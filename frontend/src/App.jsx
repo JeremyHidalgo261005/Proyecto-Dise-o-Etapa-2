@@ -1,118 +1,46 @@
 
 import { useState } from 'react'
-import Sidebar from './components/Sidebar'
+import MainLayout from './layouts/MainLayout'
+import Dashboard from './pages/Dashboard'
+import Productos from './pages/Productos'
+import Categorias from './pages/Categorias'
+import Proveedores from './pages/Proveedores'
+import Ventas from './pages/Ventas'
+import Inventario from './pages/Inventario'
 import './App.css'
 
 function App() {
   const [pagina, cambiarPagina] = useState('Dashboard')
 
-  const accesos = [
-  { nombre: 'Nueva venta', destino: 'Ventas' },
-  { nombre: 'Nuevo producto', destino: 'Inventario' },
-  { nombre: 'Nueva categoría', destino: 'Inventario' },
-  { nombre: 'Nuevo proveedor', destino: 'Proveedores' }
-]
+  function mostrarPagina() {
+    switch (pagina) {
+      case 'Dashboard':
+        return <Dashboard cambiarPagina={cambiarPagina} />
 
-  return (
-    <div className="aplicacion">
-      <Sidebar pagina={pagina} cambiarPagina={cambiarPagina} />
+      case 'Productos':
+        return <Productos cambiarPagina={cambiarPagina} />
 
-      <main className="contenido">
-        <header className="encabezado">
-          <div>
-            <h1>{pagina}</h1>
-            <p>Sistema de administración de MiniGestor</p>
-          </div>
-          <span className="etiqueta-desarrollo">
-            Versión de desarrollo
-          </span>
-        </header>
+      case 'Categorias':
+        return <Categorias cambiarPagina={cambiarPagina} />
 
-        {pagina === 'Dashboard' ? (
-          <>
-            <section className="bienvenida">
-  <div className="bienvenida-texto">
-    <span className="mini-etiqueta">Centro de control</span>
-    <h2>Gestioná tu minisúper de forma clara y rápida</h2>
-    <p>
-      Registrá ventas, agregá productos, organizá categorías
-      y mantené el inventario bajo control desde un solo lugar.
-    </p>
-  </div>
+      case 'Proveedores':
+        return <Proveedores cambiarPagina={cambiarPagina} />
 
-  <div className="bienvenida-badge">
-    <span>MiniGestor</span>
-    <strong>Dashboard principal</strong>
-  </div>
-</section>
+      case 'Ventas':
+        return <Ventas cambiarPagina={cambiarPagina} />
 
-            <section className="seccion">
-              <h2>Accesos rápidos</h2>
+      case 'Inventario':
+        return <Inventario cambiarPagina={cambiarPagina} />
 
-              <div className="accesos-grid">
-                {accesos.map((acceso) => (
-                  <button
-                    key={acceso.nombre}
-                    className="acceso-card"
-                    onClick={() => cambiarPagina(acceso.destino)}
-                  >
-                    <span>{acceso.nombre}</span>
-                    <span aria-hidden="true">→</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            <section className="resumen-grid">
-              <div className="resumen-card">
-                <h3>Productos registrados</h3>
-                <p>Pendiente</p>
-                <span>Sin conexión a la base de datos</span>
-              </div>
-
-              <div className="resumen-card">
-                <h3>Ventas del día</h3>
-                <p>Pendiente</p>
-                <span>Sin ventas cargadas</span>
-              </div>
-
-              <div className="resumen-card">
-                <h3>Productos con stock bajo</h3>
-                <p>Pendiente</p>
-                <span>Sin inventario cargado</span>
-              </div>
-            </section>
-
-            <section className="seccion panel">
-              <h2>Ventas recientes</h2>
-              <div className="tabla-contenedor">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID de venta</th>
-                      <th>Fecha</th>
-                      <th>Total</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan="4" className="tabla-vacia">
-                        Todavía no hay ventas registradas.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </>
-        ) : (
+      default:
+        return (
           <section className="panel pagina-pendiente">
             <h2>{pagina}</h2>
+
             <p>
               Esta sección se encuentra en desarrollo.
-              Próximamente tendrá sus propias funciones.
             </p>
+
             <button
               className="boton-volver"
               onClick={() => cambiarPagina('Dashboard')}
@@ -120,9 +48,17 @@ function App() {
               Volver al Dashboard
             </button>
           </section>
-        )}
-      </main>
-    </div>
+        )
+    }
+  }
+
+  return (
+    <MainLayout
+      pagina={pagina}
+      cambiarPagina={cambiarPagina}
+    >
+      {mostrarPagina()}
+    </MainLayout>
   )
 }
 

@@ -417,3 +417,249 @@ td {
     font-size: 28px;
   }
 }
+
+/* Aprovechar mejor el espacio general */
+
+.contenido {
+  padding: 26px 32px;
+}
+
+.encabezado {
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+/* Rectangulo morado compacto */
+
+.bienvenida-compacta {
+  width: 360px;
+  max-width: 42%;
+  min-height: 105px;
+  flex-shrink: 0;
+
+  background: linear-gradient(
+    135deg,
+    #24152f 0%,
+    #4c2d68 55%,
+    #7b49a6 100%
+  );
+
+  color: white;
+  border-radius: 22px;
+  padding: 18px 22px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+
+  position: relative;
+  overflow: hidden;
+
+  box-shadow: 0 12px 28px rgba(54, 28, 78, 0.16);
+}
+
+.bienvenida-compacta::before {
+  content: "";
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  right: -45px;
+  top: -65px;
+}
+
+.bienvenida-compacta .mini-etiqueta {
+  margin-bottom: 9px;
+  padding: 5px 10px;
+  font-size: 11px;
+  position: relative;
+  z-index: 1;
+}
+
+.bienvenida-compacta strong {
+  font-size: 17px;
+  line-height: 1.3;
+  position: relative;
+  z-index: 1;
+}
+
+/* Espacios del Dashboard */
+
+.dashboard .seccion {
+  margin-bottom: 20px;
+}
+
+.dashboard .seccion h2 {
+  font-size: 21px;
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+
+/* Accesos rapidos mas compactos */
+
+.dashboard .accesos-grid {
+  gap: 15px;
+  margin-bottom: 0;
+}
+
+.dashboard .acceso-card {
+  min-height: 105px;
+  padding: 18px;
+  border-radius: 20px;
+}
+
+.dashboard .acceso-card span:first-child {
+  font-size: 16px;
+}
+
+.dashboard .acceso-card span:last-child {
+  width: 34px;
+  height: 34px;
+}
+
+/* Tres tarjetas de resumen */
+
+.dashboard .resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.dashboard .resumen-card {
+  min-width: 0;
+  padding: 20px;
+  border-radius: 22px;
+}
+
+.dashboard .resumen-card h3 {
+  margin-bottom: 12px;
+}
+
+/* Desplazamiento individual de las tarjetas */
+
+.resumen-scroll {
+  height: 90px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #ac91c8 #f1eaf5;
+  padding-right: 8px;
+}
+
+.resumen-scroll p {
+  margin-top: 8px;
+}
+
+.resumen-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.resumen-scroll::-webkit-scrollbar-track {
+  background: #f1eaf5;
+  border-radius: 10px;
+}
+
+.resumen-scroll::-webkit-scrollbar-thumb {
+  background: #ac91c8;
+  border-radius: 10px;
+}
+
+/* Ventas recientes */
+
+.dashboard .ventas-recientes {
+  padding: 24px;
+  border-radius: 24px;
+}
+
+.dashboard-tabla-scroll {
+  max-height: 250px;
+  min-height: 135px;
+  overflow-x: auto;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #ac91c8 #f1eaf5;
+}
+
+.dashboard-tabla-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-tabla-scroll::-webkit-scrollbar-thumb {
+  background: #ac91c8;
+  border-radius: 10px;
+}
+
+.dashboard-tabla-scroll::-webkit-scrollbar-track {
+  background: #f1eaf5;
+}
+
+/* Mantener visibles los titulos de la tabla */
+
+.dashboard-tabla-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Permitir desplazamiento con teclado */
+
+.resumen-scroll:focus-visible,
+.dashboard-tabla-scroll:focus-visible {
+  outline: 2px solid #7b49a6;
+  outline-offset: 2px;
+}
+
+/* ADAPTACION A OTRAS PANTALLAS */
+
+@media (max-width: 1100px) {
+  .dashboard .resumen-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bienvenida-compacta {
+    width: 300px;
+    max-width: 45%;
+  }
+}
+
+@media (max-width: 768px) {
+  .contenido {
+    padding: 18px;
+  }
+
+  .encabezado {
+    align-items: stretch;
+  }
+
+  .bienvenida-compacta {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dashboard .accesos-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard .resumen-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard .accesos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Desplazamiento horizontal en tablas para celulares */
+
+@media (max-width: 768px) {
+  .dashboard-tabla-scroll table {
+    min-width: 650px;
+  }
+}
