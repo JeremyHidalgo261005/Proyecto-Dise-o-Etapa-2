@@ -1,0 +1,266 @@
+
+/* Página principal de productos */
+
+.productos-pagina {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Encabezados */
+
+.productos-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.productos-encabezado h2 {
+  margin: 0 0 10px;
+  color: #21162f;
+  font-size: 24px;
+}
+
+.productos-encabezado p {
+  margin: 0;
+  color: #60556b;
+  font-size: 14px;
+}
+
+/* Formulario */
+
+.productos-formulario {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.productos-formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #4c4060;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.productos-formulario input,
+.productos-formulario select,
+.productos-barra-busqueda input {
+  width: 100%;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid #d8cde2;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #21162f;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.productos-formulario input:focus,
+.productos-formulario select:focus,
+.productos-barra-busqueda input:focus {
+  outline: 2px solid #8e6adf;
+  outline-offset: 1px;
+}
+
+.productos-formulario input:disabled {
+  background: #f0edf3;
+  color: #6b5e76;
+  cursor: not-allowed;
+}
+
+.productos-formulario small {
+  color: #766a80;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.productos-formulario-acciones {
+  display: flex;
+  align-items: flex-end;
+}
+
+.productos-formulario-acciones button {
+  width: 100%;
+}
+
+.productos-formulario button:disabled,
+.productos-encabezado button:disabled,
+.productos-acciones button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Botones */
+
+.productos-boton-secundario {
+  padding: 12px 18px;
+  border: 1px solid #d8cde2;
+  border-radius: 12px;
+  background: #f4eff9;
+  color: #50316f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.productos-boton-secundario:hover {
+  background: #eadff5;
+}
+
+/* Mensajes */
+
+.productos-exito {
+  background: #e6f7ed;
+  border: 1px solid #a9dfc1;
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: #17663d;
+  font-weight: 700;
+  margin-bottom: 22px;
+}
+
+.productos-error {
+  background: #fff0ef;
+  border: 1px solid #f3c1bb;
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: #a12620;
+  font-weight: 700;
+  margin-bottom: 22px;
+  overflow-wrap: anywhere;
+}
+
+/* Buscador */
+
+.productos-barra-busqueda {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+  margin-bottom: 22px;
+}
+
+.productos-barra-busqueda label {
+  color: #4c4060;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Tabla */
+
+.productos-tabla-scroll {
+  width: 100%;
+  max-height: 430px;
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ac91c8 #f1eaf5;
+}
+
+.productos-tabla-scroll table {
+  min-width: 1000px;
+}
+
+.productos-tabla-scroll th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f6effc;
+}
+
+.productos-tabla-scroll td,
+.productos-tabla-scroll th {
+  padding: 15px 12px;
+}
+
+.productos-tabla-scroll tbody tr:hover {
+  background: #faf7fc;
+}
+
+/* Estado del producto */
+
+.producto-estado {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.producto-estado.activo {
+  background: #e0f5e9;
+  color: #17663d;
+}
+
+.producto-estado.inactivo {
+  background: #f3e8e8;
+  color: #973e3e;
+}
+
+/* Botones de editar y eliminar */
+
+.productos-acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.productos-acciones button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.productos-editar {
+  background: #e9dfff;
+  color: #4d2d78;
+}
+
+.productos-editar:hover {
+  background: #d8c5ff;
+}
+
+.productos-eliminar {
+  background: #ffe5e1;
+  color: #9c2f28;
+}
+
+.productos-eliminar:hover {
+  background: #ffd1ca;
+}
+
+/* Adaptación a celulares */
+
+@media (max-width: 768px) {
+  .productos-formulario {
+    grid-template-columns: 1fr;
+  }
+
+  .productos-encabezado {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .productos-encabezado h2 {
+    font-size: 21px;
+  }
+
+  .productos-encabezado button {
+    width: 100%;
+  }
+
+  .productos-barra-busqueda {
+    max-width: 100%;
+  }
+
+  .productos-tabla-scroll {
+    max-height: 350px;
+  }
+}
