@@ -663,3 +663,55 @@ td {
     min-width: 650px;
   }
 }
+
+
+/* Información del usuario y cierre de sesión */
+
+.sesion-controles {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.sesion-controles span {
+  color: #60556b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.boton-cerrar-sesion {
+  padding: 9px 13px;
+  border: 1px solid #d9cbe5;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #50316f;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.boton-cerrar-sesion:hover {
+  background: #f1e8fa;
+}
+
+.boton-cerrar-sesion:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sesion-error {
+  padding: 13px 16px;
+  background: #fff0ee;
+  border-radius: 12px;
+  color: #a12620;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.resumen-card .resumen-scroll {
+  overflow: visible;
+  height: auto;
+  max-height: none;
+}

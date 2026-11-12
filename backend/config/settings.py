@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'modulos.productos.apps.ProductosConfig',
     'modulos.proveedores.apps.ProveedoresConfig',
+    'modulos.usuarios.apps.UsuariosConfig',
 ]
 
 MIDDLEWARE = [

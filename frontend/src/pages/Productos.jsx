@@ -13,16 +13,23 @@ const formularioInicial = {
   estado: true
 }
 
-function obtenerCSRF() {
-  const cookie = document.cookie
-    .split('; ')
-    .find((valor) => valor.startsWith('csrftoken='))
+// Obtener el token de seguridad de Django
+async function obtenerTokenCSRF() {
+  const respuesta = await fetch('/api/auth/csrf/', {
+    credentials: 'same-origin'
+  })
 
-  return cookie
-    ? decodeURIComponent(cookie.substring('csrftoken='.length))
-    : ''
+  if (!respuesta.ok) {
+    throw new Error(
+      'No se pudo obtener el token de seguridad.'
+    )
+  }
+
+  const datos = await respuesta.json()
+  return datos.csrfToken
 }
 
+// Preparar mensajes de error enviados por la API
 function obtenerMensajeError(datos, estado) {
   if (!datos || typeof datos !== 'object') {
     return `Ocurrió un error con la API (${estado}).`
@@ -43,19 +50,18 @@ function obtenerMensajeError(datos, estado) {
     .join(' | ')
 }
 
+// Realizar solicitudes a Django
 async function solicitarAPI(ruta, opciones = {}) {
   const respuesta = await fetch(ruta, {
     credentials: 'same-origin',
     ...opciones
   })
 
-  let datos = null
-
   const tipo = respuesta.headers.get('content-type') || ''
 
-  if (tipo.includes('application/json')) {
-    datos = await respuesta.json()
-  }
+  const datos = tipo.includes('application/json')
+    ? await respuesta.json()
+    : null
 
   if (!respuesta.ok) {
     throw new Error(
@@ -66,19 +72,51 @@ async function solicitarAPI(ruta, opciones = {}) {
   return datos
 }
 
-function obtenerLista(datos) {
-  if (Array.isArray(datos)) {
-    return datos
+// Consultar todos los registros, incluso si hay paginación
+async function consultarTodos(rutaInicial, signal) {
+  const registros = []
+  const rutasVisitadas = new Set()
+
+  let ruta = rutaInicial
+
+  while (ruta) {
+    if (rutasVisitadas.has(ruta)) {
+      throw new Error('La API devolvió una paginación incorrecta.')
+    }
+
+    rutasVisitadas.add(ruta)
+
+    const datos = await solicitarAPI(ruta, { signal })
+
+    if (Array.isArray(datos)) {
+      registros.push(...datos)
+      break
+    }
+
+    if (!Array.isArray(datos?.results)) {
+      throw new Error('La API devolvió un formato inesperado.')
+    }
+
+    registros.push(...datos.results)
+
+    if (datos.next) {
+      const siguiente = new URL(
+        datos.next,
+        window.location.origin
+      )
+
+      ruta = siguiente.pathname + siguiente.search
+    } else {
+      ruta = null
+    }
   }
 
-  if (Array.isArray(datos?.results)) {
-    return datos.results
-  }
-
-  throw new Error('La API devolvió un formato inesperado.')
+  return registros
 }
 
-function Productos({ cambiarPagina }) {
+function Productos({ cambiarPagina, usuario }) {
+  const esAdministrador = usuario?.rol === 'Administrador'
+
   const [productos, setProductos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [proveedores, setProveedores] = useState([])
@@ -96,31 +134,45 @@ function Productos({ cambiarPagina }) {
   const [mensaje, setMensaje] = useState('')
 
   const formularioRef = useRef(null)
-
   const modoEdicion = editandoId !== null
 
-  // Cargar productos, categorías y proveedores
+  // Cargar información según el rol
   useEffect(() => {
     const controlador = new AbortController()
 
     async function cargarDatos() {
+      setCargando(true)
+      setErrorCarga('')
+
       try {
-        const opciones = {
-          signal: controlador.signal
+        // Ambos roles pueden consultar productos
+        const listaProductos = await consultarTodos(
+          '/api/productos/',
+          controlador.signal
+        )
+
+        let listaCategorias = []
+        let listaProveedores = []
+
+        // Solo el administrador consulta estas API
+        if (esAdministrador) {
+          [listaCategorias, listaProveedores] =
+            await Promise.all([
+              consultarTodos(
+                '/api/categorias/',
+                controlador.signal
+              ),
+              consultarTodos(
+                '/api/proveedores/',
+                controlador.signal
+              )
+            ])
         }
 
-        const [datosProductos, datosCategorias, datosProveedores] =
-          await Promise.all([
-            solicitarAPI('/api/productos/', opciones),
-            solicitarAPI('/api/categorias/', opciones),
-            solicitarAPI('/api/proveedores/', opciones)
-          ])
-
         if (!controlador.signal.aborted) {
-          setProductos(obtenerLista(datosProductos))
-          setCategorias(obtenerLista(datosCategorias))
-          setProveedores(obtenerLista(datosProveedores))
-          setErrorCarga('')
+          setProductos(listaProductos)
+          setCategorias(listaCategorias)
+          setProveedores(listaProveedores)
         }
 
       } catch (error) {
@@ -137,7 +189,7 @@ function Productos({ cambiarPagina }) {
     cargarDatos()
 
     return () => controlador.abort()
-  }, [])
+  }, [esAdministrador])
 
   // Actualizar los campos del formulario
   function cambiarCampo(evento) {
@@ -151,11 +203,18 @@ function Productos({ cambiarPagina }) {
     }))
   }
 
-  // Preparar formulario para registrar
-  function nuevoProducto() {
-    setEditandoId(null)
+  // Limpiar el formulario
+  function limpiarFormulario() {
     setFormulario({ ...formularioInicial })
+    setEditandoId(null)
     setErrorFormulario('')
+  }
+
+  // Preparar un producto nuevo
+  function nuevoProducto() {
+    if (!esAdministrador) return
+
+    limpiarFormulario()
     setMensaje('')
 
     formularioRef.current?.scrollIntoView({
@@ -164,8 +223,10 @@ function Productos({ cambiarPagina }) {
     })
   }
 
-  // Preparar formulario para editar
+  // Cargar un producto para editarlo
   function editarProducto(producto) {
+    if (!esAdministrador) return
+
     setEditandoId(producto.id)
 
     setFormulario({
@@ -188,40 +249,50 @@ function Productos({ cambiarPagina }) {
     })
   }
 
-  // Validaciones del formulario
+  // Comprobar los datos antes de enviarlos
   function validarFormulario() {
     if (!formulario.nombre.trim()) {
-      throw new Error('El nombre del producto es obligatorio.')
+      throw new Error(
+        'El nombre del producto es obligatorio.'
+      )
     }
 
     if (!formulario.codigo.trim()) {
-      throw new Error('El código del producto es obligatorio.')
+      throw new Error(
+        'El código del producto es obligatorio.'
+      )
     }
 
-    if (!Number.isFinite(Number(formulario.precio)) ||
-        Number(formulario.precio) <= 0) {
-      throw new Error('El precio debe ser mayor que cero.')
+    const precio = Number(formulario.precio)
+
+    if (!Number.isFinite(precio) || precio <= 0) {
+      throw new Error(
+        'El precio debe ser mayor que cero.'
+      )
     }
+
+    const stockMinimo = Number(formulario.stock_minimo)
 
     if (
-      !Number.isInteger(Number(formulario.stock_minimo)) ||
-      Number(formulario.stock_minimo) < 0
+      !Number.isInteger(stockMinimo) ||
+      stockMinimo < 0
     ) {
       throw new Error(
-        'El stock mínimo debe ser un número entero no negativo.'
+        'El stock mínimo debe ser un entero no negativo.'
       )
     }
 
-    if (
-      !modoEdicion &&
-      (
-        !Number.isInteger(Number(formulario.stock_actual)) ||
-        Number(formulario.stock_actual) < 0
-      )
-    ) {
-      throw new Error(
-        'El stock inicial debe ser un número entero no negativo.'
-      )
+    if (!modoEdicion) {
+      const stockInicial = Number(formulario.stock_actual)
+
+      if (
+        !Number.isInteger(stockInicial) ||
+        stockInicial < 0
+      ) {
+        throw new Error(
+          'El stock inicial debe ser un entero no negativo.'
+        )
+      }
     }
 
     if (!formulario.categoria) {
@@ -233,25 +304,21 @@ function Productos({ cambiarPagina }) {
     }
   }
 
-  // Crear o actualizar un producto
+  // CREATE y UPDATE
   async function guardarProducto(evento) {
     evento.preventDefault()
 
+    if (!esAdministrador || guardando) return
+
     setErrorFormulario('')
     setMensaje('')
+    setGuardando(true)
 
     try {
       validarFormulario()
 
-      const token = obtenerCSRF()
+      const token = await obtenerTokenCSRF()
 
-      if (!token) {
-        throw new Error(
-          'No se encontró el token de seguridad. Iniciá sesión en /admin/ desde localhost:5173.'
-        )
-      }
-
-      // Campos que se pueden crear o modificar
       const datosProducto = {
         nombre: formulario.nombre.trim(),
         codigo: formulario.codigo.trim(),
@@ -262,18 +329,14 @@ function Productos({ cambiarPagina }) {
         estado: formulario.estado
       }
 
-      // El stock actual solo se envía al crear.
-      // Los cambios posteriores deben manejarse
-      // desde movimientos de inventario.
+      // El stock inicial solo se envía al registrar
       if (!modoEdicion) {
         datosProducto.stock_actual =
           Number(formulario.stock_actual)
       }
 
-      setGuardando(true)
-
       if (modoEdicion) {
-        // UPDATE: modificar producto
+        // UPDATE
         const actualizado = await solicitarAPI(
           `/api/productos/${editandoId}/`,
           {
@@ -294,10 +357,12 @@ function Productos({ cambiarPagina }) {
           )
         )
 
-        setMensaje('Producto actualizado correctamente.')
+        setMensaje(
+          'Producto actualizado correctamente.'
+        )
 
       } else {
-        // CREATE: registrar producto
+        // CREATE
         const creado = await solicitarAPI(
           '/api/productos/',
           {
@@ -315,11 +380,12 @@ function Productos({ cambiarPagina }) {
           creado
         ])
 
-        setMensaje('Producto registrado correctamente.')
+        setMensaje(
+          'Producto registrado correctamente.'
+        )
       }
 
-      setFormulario({ ...formularioInicial })
-      setEditandoId(null)
+      limpiarFormulario()
 
     } catch (error) {
       setErrorFormulario(error.message)
@@ -328,32 +394,24 @@ function Productos({ cambiarPagina }) {
     }
   }
 
-  // Eliminar producto
+  // DELETE
   async function eliminarProducto(producto) {
+    if (!esAdministrador || eliminandoId !== null) return
+
     const confirmar = window.confirm(
       `¿Seguro que querés eliminar "${producto.nombre}"?\n\n` +
       'Esta acción no se puede deshacer.'
     )
 
-    if (!confirmar) {
-      return
-    }
+    if (!confirmar) return
 
-    setMensaje('')
     setErrorFormulario('')
+    setMensaje('')
+    setEliminandoId(producto.id)
 
     try {
-      const token = obtenerCSRF()
+      const token = await obtenerTokenCSRF()
 
-      if (!token) {
-        throw new Error(
-          'No se encontró el token de seguridad. Iniciá sesión nuevamente.'
-        )
-      }
-
-      setEliminandoId(producto.id)
-
-      // DELETE: eliminar en Django y PostgreSQL
       await solicitarAPI(
         `/api/productos/${producto.id}/`,
         {
@@ -370,14 +428,13 @@ function Productos({ cambiarPagina }) {
         )
       )
 
-      // Si estábamos editando ese producto,
-      // limpiar también el formulario.
       if (editandoId === producto.id) {
-        setEditandoId(null)
-        setFormulario({ ...formularioInicial })
+        limpiarFormulario()
       }
 
-      setMensaje('Producto eliminado correctamente.')
+      setMensaje(
+        'Producto eliminado correctamente.'
+      )
 
     } catch (error) {
       setErrorFormulario(error.message)
@@ -386,15 +443,17 @@ function Productos({ cambiarPagina }) {
     }
   }
 
-  // Buscar productos por código o nombre
+  // Buscar productos
   const productosFiltrados = productos.filter((producto) => {
     const texto = `${producto.codigo} ${producto.nombre}`
       .toLowerCase()
 
-    return texto.includes(busqueda.trim().toLowerCase())
+    return texto.includes(
+      busqueda.trim().toLowerCase()
+    )
   })
 
-  // Mostrar el nombre de la categoría
+  // Obtener nombre de la categoría
   function nombreCategoria(id) {
     const categoria = categorias.find(
       (item) => String(item.id) === String(id)
@@ -403,7 +462,7 @@ function Productos({ cambiarPagina }) {
     return categoria?.nombre || 'Sin categoría'
   }
 
-  // Mostrar el nombre del proveedor
+  // Obtener nombre del proveedor
   function nombreProveedor(id) {
     const proveedor = proveedores.find(
       (item) => String(item.id) === String(id)
@@ -412,6 +471,7 @@ function Productos({ cambiarPagina }) {
     return proveedor?.nombre || 'Sin proveedor'
   }
 
+  // Formato de precios en colones
   const formatoPrecio = new Intl.NumberFormat('es-CR', {
     style: 'currency',
     currency: 'CRC',
@@ -421,187 +481,191 @@ function Productos({ cambiarPagina }) {
   return (
     <div className="productos-pagina">
 
-      {/* FORMULARIO */}
-      <section
-        className="seccion panel"
-        ref={formularioRef}
-      >
-        <div className="productos-encabezado">
-          <div>
-            <h2>
-              {modoEdicion
-                ? 'Editar producto'
-                : 'Registrar producto'}
-            </h2>
-
-            <p>
-              {modoEdicion
-                ? 'Modificá los datos del producto seleccionado.'
-                : 'Agregá un producto nuevo al minisúper.'}
-            </p>
-          </div>
-
-          {modoEdicion && (
-            <button
-              type="button"
-              className="productos-boton-secundario"
-              onClick={nuevoProducto}
-              disabled={guardando}
-            >
-              Cancelar edición
-            </button>
-          )}
-        </div>
-
-        <form
-          className="productos-formulario"
-          onSubmit={guardarProducto}
+      {/* FORMULARIO EXCLUSIVO DEL ADMINISTRADOR */}
+      {esAdministrador && (
+        <section
+          className="seccion panel"
+          ref={formularioRef}
         >
+          <div className="productos-encabezado">
+            <div>
+              <h2>
+                {modoEdicion
+                  ? 'Editar producto'
+                  : 'Registrar producto'}
+              </h2>
 
-          <label>
-            Nombre del producto
-            <input
-              type="text"
-              name="nombre"
-              value={formulario.nombre}
-              onChange={cambiarCampo}
-              maxLength={150}
-              required
-            />
-          </label>
-
-          <label>
-            Código
-            <input
-              type="text"
-              name="codigo"
-              value={formulario.codigo}
-              onChange={cambiarCampo}
-              required
-            />
-          </label>
-
-          <label>
-            Precio (₡)
-            <input
-              type="number"
-              name="precio"
-              value={formulario.precio}
-              onChange={cambiarCampo}
-              min="0.01"
-              step="0.01"
-              required
-            />
-          </label>
-
-          <label>
-            Stock actual
-            <input
-              type="number"
-              name="stock_actual"
-              value={formulario.stock_actual}
-              onChange={cambiarCampo}
-              min="0"
-              step="1"
-              disabled={modoEdicion}
-              required={!modoEdicion}
-            />
+              <p>
+                {modoEdicion
+                  ? 'Modificá los datos del producto seleccionado.'
+                  : 'Agregá un producto nuevo al minisúper.'}
+              </p>
+            </div>
 
             {modoEdicion && (
-              <small>
-                Las existencias se modificarán desde
-                movimientos de inventario.
-              </small>
+              <button
+                type="button"
+                className="productos-boton-secundario"
+                onClick={limpiarFormulario}
+                disabled={guardando}
+              >
+                Cancelar edición
+              </button>
             )}
-          </label>
-
-          <label>
-            Stock mínimo
-            <input
-              type="number"
-              name="stock_minimo"
-              value={formulario.stock_minimo}
-              onChange={cambiarCampo}
-              min="0"
-              step="1"
-              required
-            />
-          </label>
-
-          <label>
-            Categoría
-            <select
-              name="categoria"
-              value={formulario.categoria}
-              onChange={cambiarCampo}
-              required
-            >
-              <option value="">Seleccionar categoría</option>
-
-              {categorias.map((categoria) => (
-                <option
-                  key={categoria.id}
-                  value={categoria.id}
-                >
-                  {categoria.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Proveedor
-            <select
-              name="proveedor"
-              value={formulario.proveedor}
-              onChange={cambiarCampo}
-              required
-            >
-              <option value="">Seleccionar proveedor</option>
-
-              {proveedores.map((proveedor) => (
-                <option
-                  key={proveedor.id}
-                  value={proveedor.id}
-                >
-                  {proveedor.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Estado
-            <select
-              name="estado"
-              value={String(formulario.estado)}
-              onChange={cambiarCampo}
-            >
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
-            </select>
-          </label>
-
-          <div className="productos-formulario-acciones">
-            <button
-              type="submit"
-              className="boton-volver"
-              disabled={
-                guardando ||
-                cargando ||
-                Boolean(errorCarga)
-              }
-            >
-              {guardando
-                ? 'Guardando...'
-                : modoEdicion
-                  ? 'Guardar cambios'
-                  : 'Registrar producto'}
-            </button>
           </div>
 
-        </form>
-      </section>
+          <form
+            className="productos-formulario"
+            onSubmit={guardarProducto}
+          >
+            <label>
+              Nombre del producto
+              <input
+                type="text"
+                name="nombre"
+                value={formulario.nombre}
+                onChange={cambiarCampo}
+                maxLength={150}
+                required
+              />
+            </label>
+
+            <label>
+              Código
+              <input
+                type="text"
+                name="codigo"
+                value={formulario.codigo}
+                onChange={cambiarCampo}
+                required
+              />
+            </label>
+
+            <label>
+              Precio (₡)
+              <input
+                type="number"
+                name="precio"
+                value={formulario.precio}
+                onChange={cambiarCampo}
+                min="0.01"
+                step="0.01"
+                required
+              />
+            </label>
+
+            <label>
+              Stock actual
+              <input
+                type="number"
+                name="stock_actual"
+                value={formulario.stock_actual}
+                onChange={cambiarCampo}
+                min="0"
+                step="1"
+                disabled={modoEdicion}
+                required={!modoEdicion}
+              />
+
+              {modoEdicion && (
+                <small>
+                  Las existencias se modificarán desde
+                  movimientos de inventario.
+                </small>
+              )}
+            </label>
+
+            <label>
+              Stock mínimo
+              <input
+                type="number"
+                name="stock_minimo"
+                value={formulario.stock_minimo}
+                onChange={cambiarCampo}
+                min="0"
+                step="1"
+                required
+              />
+            </label>
+
+            <label>
+              Categoría
+              <select
+                name="categoria"
+                value={formulario.categoria}
+                onChange={cambiarCampo}
+                required
+              >
+                <option value="">
+                  Seleccionar categoría
+                </option>
+
+                {categorias.map((categoria) => (
+                  <option
+                    key={categoria.id}
+                    value={categoria.id}
+                  >
+                    {categoria.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Proveedor
+              <select
+                name="proveedor"
+                value={formulario.proveedor}
+                onChange={cambiarCampo}
+                required
+              >
+                <option value="">
+                  Seleccionar proveedor
+                </option>
+
+                {proveedores.map((proveedor) => (
+                  <option
+                    key={proveedor.id}
+                    value={proveedor.id}
+                  >
+                    {proveedor.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Estado
+              <select
+                name="estado"
+                value={String(formulario.estado)}
+                onChange={cambiarCampo}
+              >
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+              </select>
+            </label>
+
+            <div className="productos-formulario-acciones">
+              <button
+                type="submit"
+                className="boton-volver"
+                disabled={
+                  guardando ||
+                  cargando ||
+                  Boolean(errorCarga)
+                }
+              >
+                {guardando
+                  ? 'Guardando...'
+                  : modoEdicion
+                    ? 'Guardar cambios'
+                    : 'Registrar producto'}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       {/* MENSAJES */}
       {mensaje && (
@@ -622,26 +686,33 @@ function Productos({ cambiarPagina }) {
         </p>
       )}
 
-      {/* TABLA DE PRODUCTOS */}
+      {/* TABLA PARA AMBOS ROLES */}
       <section className="seccion panel">
-
         <div className="productos-encabezado">
           <div>
-            <h2>Productos registrados</h2>
+            <h2>
+              {esAdministrador
+                ? 'Productos registrados'
+                : 'Consulta de productos'}
+            </h2>
+
             <p>
-              Consultá y administrá los productos
-              guardados en PostgreSQL.
+              {esAdministrador
+                ? 'Consultá y administrá los productos guardados en PostgreSQL.'
+                : 'Consultá los productos disponibles y sus existencias.'}
             </p>
           </div>
 
-          <button
-            type="button"
-            className="boton-volver"
-            onClick={nuevoProducto}
-            disabled={guardando}
-          >
-            + Nuevo producto
-          </button>
+          {esAdministrador && (
+            <button
+              type="button"
+              className="boton-volver"
+              onClick={nuevoProducto}
+              disabled={guardando}
+            >
+              + Nuevo producto
+            </button>
+          )}
         </div>
 
         <div className="productos-barra-busqueda">
@@ -663,7 +734,12 @@ function Productos({ cambiarPagina }) {
         {cargando ? (
           <p>Cargando productos...</p>
         ) : !errorCarga && (
-          <div className="tabla-contenedor productos-tabla-scroll">
+          <div
+            className="tabla-contenedor productos-tabla-scroll"
+            role="region"
+            aria-label="Tabla de productos registrados"
+            tabIndex={0}
+          >
             <table>
               <thead>
                 <tr>
@@ -671,11 +747,20 @@ function Productos({ cambiarPagina }) {
                   <th>Nombre</th>
                   <th>Precio</th>
                   <th>Stock</th>
-                  <th>Mínimo</th>
-                  <th>Categoría</th>
-                  <th>Proveedor</th>
+
+                  {esAdministrador && (
+                    <>
+                      <th>Mínimo</th>
+                      <th>Categoría</th>
+                      <th>Proveedor</th>
+                    </>
+                  )}
+
                   <th>Estado</th>
-                  <th>Acciones</th>
+
+                  {esAdministrador && (
+                    <th>Acciones</th>
+                  )}
                 </tr>
               </thead>
 
@@ -683,7 +768,7 @@ function Productos({ cambiarPagina }) {
                 {productosFiltrados.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="9"
+                      colSpan={esAdministrador ? 9 : 5}
                       className="tabla-vacia"
                     >
                       No se encontraron productos.
@@ -692,7 +777,6 @@ function Productos({ cambiarPagina }) {
                 ) : (
                   productosFiltrados.map((producto) => (
                     <tr key={producto.id}>
-
                       <td>{producto.codigo}</td>
 
                       <td>{producto.nombre}</td>
@@ -705,15 +789,23 @@ function Productos({ cambiarPagina }) {
 
                       <td>{producto.stock_actual}</td>
 
-                      <td>{producto.stock_minimo}</td>
+                      {esAdministrador && (
+                        <>
+                          <td>{producto.stock_minimo}</td>
 
-                      <td>
-                        {nombreCategoria(producto.categoria)}
-                      </td>
+                          <td>
+                            {nombreCategoria(
+                              producto.categoria
+                            )}
+                          </td>
 
-                      <td>
-                        {nombreProveedor(producto.proveedor)}
-                      </td>
+                          <td>
+                            {nombreProveedor(
+                              producto.proveedor
+                            )}
+                          </td>
+                        </>
+                      )}
 
                       <td>
                         <span
@@ -729,40 +821,41 @@ function Productos({ cambiarPagina }) {
                         </span>
                       </td>
 
-                      <td>
-                        <div className="productos-acciones">
-                          <button
-                            type="button"
-                            className="productos-editar"
-                            onClick={() =>
-                              editarProducto(producto)
-                            }
-                            disabled={
-                              guardando ||
-                              eliminandoId !== null
-                            }
-                          >
-                            Editar
-                          </button>
+                      {esAdministrador && (
+                        <td>
+                          <div className="productos-acciones">
+                            <button
+                              type="button"
+                              className="productos-editar"
+                              onClick={() =>
+                                editarProducto(producto)
+                              }
+                              disabled={
+                                guardando ||
+                                eliminandoId !== null
+                              }
+                            >
+                              Editar
+                            </button>
 
-                          <button
-                            type="button"
-                            className="productos-eliminar"
-                            onClick={() =>
-                              eliminarProducto(producto)
-                            }
-                            disabled={
-                              guardando ||
-                              eliminandoId !== null
-                            }
-                          >
-                            {eliminandoId === producto.id
-                              ? 'Eliminando...'
-                              : 'Eliminar'}
-                          </button>
-                        </div>
-                      </td>
-
+                            <button
+                              type="button"
+                              className="productos-eliminar"
+                              onClick={() =>
+                                eliminarProducto(producto)
+                              }
+                              disabled={
+                                guardando ||
+                                eliminandoId !== null
+                              }
+                            >
+                              {eliminandoId === producto.id
+                                ? 'Eliminando...'
+                                : 'Eliminar'}
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
