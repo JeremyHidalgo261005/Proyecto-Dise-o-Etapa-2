@@ -1,3 +1,4 @@
+from modulos.usuarios.permisos import PermisoProductos
 from django.db.models.deletion import ProtectedError
 from rest_framework import status
 from rest_framework.response import Response
@@ -44,4 +45,4 @@ class ProductoViewSet(viewsets.ModelViewSet):
     ).all().order_by('nombre')
 
     serializer_class = ProductoSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [PermisoProductos]
