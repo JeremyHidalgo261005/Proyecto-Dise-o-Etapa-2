@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './Productos.css'
 
 const formularioInicial = {
@@ -133,8 +133,8 @@ function Productos({ cambiarPagina, usuario }) {
   const [errorFormulario, setErrorFormulario] = useState('')
   const [mensaje, setMensaje] = useState('')
 
-  const formularioRef = useRef(null)
   const modoEdicion = editandoId !== null
+  const [modalAbierto, setModalAbierto] = useState(false)
 
   // Cargar información según el rol
   useEffect(() => {
@@ -191,6 +191,17 @@ function Productos({ cambiarPagina, usuario }) {
     return () => controlador.abort()
   }, [esAdministrador])
 
+  useEffect(() => {
+    if (!modalAbierto) return
+
+    function alPresionar(evento) {
+      if (evento.key === 'Escape') cerrarModal()
+    }
+
+    window.addEventListener('keydown', alPresionar)
+    return () => window.removeEventListener('keydown', alPresionar)
+  }, [modalAbierto, guardando])
+
   // Actualizar los campos del formulario
   function cambiarCampo(evento) {
     const { name, value } = evento.target
@@ -210,17 +221,18 @@ function Productos({ cambiarPagina, usuario }) {
     setErrorFormulario('')
   }
 
-  // Preparar un producto nuevo
-  function nuevoProducto() {
+  function abrirModalNuevo() {
     if (!esAdministrador) return
 
     limpiarFormulario()
     setMensaje('')
+    setModalAbierto(true)
+  }
 
-    formularioRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    })
+  function cerrarModal() {
+    if (guardando) return
+    limpiarFormulario()
+    setModalAbierto(false)
   }
 
   // Cargar un producto para editarlo
@@ -240,13 +252,9 @@ function Productos({ cambiarPagina, usuario }) {
       estado: producto.estado
     })
 
+    setModalAbierto(true)
     setErrorFormulario('')
     setMensaje('')
-
-    formularioRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    })
   }
 
   // Comprobar los datos antes de enviarlos
@@ -386,6 +394,7 @@ function Productos({ cambiarPagina, usuario }) {
       }
 
       limpiarFormulario()
+      setModalAbierto(false)
 
     } catch (error) {
       setErrorFormulario(error.message)
@@ -481,190 +490,206 @@ function Productos({ cambiarPagina, usuario }) {
   return (
     <div className="productos-pagina">
 
+      <button
+        className="boton-volver productos-volver"
+        onClick={() => cambiarPagina('Dashboard')}
+      >
+        Volver al Dashboard
+      </button>
+
       {/* FORMULARIO EXCLUSIVO DEL ADMINISTRADOR */}
-      {esAdministrador && (
-        <section
-          className="seccion panel"
-          ref={formularioRef}
-        >
-          <div className="productos-encabezado">
-            <div>
-              <h2>
-                {modoEdicion
-                  ? 'Editar producto'
-                  : 'Registrar producto'}
-              </h2>
+      {esAdministrador && modalAbierto && (
+        <div className="modal-fondo" onClick={cerrarModal}>
+          <section
+            className="modal-caja modal-caja-ancha panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-modal-producto"
+            onClick={(evento) => evento.stopPropagation()}
+          >
+            <div className="productos-encabezado">
+              <div>
+                <h2 id="titulo-modal-producto">
+                  {modoEdicion
+                    ? 'Editar producto'
+                    : 'Registrar producto'}
+                </h2>
 
-              <p>
-                {modoEdicion
-                  ? 'Modificá los datos del producto seleccionado.'
-                  : 'Agregá un producto nuevo al minisúper.'}
-              </p>
-            </div>
+                <p>
+                  {modoEdicion
+                    ? 'Modificá los datos del producto seleccionado.'
+                    : 'Agregá un producto nuevo al minisúper.'}
+                </p>
+              </div>
 
-            {modoEdicion && (
               <button
                 type="button"
                 className="productos-boton-secundario"
-                onClick={limpiarFormulario}
+                onClick={cerrarModal}
                 disabled={guardando}
               >
-                Cancelar edición
-              </button>
-            )}
-          </div>
-
-          <form
-            className="productos-formulario"
-            onSubmit={guardarProducto}
-          >
-            <label>
-              Nombre del producto
-              <input
-                type="text"
-                name="nombre"
-                value={formulario.nombre}
-                onChange={cambiarCampo}
-                maxLength={150}
-                required
-              />
-            </label>
-
-            <label>
-              Código
-              <input
-                type="text"
-                name="codigo"
-                value={formulario.codigo}
-                onChange={cambiarCampo}
-                required
-              />
-            </label>
-
-            <label>
-              Precio (₡)
-              <input
-                type="number"
-                name="precio"
-                value={formulario.precio}
-                onChange={cambiarCampo}
-                min="0.01"
-                step="0.01"
-                required
-              />
-            </label>
-
-            <label>
-              Stock actual
-              <input
-                type="number"
-                name="stock_actual"
-                value={formulario.stock_actual}
-                onChange={cambiarCampo}
-                min="0"
-                step="1"
-                disabled={modoEdicion}
-                required={!modoEdicion}
-              />
-
-              {modoEdicion && (
-                <small>
-                  Las existencias se modificarán desde
-                  movimientos de inventario.
-                </small>
-              )}
-            </label>
-
-            <label>
-              Stock mínimo
-              <input
-                type="number"
-                name="stock_minimo"
-                value={formulario.stock_minimo}
-                onChange={cambiarCampo}
-                min="0"
-                step="1"
-                required
-              />
-            </label>
-
-            <label>
-              Categoría
-              <select
-                name="categoria"
-                value={formulario.categoria}
-                onChange={cambiarCampo}
-                required
-              >
-                <option value="">
-                  Seleccionar categoría
-                </option>
-
-                {categorias.map((categoria) => (
-                  <option
-                    key={categoria.id}
-                    value={categoria.id}
-                  >
-                    {categoria.nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Proveedor
-              <select
-                name="proveedor"
-                value={formulario.proveedor}
-                onChange={cambiarCampo}
-                required
-              >
-                <option value="">
-                  Seleccionar proveedor
-                </option>
-
-                {proveedores.map((proveedor) => (
-                  <option
-                    key={proveedor.id}
-                    value={proveedor.id}
-                  >
-                    {proveedor.nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Estado
-              <select
-                name="estado"
-                value={String(formulario.estado)}
-                onChange={cambiarCampo}
-              >
-                <option value="true">Activo</option>
-                <option value="false">Inactivo</option>
-              </select>
-            </label>
-
-            <div className="productos-formulario-acciones">
-              <button
-                type="submit"
-                className="boton-volver"
-                disabled={
-                  guardando ||
-                  cargando ||
-                  Boolean(errorCarga)
-                }
-              >
-                {guardando
-                  ? 'Guardando...'
-                  : modoEdicion
-                    ? 'Guardar cambios'
-                    : 'Registrar producto'}
+                Cerrar
               </button>
             </div>
-          </form>
-        </section>
+
+            {errorFormulario && (
+              <p className="productos-error" role="alert">
+                {errorFormulario}
+              </p>
+            )}
+
+            <form
+              className="productos-formulario"
+              onSubmit={guardarProducto}
+            >
+              <label>
+                Nombre del producto
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formulario.nombre}
+                  onChange={cambiarCampo}
+                  maxLength={150}
+                  required
+                />
+              </label>
+
+              <label>
+                Código
+                <input
+                  type="text"
+                  name="codigo"
+                  value={formulario.codigo}
+                  onChange={cambiarCampo}
+                  required
+                />
+              </label>
+
+              <label>
+                Precio (₡)
+                <input
+                  type="number"
+                  name="precio"
+                  value={formulario.precio}
+                  onChange={cambiarCampo}
+                  min="0.01"
+                  step="0.01"
+                  required
+                />
+              </label>
+
+              <label>
+                Stock actual
+                <input
+                  type="number"
+                  name="stock_actual"
+                  value={formulario.stock_actual}
+                  onChange={cambiarCampo}
+                  min="0"
+                  step="1"
+                  disabled={modoEdicion}
+                  required={!modoEdicion}
+                />
+
+                {modoEdicion && (
+                  <small>
+                    Las existencias se modificarán desde
+                    movimientos de inventario.
+                  </small>
+                )}
+              </label>
+
+              <label>
+                Stock mínimo
+                <input
+                  type="number"
+                  name="stock_minimo"
+                  value={formulario.stock_minimo}
+                  onChange={cambiarCampo}
+                  min="0"
+                  step="1"
+                  required
+                />
+              </label>
+
+              <label>
+                Categoría
+                <select
+                  name="categoria"
+                  value={formulario.categoria}
+                  onChange={cambiarCampo}
+                  required
+                >
+                  <option value="">
+                    Seleccionar categoría
+                  </option>
+
+                  {categorias.map((categoria) => (
+                    <option
+                      key={categoria.id}
+                      value={categoria.id}
+                    >
+                      {categoria.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Proveedor
+                <select
+                  name="proveedor"
+                  value={formulario.proveedor}
+                  onChange={cambiarCampo}
+                  required
+                >
+                  <option value="">
+                    Seleccionar proveedor
+                  </option>
+
+                  {proveedores.map((proveedor) => (
+                    <option
+                      key={proveedor.id}
+                      value={proveedor.id}
+                    >
+                      {proveedor.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Estado
+                <select
+                  name="estado"
+                  value={String(formulario.estado)}
+                  onChange={cambiarCampo}
+                >
+                  <option value="true">Activo</option>
+                  <option value="false">Inactivo</option>
+                </select>
+              </label>
+
+              <div className="productos-formulario-acciones">
+                <button
+                  type="submit"
+                  className="boton-volver"
+                  disabled={
+                    guardando ||
+                    cargando ||
+                    Boolean(errorCarga)
+                  }
+                >
+                  {guardando
+                    ? 'Guardando...'
+                    : modoEdicion
+                      ? 'Guardar cambios'
+                      : 'Registrar producto'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
       )}
 
       {/* MENSAJES */}
@@ -674,7 +699,7 @@ function Productos({ cambiarPagina, usuario }) {
         </p>
       )}
 
-      {errorFormulario && (
+      {!modalAbierto && errorFormulario && (
         <p className="productos-error" role="alert">
           {errorFormulario}
         </p>
@@ -707,7 +732,7 @@ function Productos({ cambiarPagina, usuario }) {
             <button
               type="button"
               className="boton-volver"
-              onClick={nuevoProducto}
+              onClick={abrirModalNuevo}
               disabled={guardando}
             >
               + Nuevo producto
@@ -864,14 +889,6 @@ function Productos({ cambiarPagina, usuario }) {
           </div>
         )}
       </section>
-
-      <button
-        type="button"
-        className="boton-volver"
-        onClick={() => cambiarPagina('Dashboard')}
-      >
-        Volver al Dashboard
-      </button>
 
     </div>
   )
