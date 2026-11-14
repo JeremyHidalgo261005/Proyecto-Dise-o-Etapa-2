@@ -96,6 +96,29 @@
   cursor: pointer;
 }
 
+/* Modal */
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(20, 10, 30, 0.55);
+}
+
+.modal-caja {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-caja .proveedores-formulario {
+  grid-template-columns: 1fr;
+}
+
 /* Buscador */
 
 .proveedores-busqueda {
@@ -198,6 +221,13 @@
   font-weight: 700;
   margin-bottom: 22px;
   overflow-wrap: anywhere;
+}
+
+.proveedores-volver {
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  margin-bottom: 25px;
 }
 
 /* Adaptación a celulares */

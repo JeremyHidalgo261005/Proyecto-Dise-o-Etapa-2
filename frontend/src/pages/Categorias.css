@@ -75,6 +75,29 @@
   cursor: not-allowed;
 }
 
+/* Modal */
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(20, 10, 30, 0.55);
+}
+
+.modal-caja {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-caja .proveedores-formulario {
+  grid-template-columns: 1fr;
+}
+
 .categorias-secundario {
   border: 1px solid #d8cde2;
   border-radius: 12px;
@@ -155,6 +178,13 @@
   padding: 14px 18px;
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+.categorias-volver {
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  margin-bottom: 25px;
 }
 
 @media (max-width: 768px) {

@@ -74,6 +74,7 @@ function Categorias({ cambiarPagina }) {
   const [errorCarga, setErrorCarga] = useState('')
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
+  const [modalAbierto, setModalAbierto] = useState(false)
 
   const modoEdicion = editandoId !== null
 
@@ -107,6 +108,17 @@ function Categorias({ cambiarPagina }) {
     return () => controlador.abort()
   }, [])
 
+  useEffect(() => {
+    if (!modalAbierto) return
+
+    function alPresionar(evento) {
+      if (evento.key === 'Escape') cerrarModal()
+    }
+
+    window.addEventListener('keydown', alPresionar)
+    return () => window.removeEventListener('keydown', alPresionar)
+  }, [modalAbierto, guardando])
+
   function cambiarCampo(evento) {
     const { name, value } = evento.target
 
@@ -122,6 +134,18 @@ function Categorias({ cambiarPagina }) {
     setError('')
   }
 
+  function abrirModalNuevo() {
+    limpiarFormulario()
+    setMensaje('')
+    setModalAbierto(true)
+  }
+
+  function cerrarModal() {
+    if (guardando) return
+    limpiarFormulario()
+    setModalAbierto(false)
+  }
+
   function editarCategoria(categoria) {
     setFormulario({
       nombre: categoria.nombre,
@@ -132,10 +156,7 @@ function Categorias({ cambiarPagina }) {
     setError('')
     setMensaje('')
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    })
+    setModalAbierto(true)
   }
 
   // CREATE y UPDATE
@@ -217,6 +238,7 @@ function Categorias({ cambiarPagina }) {
       }
 
       limpiarFormulario()
+      setModalAbierto(false)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -278,77 +300,99 @@ function Categorias({ cambiarPagina }) {
       .toLowerCase()
       .includes(busqueda.trim().toLowerCase())
   )
+  const errorPagina = modalAbierto ? errorCarga : (error || errorCarga)
 
   return (
     <div className="categorias-pagina">
 
-      <section className="seccion panel">
-        <div className="categorias-encabezado">
-          <div>
-            <h2>
-              {modoEdicion
-                ? 'Editar categoría'
-                : 'Registrar categoría'}
-            </h2>
-            <p>
-              Organizá los productos del minisúper
-              mediante categorías.
-            </p>
-          </div>
+      <button
+        className="boton-volver categorias-volver"
+        onClick={() => cambiarPagina('Dashboard')}
+      >
+        Volver al Dashboard
+      </button>
 
-          {modoEdicion && (
-            <button
-              type="button"
-              className="categorias-secundario"
-              onClick={limpiarFormulario}
-              disabled={guardando}
-            >
-              Cancelar edición
-            </button>
-          )}
-        </div>
-
-        <form
-          className="categorias-formulario"
-          onSubmit={guardarCategoria}
-        >
-          <label>
-            Nombre de la categoría
-            <input
-              type="text"
-              name="nombre"
-              value={formulario.nombre}
-              onChange={cambiarCampo}
-              maxLength={100}
-              placeholder="Ejemplo: Lácteos"
-              required
-            />
-          </label>
-
-          <label>
-            Descripción
-            <textarea
-              name="descripcion"
-              value={formulario.descripcion}
-              onChange={cambiarCampo}
-              rows={3}
-              placeholder="Descripción de la categoría"
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="boton-volver"
-            disabled={guardando || cargando || Boolean(errorCarga)}
+      {modalAbierto && (
+        <div className="modal-fondo" onClick={cerrarModal}>
+          <section
+            className="modal-caja panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-modal-categoria"
+            onClick={(evento) => evento.stopPropagation()}
           >
-            {guardando
-              ? 'Guardando...'
-              : modoEdicion
-                ? 'Guardar cambios'
-                : 'Registrar categoría'}
-          </button>
-        </form>
-      </section>
+            <div className="categorias-encabezado">
+              <div>
+                <h2 id="titulo-modal-categoria">
+                  {modoEdicion
+                    ? 'Editar categoría'
+                    : 'Registrar categoría'}
+                </h2>
+                <p>
+                  Organizá los productos del minisúper
+                  mediante categorías.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="categorias-secundario"
+                onClick={cerrarModal}
+                disabled={guardando}
+              >
+                Cerrar
+              </button>
+            </div>
+
+            {error && (
+              <p className="categorias-error" role="alert">
+                {error}
+              </p>
+            )}
+
+            <form
+              className="categorias-formulario"
+              onSubmit={guardarCategoria}
+            >
+              <label>
+                Nombre de la categoría
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formulario.nombre}
+                  onChange={cambiarCampo}
+                  maxLength={100}
+                  placeholder="Ejemplo: Lácteos"
+                  required
+                />
+              </label>
+
+              <label>
+                Descripción
+                <textarea
+                  name="descripcion"
+                  value={formulario.descripcion}
+                  onChange={cambiarCampo}
+                  rows={3}
+                  placeholder="Descripción de la categoría"
+                />
+              </label>
+
+              <button
+                type="submit"
+                className="boton-volver"
+                disabled={guardando || cargando || Boolean(errorCarga)}
+              >
+                {guardando
+                  ? 'Guardando...'
+                  : modoEdicion
+                    ? 'Guardar cambios'
+                    : 'Registrar categoría'}
+              </button>
+            </form>
+          </section>
+        </div>
+      )}
 
       {mensaje && (
         <p className="categorias-exito" role="status">
@@ -356,9 +400,9 @@ function Categorias({ cambiarPagina }) {
         </p>
       )}
 
-      {(error || errorCarga) && (
+      {errorPagina && (
         <p className="categorias-error" role="alert">
-          {error || errorCarga}
+          {errorPagina}
         </p>
       )}
 
@@ -370,6 +414,15 @@ function Categorias({ cambiarPagina }) {
               Consultá las categorías guardadas en PostgreSQL.
             </p>
           </div>
+
+          <button
+            type="button"
+            className="boton-volver"
+            onClick={abrirModalNuevo}
+            disabled={guardando}
+          >
+            + Nueva categoría
+          </button>
         </div>
 
         <div className="categorias-busqueda">
@@ -447,12 +500,7 @@ function Categorias({ cambiarPagina }) {
         )}
       </section>
 
-      <button
-        className="boton-volver"
-        onClick={() => cambiarPagina('Dashboard')}
-      >
-        Volver al Dashboard
-      </button>
+      
     </div>
   )
 }

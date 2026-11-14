@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './Proveedores.css'
 
 const formularioInicial = {
@@ -108,8 +108,9 @@ function Proveedores({ cambiarPagina }) {
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
 
-  const formularioRef = useRef(null)
   const modoEdicion = editandoId !== null
+  const [modalAbierto, setModalAbierto] = useState(false)
+  const errorPagina = modalAbierto ? errorCarga : (error || errorCarga)
 
   // READ: cargar proveedores desde PostgreSQL
   useEffect(() => {
@@ -140,6 +141,17 @@ function Proveedores({ cambiarPagina }) {
 
     return () => controlador.abort()
   }, [])
+
+  useEffect(() => {
+    if (!modalAbierto) return
+
+    function alPresionar(evento) {
+      if (evento.key === 'Escape') cerrarModal()
+    }
+
+    window.addEventListener('keydown', alPresionar)
+    return () => window.removeEventListener('keydown', alPresionar)
+  }, [modalAbierto, guardando])
 
   
 function cambiarCampo(evento) {
@@ -184,20 +196,19 @@ function cambiarCampo(evento) {
     setError('')
     setMensaje('')
 
-    formularioRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    })
+    setModalAbierto(true)
   }
 
-  function nuevoProveedor() {
+  function abrirModalNuevo() {
     limpiarFormulario()
     setMensaje('')
+    setModalAbierto(true)
+  }
 
-    formularioRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    })
+  function cerrarModal() {
+    if (guardando) return
+    limpiarFormulario()
+    setModalAbierto(false)
   }
 
   // CREATE y UPDATE
@@ -277,6 +288,7 @@ function cambiarCampo(evento) {
       }
 
       limpiarFormulario()
+      setModalAbierto(false)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -352,109 +364,125 @@ function cambiarCampo(evento) {
   return (
     <div className="proveedores-pagina">
 
+      <button
+        className="boton-volver proveedores-volver"
+        onClick={() => cambiarPagina('Dashboard')}
+      >
+        Volver al Dashboard
+      </button>
+
       {/* FORMULARIO */}
-      <section className="seccion panel" ref={formularioRef}>
-        <div className="proveedores-encabezado">
-          <div>
-            <h2>
-              {modoEdicion
-                ? 'Editar proveedor'
-                : 'Registrar proveedor'}
-            </h2>
+      {modalAbierto && (
+        <div className="modal-fondo" onClick={cerrarModal}>
+          <section
+            className="modal-caja panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-modal-proveedor"
+            onClick={(evento) => evento.stopPropagation()}
+          >
+            <div className="proveedores-encabezado">
+              <div>
+                <h2 id="titulo-modal-proveedor">
+                  {modoEdicion ? 'Editar proveedor' : 'Registrar proveedor'}
+                </h2>
+                <p>
+                  {modoEdicion
+                    ? 'Modificá la información del proveedor seleccionado.'
+                    : 'Registrá los proveedores que abastecen al minisúper.'}
+                </p>
+              </div>
 
-            <p>
-              {modoEdicion
-                ? 'Modificá la información del proveedor seleccionado.'
-                : 'Registrá los proveedores que abastecen al minisúper.'}
-            </p>
-          </div>
+              <button
+                type="button"
+                className="proveedores-secundario"
+                onClick={cerrarModal}
+                disabled={guardando}
+              >
+                Cerrar
+              </button>
+            </div>
 
-          {modoEdicion && (
-            <button
-              type="button"
-              className="proveedores-secundario"
-              onClick={limpiarFormulario}
-              disabled={guardando}
+            {error && (
+              <p className="proveedores-error" role="alert">{error}</p>
+            )}
+
+            <form
+              className="proveedores-formulario"
+              onSubmit={guardarProveedor}
             >
-              Cancelar edición
-            </button>
-          )}
+              <label>
+                Nombre del proveedor
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formulario.nombre}
+                  onChange={cambiarCampo}
+                  placeholder="Ejemplo: Distribuidora Central"
+                  required
+                />
+              </label>
+
+              
+              <label>
+                Teléfono
+                <input
+                  type="tel"
+                  name="telefono"
+                  value={formulario.telefono}
+                  onChange={cambiarCampo}
+                  placeholder="2222-1234"
+                  maxLength={9}
+                  pattern="[0-9]{4}-[0-9]{4}"
+                  title="El teléfono debe tener el formato 2222-1234"
+                  inputMode="numeric"
+                />
+              </label>
+
+
+              <label>
+                Correo electrónico
+                <input
+                  type="email"
+                  name="correo"
+                  value={formulario.correo}
+                  onChange={cambiarCampo}
+                  placeholder="Ejemplo: ventas@proveedor.com"
+                />
+              </label>
+
+              <label>
+                Dirección
+                <textarea
+                  name="direccion"
+                  value={formulario.direccion}
+                  onChange={cambiarCampo}
+                  rows={3}
+                  placeholder="Dirección del proveedor"
+                />
+              </label>
+
+              <div className="proveedores-formulario-acciones">
+                <button
+                  type="submit"
+                  className="boton-volver"
+                  disabled={
+                    guardando ||
+                    cargando ||
+                    Boolean(errorCarga)
+                  }
+                >
+                  {guardando
+                    ? 'Guardando...'
+                    : modoEdicion
+                      ? 'Guardar cambios'
+                      : 'Registrar proveedor'}
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
-
-        <form
-          className="proveedores-formulario"
-          onSubmit={guardarProveedor}
-        >
-          <label>
-            Nombre del proveedor
-            <input
-              type="text"
-              name="nombre"
-              value={formulario.nombre}
-              onChange={cambiarCampo}
-              placeholder="Ejemplo: Distribuidora Central"
-              required
-            />
-          </label>
-
-          
-          <label>
-            Teléfono
-            <input
-              type="tel"
-              name="telefono"
-              value={formulario.telefono}
-              onChange={cambiarCampo}
-              placeholder="2222-1234"
-              maxLength={9}
-              pattern="[0-9]{4}-[0-9]{4}"
-              title="El teléfono debe tener el formato 2222-1234"
-              inputMode="numeric"
-            />
-          </label>
-
-
-          <label>
-            Correo electrónico
-            <input
-              type="email"
-              name="correo"
-              value={formulario.correo}
-              onChange={cambiarCampo}
-              placeholder="Ejemplo: ventas@proveedor.com"
-            />
-          </label>
-
-          <label>
-            Dirección
-            <textarea
-              name="direccion"
-              value={formulario.direccion}
-              onChange={cambiarCampo}
-              rows={3}
-              placeholder="Dirección del proveedor"
-            />
-          </label>
-
-          <div className="proveedores-formulario-acciones">
-            <button
-              type="submit"
-              className="boton-volver"
-              disabled={
-                guardando ||
-                cargando ||
-                Boolean(errorCarga)
-              }
-            >
-              {guardando
-                ? 'Guardando...'
-                : modoEdicion
-                  ? 'Guardar cambios'
-                  : 'Registrar proveedor'}
-            </button>
-          </div>
-        </form>
-      </section>
+      )}
 
       {/* MENSAJES */}
       {mensaje && (
@@ -483,7 +511,7 @@ function cambiarCampo(evento) {
           <button
             type="button"
             className="boton-volver"
-            onClick={nuevoProveedor}
+            onClick={abrirModalNuevo}
             disabled={guardando}
           >
             + Nuevo proveedor
@@ -585,13 +613,6 @@ function cambiarCampo(evento) {
         )}
       </section>
 
-      <button
-        type="button"
-        className="boton-volver"
-        onClick={() => cambiarPagina('Dashboard')}
-      >
-        Volver al Dashboard
-      </button>
     </div>
   )
 }
