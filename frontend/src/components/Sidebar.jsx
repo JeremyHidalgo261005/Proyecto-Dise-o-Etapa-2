@@ -1,7 +1,15 @@
 
 import './Sidebar.css'
 
-function Sidebar({ pagina, cambiarPagina, usuario }) {
+function Sidebar({
+  pagina,
+  cambiarPagina,
+  usuario,
+  onCerrarSesion,
+  cerrandoSesion,
+  contraido,
+  alternarSidebar
+}) {
 
   const opcionesAdministrador = [
     'Dashboard',
@@ -36,18 +44,56 @@ function Sidebar({ pagina, cambiarPagina, usuario }) {
     return opcion
   }
 
+  // Iconos para las opciones del menú
+  function obtenerIcono(opcion) {
+    const iconos = {
+      Dashboard: '▦',
+      Productos: '▤',
+      Categorias: '▧',
+      Proveedores: '▥',
+      Inventario: '▣',
+      Ventas: '▱',
+      'Importar CSV': '⇧',
+      Recomendaciones: '✧'
+    }
+
+    return iconos[opcion] || '•'
+  }
+
+  // Obtener inicial del usuario
+  const nombreUsuario = usuario?.nombre || 'Usuario'
+  const inicialUsuario = nombreUsuario.charAt(0).toUpperCase()
+
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${contraido ? 'contraido' : ''}`}>
 
-      <div className="sidebar-logo">
-        <div className="logo-icono">M</div>
+      {/* ENCABEZADO DEL SIDEBAR */}
+      <div className="sidebar-encabezado">
 
-        <div>
-          <h2>MiniGestor</h2>
-          <p>Administración de minisúper</p>
+        <div className="sidebar-logo">
+          <div className="logo-icono">M</div>
+
+          <div className="sidebar-logo-texto">
+            <h2>MiniGestor</h2>
+            <p>Gestión de minisúper</p>
+          </div>
         </div>
+
+        {/* BOTÓN CONTRAER / EXPANDIR */}
+        <button
+          type="button"
+          className="sidebar-toggle"
+          onClick={alternarSidebar}
+          aria-label={contraido ? 'Expandir menú' : 'Contraer menú'}
+          aria-expanded={!contraido}
+          title={contraido ? 'Expandir menú' : 'Contraer menú'}
+        >
+          {contraido ? '»' : '«'}
+        </button>
+
       </div>
 
+      {/* MENÚ DE NAVEGACIÓN */}
       <nav
         className="sidebar-menu"
         aria-label="Menú principal"
@@ -63,15 +109,58 @@ function Sidebar({ pagina, cambiarPagina, usuario }) {
             aria-current={
               pagina === opcion ? 'page' : undefined
             }
+            title={contraido ? obtenerNombre(opcion) : undefined}
           >
-            {obtenerNombre(opcion)}
+            <span className="menu-icono" aria-hidden="true">
+              {obtenerIcono(opcion)}
+            </span>
+
+            <span className="menu-texto">
+              {obtenerNombre(opcion)}
+            </span>
           </button>
         ))}
       </nav>
 
+      {/* INFORMACIÓN DEL USUARIO Y CIERRE DE SESIÓN */}
       <div className="sidebar-footer">
-        <p>MiniGestor</p>
-        <span>Tu negocio, bajo control</span>
+
+        <div className="sidebar-usuario">
+
+          <div className="usuario-avatar">
+            {inicialUsuario}
+          </div>
+
+          <div className="usuario-datos">
+            <p className="usuario-nombre">
+              {nombreUsuario}
+            </p>
+
+            <span className="usuario-rol">
+              {usuario?.rol}
+            </span>
+          </div>
+
+        </div>
+
+        <button
+          type="button"
+          className="sidebar-cerrar-sesion"
+          onClick={onCerrarSesion}
+          disabled={cerrandoSesion}
+          title={contraido ? 'Cerrar sesión' : undefined}
+        >
+          <span className="cerrar-sesion-icono" aria-hidden="true">
+            ↪
+          </span>
+
+          <span className="cerrar-sesion-texto">
+            {cerrandoSesion
+              ? 'Cerrando...'
+              : 'Cerrar sesión'}
+          </span>
+        </button>
+
       </div>
 
     </aside>

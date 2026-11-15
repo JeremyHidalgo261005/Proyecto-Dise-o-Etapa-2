@@ -5,6 +5,7 @@ import './Productos.css'
 const formularioInicial = {
   nombre: '',
   codigo: '',
+  costo: '',
   precio: '',
   stock_actual: '0',
   stock_minimo: '0',
@@ -244,6 +245,7 @@ function Productos({ cambiarPagina, usuario }) {
     setFormulario({
       nombre: producto.nombre,
       codigo: producto.codigo,
+      costo: String(producto.costo),
       precio: String(producto.precio),
       stock_actual: String(producto.stock_actual),
       stock_minimo: String(producto.stock_minimo),
@@ -268,6 +270,14 @@ function Productos({ cambiarPagina, usuario }) {
     if (!formulario.codigo.trim()) {
       throw new Error(
         'El código del producto es obligatorio.'
+      )
+    }
+
+    const costo = Number(formulario.costo)
+
+    if (!Number.isFinite(costo) || costo <= 0) {
+      throw new Error(
+        'El costo debe ser mayor que cero.'
       )
     }
 
@@ -330,6 +340,7 @@ function Productos({ cambiarPagina, usuario }) {
       const datosProducto = {
         nombre: formulario.nombre.trim(),
         codigo: formulario.codigo.trim(),
+        costo: formulario.costo,
         precio: formulario.precio,
         stock_minimo: Number(formulario.stock_minimo),
         categoria: Number(formulario.categoria),
@@ -566,6 +577,19 @@ function Productos({ cambiarPagina, usuario }) {
               </label>
 
               <label>
+                Costo (₡)
+                <input
+                  type="number"
+                  name="costo"
+                  value={formulario.costo}
+                  onChange={cambiarCampo}
+                  min="0.01"
+                  step="0.01"
+                  required
+                />
+              </label>
+
+              <label>
                 Precio (₡)
                 <input
                   type="number"
@@ -658,7 +682,7 @@ function Productos({ cambiarPagina, usuario }) {
                 </select>
               </label>
 
-              <label>
+              <label className="productos-formulario-estado">
                 Estado
                 <select
                   name="estado"
@@ -775,6 +799,7 @@ function Productos({ cambiarPagina, usuario }) {
 
                   {esAdministrador && (
                     <>
+                      <th>Costo</th>
                       <th>Mínimo</th>
                       <th>Categoría</th>
                       <th>Proveedor</th>
@@ -793,7 +818,7 @@ function Productos({ cambiarPagina, usuario }) {
                 {productosFiltrados.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={esAdministrador ? 9 : 5}
+                      colSpan={esAdministrador ? 10 : 5}
                       className="tabla-vacia"
                     >
                       No se encontraron productos.
@@ -816,6 +841,12 @@ function Productos({ cambiarPagina, usuario }) {
 
                       {esAdministrador && (
                         <>
+                          <td>
+                            {formatoPrecio.format(
+                              Number(producto.costo)
+                            )}
+                          </td>
+
                           <td>{producto.stock_minimo}</td>
 
                           <td>

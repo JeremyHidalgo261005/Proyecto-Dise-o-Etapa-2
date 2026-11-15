@@ -1,33 +1,87 @@
 
+/* ========================================
+   SIDEBAR PRINCIPAL
+======================================== */
+
 .sidebar {
   width: 250px;
   min-width: 250px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #20142b 0%, #2b1738 100%);
+
+  background: linear-gradient(
+    180deg,
+    #20142b 0%,
+    #2b1738 100%
+  );
+
   display: flex;
   flex-direction: column;
-  padding: 28px 16px;
+
+  padding: 24px 14px;
+
   border-right: 1px solid rgba(255, 255, 255, 0.04);
+
+  transition:
+    width 0.3s ease,
+    min-width 0.3s ease,
+    padding 0.3s ease;
+
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+}
+
+/* ========================================
+   ENCABEZADO Y LOGO
+======================================== */
+
+.sidebar-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  margin-bottom: 40px;
+  min-height: 45px;
 }
 
 .sidebar-logo {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 45px;
+
+  min-width: 0;
+  overflow: hidden;
 }
 
 .logo-icono {
-  background: linear-gradient(135deg, #ffb199, #ff8e72);
+  background: linear-gradient(
+    135deg,
+    #ffb199,
+    #ff8e72
+  );
+
   color: #24152f;
+
   width: 45px;
   height: 45px;
+  min-width: 45px;
+
   border-radius: 16px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   font-weight: bold;
   font-size: 24px;
+}
+
+.sidebar-logo-texto {
+  white-space: nowrap;
+  overflow: hidden;
+
+  transition: opacity 0.2s ease;
 }
 
 .sidebar-logo h2 {
@@ -42,6 +96,44 @@
   margin: 5px 0 0;
 }
 
+/* BOTÓN CONTRAER */
+
+.sidebar-toggle {
+  width: 28px;
+  height: 32px;
+  min-width: 28px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+
+  font-size: 21px;
+  font-weight: bold;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.17);
+}
+
+.sidebar-toggle:focus-visible {
+  outline: 2px solid #ffb199;
+  outline-offset: 3px;
+}
+
+/* ========================================
+   MENÚ DE NAVEGACIÓN
+======================================== */
+
 .sidebar-menu {
   display: flex;
   flex-direction: column;
@@ -49,15 +141,29 @@
 }
 
 .menu-opcion {
+  width: 100%;
+  min-height: 46px;
+
   background: transparent;
   color: #f0e8f5;
+
   border: none;
   border-radius: 12px;
-  padding: 15px 17px;
+
+  padding: 12px 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
   text-align: left;
   cursor: pointer;
+
   font-size: 14px;
-  transition: background 0.2s;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .menu-opcion:hover {
@@ -65,7 +171,12 @@
 }
 
 .menu-opcion.activo {
-  background: linear-gradient(135deg, #ff9f7a, #ff7f67);
+  background: linear-gradient(
+    135deg,
+    #ff9f7a,
+    #ff7f67
+  );
+
   color: #23162f;
   font-weight: 800;
 }
@@ -75,30 +186,256 @@
   outline-offset: 3px;
 }
 
+/* ICONOS DEL MENÚ */
+
+.menu-icono {
+  width: 22px;
+  min-width: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 19px;
+  font-weight: bold;
+}
+
+.menu-texto {
+  white-space: nowrap;
+  overflow: hidden;
+
+  transition: opacity 0.2s ease;
+}
+
+/* ========================================
+   INFORMACIÓN DEL USUARIO
+======================================== */
+
 .sidebar-footer {
   margin-top: auto;
+
   border-top: 1px solid #594361;
-  padding: 22px 12px 0;
-  color: #d6c9df;
-  font-size: 12px;
+
+  padding: 20px 4px 0;
 }
 
-.sidebar-footer p {
-  color: #ffffff;
-  font-weight: bold;
-  margin: 0 0 6px;
+.sidebar-usuario {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  padding: 0 7px;
+  margin-bottom: 16px;
+
+  min-width: 0;
 }
+
+.usuario-avatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    #ffb199,
+    #ff8e72
+  );
+
+  color: #24152f;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.usuario-datos {
+  min-width: 0;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.usuario-nombre {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+
+  margin: 0;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.usuario-rol {
+  color: #d6c9df;
+  font-size: 11px;
+}
+
+/* ========================================
+   BOTÓN CERRAR SESIÓN
+======================================== */
+
+.sidebar-cerrar-sesion {
+  width: 100%;
+  min-height: 42px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px 13px;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 11px;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.sidebar-cerrar-sesion:hover {
+  background: rgba(255, 142, 114, 0.18);
+  border-color: rgba(255, 177, 153, 0.4);
+}
+
+.sidebar-cerrar-sesion:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cerrar-sesion-icono {
+  width: 22px;
+  min-width: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 20px;
+}
+
+.cerrar-sesion-texto {
+  white-space: nowrap;
+}
+
+/* ========================================
+   SIDEBAR CONTRAÍDO
+======================================== */
+
+.sidebar.contraido {
+  width: 85px;
+  min-width: 85px;
+
+  padding: 24px 12px;
+}
+
+/* Encabezado */
+
+.sidebar.contraido .sidebar-encabezado {
+  flex-direction: column;
+  gap: 15px;
+}
+
+.sidebar.contraido .sidebar-logo {
+  justify-content: center;
+}
+
+.sidebar.contraido .sidebar-logo-texto {
+  display: none;
+}
+
+.sidebar.contraido .sidebar-toggle {
+  width: 100%;
+}
+
+/* Menú */
+
+.sidebar.contraido .menu-opcion {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.sidebar.contraido .menu-texto {
+  display: none;
+}
+
+.sidebar.contraido .menu-icono {
+  font-size: 21px;
+}
+
+/* Usuario */
+
+.sidebar.contraido .sidebar-footer {
+  padding: 18px 0 0;
+}
+
+.sidebar.contraido .sidebar-usuario {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar.contraido .usuario-datos {
+  display: none;
+}
+
+/* Cerrar sesión */
+
+.sidebar.contraido .sidebar-cerrar-sesion {
+  justify-content: center;
+  padding: 10px 0;
+  gap: 0;
+}
+
+.sidebar.contraido .cerrar-sesion-texto {
+  display: none;
+}
+
+/* ========================================
+   ADAPTACIÓN A CELULARES
+======================================== */
 
 @media (max-width: 768px) {
+
   .sidebar {
     width: 100%;
     min-width: 0;
     min-height: auto;
+
     padding: 18px;
+
+    transition: none;
   }
 
-  .sidebar-logo {
+  .sidebar.contraido {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sidebar-encabezado,
+  .sidebar.contraido .sidebar-encabezado {
+    flex-direction: row;
     margin-bottom: 18px;
+  }
+
+  .sidebar-logo-texto,
+  .sidebar.contraido .sidebar-logo-texto {
+    display: block;
   }
 
   .sidebar-menu {
@@ -107,12 +444,44 @@
     padding-bottom: 6px;
   }
 
-  .menu-opcion {
+  .menu-opcion,
+  .sidebar.contraido .menu-opcion {
+    width: auto;
+    justify-content: flex-start;
     white-space: nowrap;
     flex-shrink: 0;
+    padding: 12px 14px;
+  }
+
+  .menu-texto,
+  .sidebar.contraido .menu-texto {
+    display: block;
   }
 
   .sidebar-footer {
-    display: none;
+    margin-top: 15px;
+  }
+
+  .sidebar.contraido .sidebar-footer {
+    padding: 15px 4px 0;
+  }
+
+  .sidebar-usuario,
+  .sidebar.contraido .sidebar-usuario {
+    justify-content: flex-start;
+  }
+
+  .sidebar.contraido .usuario-datos {
+    display: flex;
+  }
+
+  .sidebar-cerrar-sesion,
+  .sidebar.contraido .sidebar-cerrar-sesion {
+    justify-content: flex-start;
+    padding: 10px 13px;
+  }
+
+  .sidebar.contraido .cerrar-sesion-texto {
+    display: block;
   }
 }
