@@ -18,6 +18,12 @@ class Producto(models.Model):
     nombre = models.CharField(max_length=150)
     codigo = models.CharField(max_length=50, unique=True)
 
+    costo = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
+
     precio = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -41,6 +47,10 @@ class Producto(models.Model):
 
     class Meta:
         constraints = [
+            models.CheckConstraint(
+                condition=models.Q(costo__gt=0),
+                name='producto_costo_positivo'
+            ),
             models.CheckConstraint(
                 condition=models.Q(precio__gt=0),
                 name='producto_precio_positivo'

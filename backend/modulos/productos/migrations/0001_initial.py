@@ -29,6 +29,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('nombre', models.CharField(max_length=150)),
                 ('codigo', models.CharField(max_length=50, unique=True)),
+                ('costo', models.DecimalField(decimal_places=2, max_digits=10, validators=[django.core.validators.MinValueValidator(Decimal('0.01'))])),
                 ('precio', models.DecimalField(decimal_places=2, max_digits=10, validators=[django.core.validators.MinValueValidator(Decimal('0.01'))])),
                 ('stock_actual', models.PositiveIntegerField(default=0)),
                 ('stock_minimo', models.PositiveIntegerField(default=5)),
@@ -37,7 +38,10 @@ class Migration(migrations.Migration):
                 ('proveedor', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='proveedores.proveedor')),
             ],
             options={
-                'constraints': [models.CheckConstraint(condition=models.Q(('precio__gt', 0)), name='producto_precio_positivo')],
+                'constraints': [
+                    models.CheckConstraint(condition=models.Q(('costo__gt', 0)), name='producto_costo_positivo'),
+                    models.CheckConstraint(condition=models.Q(('precio__gt', 0)), name='producto_precio_positivo'),
+                ],
             },
         ),
     ]
