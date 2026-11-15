@@ -16,6 +16,7 @@ class ProductoSerializer(serializers.ModelSerializer):
             'id',
             'nombre',
             'codigo',
+            'costo',
             'precio',
             'stock_actual',
             'stock_minimo',
