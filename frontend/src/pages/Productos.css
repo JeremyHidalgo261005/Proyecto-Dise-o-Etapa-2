@@ -80,13 +80,26 @@
   line-height: 1.5;
 }
 
+/* Campo de estado centrado */
+
+.productos-formulario-estado {
+  grid-column: 1 / -1;
+  width: calc(50% - 9px);
+  justify-self: center;
+}
+
+/* Botón de registro en una fila independiente */
+
 .productos-formulario-acciones {
+  grid-column: 1 / -1;
+
   display: flex;
-  align-items: flex-end;
+  justify-content: center;
+  align-items: center;
 }
 
 .productos-formulario-acciones button {
-  width: 100%;
+  width: 50%;
 }
 
 .productos-formulario button:disabled,
@@ -293,4 +306,12 @@
   .productos-tabla-scroll {
     max-height: 350px;
   }
+
+  .productos-formulario-estado {
+  width: 100%;
+}
+
+.productos-formulario-acciones button {
+  width: 100%;
+}
 }
