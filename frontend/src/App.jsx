@@ -209,6 +209,7 @@ function App() {
         return (
           <Ventas
             cambiarPagina={cambiarPagina}
+            usuario={usuarioActual}
           />
         )
 
