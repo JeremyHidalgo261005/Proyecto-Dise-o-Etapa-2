@@ -406,6 +406,17 @@
   display: none;
 }
 
+/* Botón desplegable móvil oculto en escritorio */
+.sidebar-movil-toggle {
+  display: none;
+}
+
+.sidebar-desplegable-cuerpo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
 /* ========================================
    ADAPTACIÓN A CELULARES
 ======================================== */
@@ -416,10 +427,12 @@
     width: 100%;
     min-width: 0;
     min-height: auto;
-
-    padding: 18px;
-
-    transition: none;
+    padding: 14px 18px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
   }
 
   .sidebar.contraido {
@@ -427,10 +440,43 @@
     min-width: 0;
   }
 
+  /* Ocultar toggle de escritorio en celular */
+  .sidebar-toggle {
+    display: none;
+  }
+
+  /* Encabezado fijo en móvil */
   .sidebar-encabezado,
   .sidebar.contraido .sidebar-encabezado {
-    flex-direction: row;
-    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0;
+    min-height: auto;
+    width: 100%;
+  }
+
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icono {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    font-size: 20px;
+    border-radius: 12px;
+  }
+
+  .sidebar-logo h2 {
+    font-size: 17px;
+  }
+
+  .sidebar-logo p {
+    font-size: 10px;
+    margin: 2px 0 0;
   }
 
   .sidebar-logo-texto,
@@ -438,37 +484,114 @@
     display: block;
   }
 
+  /* Botón desplegable estilo barra de navegación móvil */
+  .sidebar-movil-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .sidebar-movil-toggle:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .movil-toggle-icono {
+    font-size: 16px;
+    color: #ffb199;
+  }
+
+  .movil-toggle-texto {
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .movil-toggle-flecha {
+    font-size: 10px;
+    opacity: 0.7;
+    margin-left: 2px;
+  }
+
+  /* El cuerpo con las ventanas se colapsa verticalmente */
+  .sidebar-desplegable-cuerpo {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease,
+                transform 0.25s ease,
+                margin-top 0.25s ease;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Cuando se abre el desplegable en móvil */
+  .sidebar-desplegable-cuerpo.abierto {
+    max-height: 80vh;
+    overflow-y: auto;
+    opacity: 1;
+    transform: translateY(0);
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Deslizamiento vertical de opciones */
   .sidebar-menu {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-x: visible;
+    padding-bottom: 8px;
   }
 
   .menu-opcion,
   .sidebar.contraido .menu-opcion {
-    width: auto;
+    width: 100%;
+    min-height: 44px;
     justify-content: flex-start;
-    white-space: nowrap;
-    flex-shrink: 0;
-    padding: 12px 14px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .menu-opcion.activo,
+  .sidebar.contraido .menu-opcion.activo {
+    background: linear-gradient(135deg, rgba(255, 177, 153, 0.22), rgba(255, 142, 114, 0.12));
+    border-color: rgba(255, 177, 153, 0.4);
+    color: #ffffff;
   }
 
   .menu-texto,
   .sidebar.contraido .menu-texto {
     display: block;
+    font-size: 14.5px;
   }
 
   .sidebar-footer {
-    margin-top: 15px;
-  }
-
-  .sidebar.contraido .sidebar-footer {
-    padding: 15px 4px 0;
+    margin-top: 12px;
+    padding: 14px 4px 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .sidebar-usuario,
   .sidebar.contraido .sidebar-usuario {
     justify-content: flex-start;
+    margin-bottom: 12px;
   }
 
   .sidebar.contraido .usuario-datos {
@@ -477,8 +600,9 @@
 
   .sidebar-cerrar-sesion,
   .sidebar.contraido .sidebar-cerrar-sesion {
-    justify-content: flex-start;
-    padding: 10px 13px;
+    justify-content: center;
+    padding: 10px 14px;
+    width: 100%;
   }
 
   .sidebar.contraido .cerrar-sesion-texto {

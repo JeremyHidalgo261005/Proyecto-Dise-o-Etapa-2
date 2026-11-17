@@ -1,4 +1,5 @@
 
+import { useState } from 'react'
 import './Sidebar.css'
 
 function Sidebar({
@@ -10,6 +11,9 @@ function Sidebar({
   contraido,
   alternarSidebar
 }) {
+
+  // Controlar el despliegue del menú vertical en celulares
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false)
 
   const opcionesAdministrador = [
     'Dashboard',
@@ -60,12 +64,17 @@ function Sidebar({
     return iconos[opcion] || '•'
   }
 
+  function seleccionarOpcion(opcion) {
+    cambiarPagina(opcion)
+    setMenuMovilAbierto(false)
+  }
+
   // Obtener inicial del usuario
   const nombreUsuario = usuario?.nombre || 'Usuario'
   const inicialUsuario = nombreUsuario.charAt(0).toUpperCase()
 
   return (
-    <aside className={`sidebar ${contraido ? 'contraido' : ''}`}>
+    <aside className={`sidebar ${contraido ? 'contraido' : ''} ${menuMovilAbierto ? 'movil-abierto' : ''}`}>
 
       {/* ENCABEZADO DEL SIDEBAR */}
       <div className="sidebar-encabezado">
@@ -79,7 +88,26 @@ function Sidebar({
           </div>
         </div>
 
-        {/* BOTÓN CONTRAER / EXPANDIR */}
+        {/* BOTÓN DESPLEGABLE PARA VERSIÓN MÓVIL (HAMBURGUESA / EXPANDIBLE) */}
+        <button
+          type="button"
+          className="sidebar-movil-toggle"
+          onClick={() => setMenuMovilAbierto((prev) => !prev)}
+          aria-label={menuMovilAbierto ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={menuMovilAbierto}
+        >
+          <span className="movil-toggle-icono">
+            {menuMovilAbierto ? '✕' : '☰'}
+          </span>
+          <span className="movil-toggle-texto">
+            {obtenerNombre(pagina)}
+          </span>
+          <span className="movil-toggle-flecha">
+            {menuMovilAbierto ? '▲' : '▼'}
+          </span>
+        </button>
+
+        {/* BOTÓN CONTRAER / EXPANDIR (ESCRITORIO) */}
         <button
           type="button"
           className="sidebar-toggle"
@@ -93,74 +121,77 @@ function Sidebar({
 
       </div>
 
-      {/* MENÚ DE NAVEGACIÓN */}
-      <nav
-        className="sidebar-menu"
-        aria-label="Menú principal"
-      >
-        {opciones.map((opcion) => (
+      {/* CONTENEDOR DESPLEGABLE VERTICAL PARA MÓVIL */}
+      <div className={`sidebar-desplegable-cuerpo ${menuMovilAbierto ? 'abierto' : ''}`}>
+        {/* MENÚ DE NAVEGACIÓN VERTICAL */}
+        <nav
+          className="sidebar-menu"
+          aria-label="Menú principal"
+        >
+          {opciones.map((opcion) => (
+            <button
+              key={opcion}
+              type="button"
+              className={`menu-opcion ${
+                pagina === opcion ? 'activo' : ''
+              }`}
+              onClick={() => seleccionarOpcion(opcion)}
+              aria-current={
+                pagina === opcion ? 'page' : undefined
+              }
+              title={contraido ? obtenerNombre(opcion) : undefined}
+            >
+              <span className="menu-icono" aria-hidden="true">
+                {obtenerIcono(opcion)}
+              </span>
+
+              <span className="menu-texto">
+                {obtenerNombre(opcion)}
+              </span>
+            </button>
+          ))}
+        </nav>
+
+        {/* INFORMACIÓN DEL USUARIO Y CIERRE DE SESIÓN */}
+        <div className="sidebar-footer">
+
+          <div className="sidebar-usuario">
+
+            <div className="usuario-avatar">
+              {inicialUsuario}
+            </div>
+
+            <div className="usuario-datos">
+              <p className="usuario-nombre">
+                {nombreUsuario}
+              </p>
+
+              <span className="usuario-rol">
+                {usuario?.rol}
+              </span>
+            </div>
+
+          </div>
+
           <button
-            key={opcion}
             type="button"
-            className={`menu-opcion ${
-              pagina === opcion ? 'activo' : ''
-            }`}
-            onClick={() => cambiarPagina(opcion)}
-            aria-current={
-              pagina === opcion ? 'page' : undefined
-            }
-            title={contraido ? obtenerNombre(opcion) : undefined}
+            className="sidebar-cerrar-sesion"
+            onClick={onCerrarSesion}
+            disabled={cerrandoSesion}
+            title={contraido ? 'Cerrar sesión' : undefined}
           >
-            <span className="menu-icono" aria-hidden="true">
-              {obtenerIcono(opcion)}
+            <span className="cerrar-sesion-icono" aria-hidden="true">
+              ↪
             </span>
 
-            <span className="menu-texto">
-              {obtenerNombre(opcion)}
+            <span className="cerrar-sesion-texto">
+              {cerrandoSesion
+                ? 'Cerrando...'
+                : 'Cerrar sesión'}
             </span>
           </button>
-        ))}
-      </nav>
-
-      {/* INFORMACIÓN DEL USUARIO Y CIERRE DE SESIÓN */}
-      <div className="sidebar-footer">
-
-        <div className="sidebar-usuario">
-
-          <div className="usuario-avatar">
-            {inicialUsuario}
-          </div>
-
-          <div className="usuario-datos">
-            <p className="usuario-nombre">
-              {nombreUsuario}
-            </p>
-
-            <span className="usuario-rol">
-              {usuario?.rol}
-            </span>
-          </div>
 
         </div>
-
-        <button
-          type="button"
-          className="sidebar-cerrar-sesion"
-          onClick={onCerrarSesion}
-          disabled={cerrandoSesion}
-          title={contraido ? 'Cerrar sesión' : undefined}
-        >
-          <span className="cerrar-sesion-icono" aria-hidden="true">
-            ↪
-          </span>
-
-          <span className="cerrar-sesion-texto">
-            {cerrandoSesion
-              ? 'Cerrando...'
-              : 'Cerrar sesión'}
-          </span>
-        </button>
-
       </div>
 
     </aside>
