@@ -1,150 +1,170 @@
-# Django
+import hashlib
+import json
+from decimal import Decimal, ROUND_HALF_UP
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password, is_password_usable
+from django.core import signing
 from django.db import transaction
-from decimal import Decimal
-
-# Django REST Framework
 from rest_framework import mixins, status, viewsets
-from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from django.db.models import Sum
+from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 
-# Modelos
-from .models import Venta, DetalleVenta
-from modulos.productos.models import Producto
 from modulos.movimientos_inventario.models import MovimientoInventario
-
-# Serializers
-from .serializers import VentaSerializer
-
-# Permisos
+from modulos.productos.models import Producto
 from modulos.usuarios.permisos import PermisoVentas
+
+from .models import DetalleVenta, Venta
+from .serializers import AutorizacionVentaSerializer, RegistroVentaSerializer, VentaSerializer
+
+SAL_AUTORIZACION = 'ventas.descuento'
+CENTIMO = Decimal('0.01')
+MAX_IMPORTE = Decimal('99999999.99')
+
+
+class LimiteIntentosPin(UserRateThrottle):
+    scope = 'ventas_pin'
+    rate = '5/min'
+
 
 class VentaViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.CreateModelMixin,
-    viewsets.GenericViewSet
+    viewsets.GenericViewSet,
 ):
-
-    queryset = Venta.objects.select_related(
-        'usuario'
-    ).prefetch_related(
+    queryset = Venta.objects.select_related('usuario').prefetch_related(
         'detalles__producto'
-    ).all().order_by('-fecha')
-
+    ).order_by('-fecha')
     serializer_class = VentaSerializer
     permission_classes = [PermisoVentas]
 
-    def create(self, request, *args, **kwargs):
-
-        detalles = request.data.get('detalles') 
-
-        if not isinstance(detalles, list) or not detalles:
+    @action(detail=False, methods=['post'], url_path='autorizar', throttle_classes=[LimiteIntentosPin])
+    def autorizar(self, request):
+        entrada = AutorizacionVentaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        datos = entrada.validated_data
+        pin_hash = settings.VENTAS_PIN_ADMIN_HASH
+        if not pin_hash or not is_password_usable(pin_hash):
             return Response(
-                {'detail': 'Debés incluir al menos un producto en la venta.'},
-                status=status.HTTP_400_BAD_REQUEST 
+                {'detail': 'La autorización de administrador no está configurada.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-
-        ids_productos = []
-
-        for item in detalles:
-
-            if not isinstance(item, dict):
-                raise ValidationError(
-                    {'detail': 'Cada detalle debe contener un producto y una cantidad.'}
-                )
-
-            id_producto = item.get('producto')
-
-            if isinstance(id_producto, bool) or not isinstance(id_producto, int) or id_producto <= 0:
-                raise ValidationError(
-                    {'detail': 'Cada producto debe tener un ID entero positivo.'}
-                )
-
-            ids_productos.append(id_producto)
-
-        if len(ids_productos) != len(set(ids_productos)):
-            raise ValidationError(
-                {'detail': 'No podés incluir el mismo producto más de una vez en una venta.'}
+        if not check_password(datos['pin'], pin_hash):
+            return Response(
+                {'detail': 'Clave de administrador incorrecta.'},
+                status=status.HTTP_403_FORBIDDEN,
             )
+        autorizacion = signing.dumps(
+            {
+                'usuario': request.user.pk,
+                'porcentaje': str(Decimal(datos['porcentaje_descuento']).quantize(CENTIMO)),
+                'clave': str(datos['clave_solicitud']),
+            },
+            salt=SAL_AUTORIZACION,
+        )
+        return Response({'autorizacion': autorizacion})
+
+    def create(self, request, *args, **kwargs):
+        entrada = RegistroVentaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        datos = entrada.validated_data
+        clave = datos.get('clave_solicitud')
+        detalles = datos['detalles']
+        porcentaje = Decimal(datos['porcentaje_descuento']).quantize(CENTIMO)
+        metodo = datos.get('metodo_pago', '')
+        aportado = datos.get('dinero_aportado')
+        referencia = datos.get('referencia_tarjeta', '')
+        total_esperado = datos.get('total_esperado')
+        huella = hashlib.sha256(json.dumps([
+            detalles, str(porcentaje), metodo, str(aportado), referencia, str(total_esperado)
+        ], sort_keys=True).encode()).hexdigest()
 
         with transaction.atomic():
+            if clave:
+                # Serializar reintentos del mismo usuario antes de consultar la clave.
+                get_user_model().objects.select_for_update(no_key=True).only('pk').get(
+                    pk=request.user.pk
+                )
+                existente = self.get_queryset().filter(usuario=request.user, clave_solicitud=clave).first()
+                if existente:
+                    if existente.huella_solicitud != huella:
+                        return Response(
+                            {'detail': 'La solicitud ya se utilizó con otros datos.'},
+                            status=status.HTTP_409_CONFLICT,
+                        )
+                    return Response(VentaSerializer(existente).data, status=status.HTTP_200_OK)
+
+            if porcentaje:
+                self.validar_descuento(
+                    datos.get('autorizacion', ''), request.user.pk, porcentaje, clave
+                )
+
+            productos = {
+                producto.pk: producto for producto in Producto.objects.select_for_update().filter(
+                    pk__in=[item['producto'] for item in detalles]
+                ).order_by('pk')
+            }
+            lineas = []
+            subtotal = Decimal('0.00')
+            for item in detalles:
+                producto = productos.get(item['producto'])
+                cantidad = item['cantidad']
+                if producto is None:
+                    raise ValidationError({'detail': f"No existe el producto {item['producto']}."})
+                if not producto.estado:
+                    raise ValidationError({'detail': f'{producto.nombre} no está disponible.'})
+                if producto.stock_actual < cantidad:
+                    raise ValidationError({'detail': f'No hay suficiente stock para {producto.nombre}.'})
+                importe = producto.precio * cantidad
+                if importe > MAX_IMPORTE:
+                    raise ValidationError({'detail': 'El importe de un artículo excede el valor admitido.'})
+                subtotal += importe
+                lineas.append((producto, cantidad, importe))
+
+            descuento = (subtotal * porcentaje / 100).quantize(CENTIMO, rounding=ROUND_HALF_UP)
+            total = subtotal - descuento
+            if total > MAX_IMPORTE or descuento > MAX_IMPORTE:
+                raise ValidationError({'detail': 'El importe de la venta excede el valor admitido.'})
+            if total_esperado is not None and total != total_esperado:
+                return Response(
+                    {'detail': 'El total cambió. Volvé a la factura para revisar los precios.'},
+                    status=status.HTTP_409_CONFLICT,
+                )
+            if aportado is not None and aportado < total:
+                raise ValidationError({'detail': 'El dinero aportado es insuficiente.'})
 
             venta = Venta.objects.create(
-                usuario=request.user,
-                total=Decimal('0.00')
+                usuario=request.user, total=total, porcentaje_descuento=porcentaje,
+                descuento=descuento, metodo_pago=metodo, dinero_aportado=aportado,
+                vuelto=aportado - total if aportado is not None else None,
+                referencia_tarjeta=referencia, clave_solicitud=clave,
+                huella_solicitud=huella if clave else '',
             )
-
-            for item in detalles:
-
-                id_producto = item.get('producto')
-                cantidad = item.get('cantidad')
-
-                if isinstance(cantidad, bool) or not isinstance(cantidad, int) or cantidad <= 0:
-                    raise ValidationError(
-                        {'detail': 'La cantidad debe ser un número entero mayor que cero.'}
-                    )
-
-                try:
-                    producto = Producto.objects.select_for_update().get(
-                        pk=id_producto
-                    )
-                except (Producto.DoesNotExist, ValueError, TypeError):
-                    raise ValidationError(
-                        {'detail': f'No existe un producto con el ID {id_producto}.'}
-                    )
-
-                if not producto.estado:
-                    raise ValidationError(
-                        {'detail': f'El producto {producto.nombre} no está disponible para la venta.'}
-                    )
-
-                if producto.stock_actual < cantidad:
-                    raise ValidationError(
-                        {'detail': f'No hay suficiente stock para el producto {producto.nombre}.'}
-                    )
-
-                stock_anterior = producto.stock_actual
-                stock_resultante = stock_anterior - cantidad
-
-                producto.stock_actual = stock_resultante
+            for producto, cantidad, importe in lineas:
+                anterior = producto.stock_actual
+                producto.stock_actual -= cantidad
                 producto.save(update_fields=['stock_actual'])
-
-                subtotal = producto.precio * Decimal(cantidad)
-                precio_unitario = producto.precio
-
                 detalle = DetalleVenta.objects.create(
-                    venta=venta,
-                    producto=producto,
-                    cantidad=cantidad,
-                    precio_unitario=precio_unitario,
-                    subtotal=subtotal
+                    venta=venta, producto=producto, cantidad=cantidad,
+                    precio_unitario=producto.precio, subtotal=importe,
                 )
-
                 MovimientoInventario.objects.create(
-                    producto=producto,
-                    tipo_movimiento='venta',
-                    cantidad=cantidad,
-                    motivo=f'Venta ID: {venta.id_venta}',
-                    stock_anterior=stock_anterior,
-                    stock_resultante=stock_resultante,
-                    detalle_venta=detalle,
-                    usuario=request.user
+                    producto=producto, tipo_movimiento='venta', cantidad=cantidad,
+                    motivo=f'Venta ID: {venta.pk}', stock_anterior=anterior,
+                    stock_resultante=producto.stock_actual,
+                    detalle_venta=detalle, usuario=request.user,
                 )
+            return Response(VentaSerializer(venta).data, status=status.HTTP_201_CREATED)
 
-            venta.total = venta.detalles.aggregate(
-                total_venta=Sum('subtotal')
-            )['total_venta'] or Decimal('0.00')
-
-            venta.save(update_fields=['total'])
-            venta = self.get_queryset().get(pk=venta.pk)
-
-            serializer = VentaSerializer(venta)
-
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-            
-
-    
+    @staticmethod
+    def validar_descuento(token, usuario, porcentaje, clave):
+        try:
+            autorizacion = signing.loads(token, salt=SAL_AUTORIZACION, max_age=900)
+        except signing.BadSignature:
+            autorizacion = None
+        if autorizacion != {'usuario': usuario, 'porcentaje': str(porcentaje), 'clave': str(clave)}:
+            raise ValidationError({'detail': 'Volvé a autorizar el descuento con el PIN de administrador.'})

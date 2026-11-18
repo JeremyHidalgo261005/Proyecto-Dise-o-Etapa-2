@@ -12,11 +12,23 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / '.env')
+ENV_FILE = BASE_DIR / '.env'
+load_dotenv(ENV_FILE, encoding='utf-8-sig')
+
+
+def obtener_hash_pin_ventas(archivo_env):
+    clave = 'VENTAS_PIN_ADMIN_HASH'
+    hash_entorno = os.getenv(clave, '').strip()
+    if hash_entorno:
+        return hash_entorno
+    # load_dotenv conserva variables heredadas, incluso si están vacías.
+    valores = dotenv_values(archivo_env, encoding='utf-8-sig', interpolate=False)
+    return (valores.get(clave) or '').strip()
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -24,6 +36,7 @@ load_dotenv(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+VENTAS_PIN_ADMIN_HASH = obtener_hash_pin_ventas(ENV_FILE)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -21,8 +21,22 @@ class Venta(models.Model):
         default=Decimal('0.00')
     )
 
+    clave_solicitud = models.UUIDField(null=True, editable=False)
+    huella_solicitud = models.CharField(max_length=64, blank=True, editable=False)
+    porcentaje_descuento = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    descuento = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    metodo_pago = models.CharField(
+        max_length=8, choices=[('efectivo', 'Efectivo'), ('tarjeta', 'Tarjeta')], blank=True
+    )
+    dinero_aportado = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    vuelto = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    referencia_tarjeta = models.CharField(max_length=64, blank=True)
+
     class Meta:
         constraints = [
+            models.UniqueConstraint(
+                fields=['usuario', 'clave_solicitud'], name='venta_usuario_clave_solicitud'
+            ),
             models.CheckConstraint(
                 condition=Q(total__gte=0),
                 name='venta_total_no_negativo'
