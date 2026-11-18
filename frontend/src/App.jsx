@@ -154,7 +154,7 @@ function App() {
   function cambiarPagina(destino) {
     const paginasCajero = [
       'Dashboard',
-      'Productos',
+      'Inventario',
       'Ventas'
     ]
 
@@ -183,7 +183,7 @@ function App() {
           />
         )
 
-      case 'Productos':
+      case 'Inventario':
         return (
           <Productos
             cambiarPagina={cambiarPagina}
@@ -213,7 +213,7 @@ function App() {
           />
         )
 
-      case 'Inventario':
+      case 'Movimientos':
         return (
           <Inventario
             cambiarPagina={cambiarPagina}

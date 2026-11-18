@@ -17,10 +17,10 @@ function Sidebar({
 
   const opcionesAdministrador = [
     'Dashboard',
-    'Productos',
+    'Inventario',
     'Categorias',
     'Proveedores',
-    'Inventario',
+    'Movimientos',
     'Ventas',
     'Importar CSV',
     'Recomendaciones'
@@ -28,7 +28,7 @@ function Sidebar({
 
   const opcionesCajero = [
     'Dashboard',
-    'Productos',
+    'Inventario',
     'Ventas'
   ]
 
@@ -60,12 +60,12 @@ function Sidebar({
           <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/>
         </svg>
       ),
-      Productos: (
+      Inventario: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 8.5v7a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 15.5v-7a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8.5z"/>
-          <path d="M3.3 7.3 12 12l8.7-4.7"/>
-          <path d="M12 22V12"/>
+          <rect x="3" y="4" width="18" height="5" rx="1.6"/>
+          <path d="M4.5 9v9A1.5 1.5 0 0 0 6 19.5h12a1.5 1.5 0 0 0 1.5-1.5V9"/>
+          <path d="M10 13h4"/>
         </svg>
       ),
       Categorias: (
@@ -85,12 +85,18 @@ function Sidebar({
           <path d="M10.5 17.5h3"/>
         </svg>
       ),
-      Inventario: (
+      Movimientos: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="5" rx="1.6"/>
-          <path d="M4.5 9v9A1.5 1.5 0 0 0 6 19.5h12a1.5 1.5 0 0 0 1.5-1.5V9"/>
-          <path d="M10 13h4"/>
+          <rect x="3" y="3" width="11" height="18" rx="1.8"/>
+          <path d="M5.8 7h5.4"/>
+          <path d="M5.8 11h5.4"/>
+          <path d="M5.8 15h5.4"/>
+          <path d="M5.8 18.5h3"/>
+          <path d="M16.2 7 18.4 4.8 20.6 7"/>
+          <path d="M18.4 4.8v5.4"/>
+          <path d="M16.2 17 18.4 19.2 20.6 17"/>
+          <path d="M18.4 19.2v-5.4"/>
         </svg>
       ),
       Ventas: (

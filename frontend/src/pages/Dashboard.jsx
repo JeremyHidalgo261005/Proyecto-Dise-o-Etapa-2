@@ -120,7 +120,7 @@ function Dashboard({ cambiarPagina, usuario }) {
   // Accesos rápidos del administrador
   const accesosAdministrador = [
     { nombre: 'Nueva venta', destino: 'Ventas' },
-    { nombre: 'Nuevo producto', destino: 'Productos' },
+    { nombre: 'Inventario (Productos)', destino: 'Inventario' },
     { nombre: 'Nueva categoría', destino: 'Categorias' },
     { nombre: 'Nuevo proveedor', destino: 'Proveedores' }
   ]
@@ -128,7 +128,7 @@ function Dashboard({ cambiarPagina, usuario }) {
   // Accesos rápidos del cajero
   const accesosCajero = [
     { nombre: 'Nueva venta', destino: 'Ventas' },
-    { nombre: 'Consultar productos', destino: 'Productos' }
+    { nombre: 'Consultar inventario', destino: 'Inventario' }
   ]
 
   const accesos = esAdministrador
