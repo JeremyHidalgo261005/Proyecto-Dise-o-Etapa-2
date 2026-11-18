@@ -8,10 +8,51 @@ const formatoCRC = new Intl.NumberFormat('es-CR', {
   maximumFractionDigits: 2
 })
 
-// PIN de prueba provisional para acciones de administrador
-const PIN_ADMIN_DEFAULT = '1234'
+async function cargarProductos(signal) {
+  const productos = []
+  let ruta = '/api/productos/'
+  while (ruta) {
+    const respuesta = await fetch(ruta, { credentials: 'same-origin', signal })
+    if (!respuesta.ok) throw new Error('No se pudo cargar la lista de productos.')
+    const datos = await respuesta.json()
+    productos.push(...(Array.isArray(datos) ? datos : datos.results || []))
+    const siguiente = datos.next && new URL(datos.next, window.location.origin)
+    ruta = siguiente ? siguiente.pathname + siguiente.search : null
+  }
+  return productos.filter((producto) => producto.estado !== false)
+}
+
+async function enviarVenta(ruta, datos) {
+  const sesion = await fetch('/api/auth/csrf/', { credentials: 'same-origin' })
+  if (!sesion.ok) throw new Error('No se pudo obtener el token de seguridad.')
+  const { csrfToken } = await sesion.json()
+  return fetch(ruta, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+    body: JSON.stringify(datos)
+  })
+}
+
+function mensajeApi(datos, alternativo) {
+  return datos.detail || Object.values(datos).flat().find((valor) => typeof valor === 'string')
+    || alternativo
+}
 
 function Ventas({ cambiarPagina, usuario }) {
+  const clavePendiente = 'minigestor.venta-pendiente.' + usuario.id
+  const [pendiente, setPendiente] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem(clavePendiente))
+    } catch {
+      return null
+    }
+  })
+  const enviandoPago = useRef(false)
+  const claveBorrador = useRef(pendiente?.clave_solicitud || null)
+  const [guardandoPago, setGuardandoPago] = useState(false)
+  const [autorizando, setAutorizando] = useState(false)
+  const [autorizacion, setAutorizacion] = useState('')
   // Estado de catálogo de productos
   const [productos, setProductos] = useState([])
   const [cargandoProductos, setCargandoProductos] = useState(true)
@@ -24,19 +65,17 @@ function Ventas({ cambiarPagina, usuario }) {
 
   // 1. Modal de Autorización de Administrador (Eliminar artículo o Descuento)
   const [modalAdminAbierto, setModalAdminAbierto] = useState(false)
-  const [accionAdmin, setAccionAdmin] = useState(null) // 'eliminar' | 'descuento'
-  const [itemParaEliminar, setItemParaEliminar] = useState(null)
   const [descuentoTemporal, setDescuentoTemporal] = useState(10)
   const [pinAdmin, setPinAdmin] = useState('')
   const [mostrarPin, setMostrarPin] = useState(false)
   const [errorPin, setErrorPin] = useState('')
 
   // 2. Modal de Procesar Pago
-  const [modalPagoAbierto, setModalPagoAbierto] = useState(false)
+  const [modalPagoAbierto, setModalPagoAbierto] = useState(Boolean(pendiente))
   const [metodoPago, setMetodoPago] = useState('efectivo') // 'efectivo' | 'tarjeta'
   const [dineroAportado, setDineroAportado] = useState('')
   const [referenciaTarjeta, setReferenciaTarjeta] = useState('')
-  const [errorPago, setErrorPago] = useState('')
+  const [errorPago, setErrorPago] = useState(pendiente ? 'Hay un registro pendiente de confirmar. Reintentá el registro antes de cobrar otra vez.' : '')
 
   // 3. Modal de Venta Exitosa (Ticket / Factura final)
   const [ventaExitosa, setVentaExitosa] = useState(null)
@@ -51,17 +90,7 @@ function Ventas({ cambiarPagina, usuario }) {
       setCargandoProductos(true)
       setErrorProductos('')
       try {
-        const respuesta = await fetch('/api/productos/', {
-          credentials: 'same-origin',
-          signal: controlador.signal
-        })
-        if (!respuesta.ok) {
-          throw new Error('No se pudo cargar la lista de productos.')
-        }
-        const datos = await respuesta.json()
-        const lista = Array.isArray(datos) ? datos : datos.results || []
-        // Solo productos activos
-        setProductos(lista.filter((p) => p.estado !== false))
+        setProductos(await cargarProductos(controlador.signal))
       } catch (err) {
         if (err.name !== 'AbortError') {
           setErrorProductos(err.message)
@@ -110,10 +139,13 @@ function Ventas({ cambiarPagina, usuario }) {
     })
   }
 
+  function eliminarArticulo(idProducto) {
+    setItemsFactura((anteriores) => anteriores.filter((item) => item.producto.id !== idProducto))
+  }
+
   function modificarCantidad(idProducto, nuevaCantidad) {
     if (nuevaCantidad <= 0) {
-      const item = itemsFactura.find((it) => it.producto.id === idProducto)
-      if (item) solicitarEliminarArticulo(item)
+      eliminarArticulo(idProducto)
       return
     }
 
@@ -134,57 +166,54 @@ function Ventas({ cambiarPagina, usuario }) {
   // ==========================================
   // CÁLCULOS EN TIEMPO REAL
   // ==========================================
-  const subtotal = itemsFactura.reduce((sum, item) => sum + item.precioTotal, 0)
-  const montoDescuento = (subtotal * porcentajeDescuento) / 100
-  const totalPagar = Math.max(0, subtotal - montoDescuento)
+  const subtotalCentimos = itemsFactura.reduce(
+    (suma, item) => suma + Math.round(item.precioUnitario * 100) * item.cantidad, 0
+  )
+  const subtotal = subtotalCentimos / 100
+  const descuentoCentimos = Math.round(subtotalCentimos * Math.round(porcentajeDescuento * 100) / 10000)
+  const montoDescuento = descuentoCentimos / 100
+  const totalPagar = (subtotalCentimos - descuentoCentimos) / 100
 
   // ==========================================
   // AUTORIZACIÓN PIN ADMINISTRADOR
   // ==========================================
-  function solicitarEliminarArticulo(item) {
-    setItemParaEliminar(item)
-    setAccionAdmin('eliminar')
-    setPinAdmin('')
-    setMostrarPin(false)
-    setErrorPin('')
-    setModalAdminAbierto(true)
-  }
-
   function solicitarAplicarDescuento() {
     if (itemsFactura.length === 0) return
     setDescuentoTemporal(porcentajeDescuento || 10)
-    setAccionAdmin('descuento')
     setPinAdmin('')
     setMostrarPin(false)
     setErrorPin('')
     setModalAdminAbierto(true)
   }
 
-  function autorizarAccionAdmin(evento) {
+  function obtenerClaveBorrador() {
+    claveBorrador.current ??= crypto.randomUUID()
+    return claveBorrador.current
+  }
+
+  async function autorizarDescuento(evento) {
     evento.preventDefault()
-    const pinLimpio = pinAdmin.trim()
+    if (autorizando) return
+    setAutorizando(true)
+    setErrorPin('')
+    try {
+      const porcentaje = Number(descuentoTemporal)
+      const respuesta = await enviarVenta('/api/ventas/autorizar/', {
+        pin: pinAdmin,
+        porcentaje_descuento: porcentaje.toFixed(2),
+        clave_solicitud: obtenerClaveBorrador()
+      })
+      const datos = await respuesta.json()
+      if (!respuesta.ok) throw new Error(mensajeApi(datos, 'No se pudo autorizar la acción.'))
 
-    if (!pinLimpio) {
-      setErrorPin('Por favor ingresá la clave del administrador.')
-      return
-    }
-
-    // Validación provisional del PIN
-    if (pinLimpio !== PIN_ADMIN_DEFAULT && usuario?.rol !== 'Administrador') {
-      setErrorPin('Clave de administrador incorrecta. (PIN de prueba: 1234)')
-      return
-    }
-
-    if (accionAdmin === 'eliminar' && itemParaEliminar) {
-      setItemsFactura((prev) =>
-        prev.filter((it) => it.producto.id !== itemParaEliminar.producto.id)
-      )
-      setItemParaEliminar(null)
+      setPorcentajeDescuento(porcentaje)
+      setAutorizacion(datos.autorizacion)
       setModalAdminAbierto(false)
-    } else if (accionAdmin === 'descuento') {
-      const desc = Math.max(0, Math.min(100, Number(descuentoTemporal) || 0))
-      setPorcentajeDescuento(desc)
-      setModalAdminAbierto(false)
+    } catch (error) {
+      setErrorPin(error.message)
+    } finally {
+      setPinAdmin('')
+      setAutorizando(false)
     }
   }
 
@@ -194,47 +223,128 @@ function Ventas({ cambiarPagina, usuario }) {
   function abrirModalPago() {
     if (itemsFactura.length === 0) return
     setMetodoPago('efectivo')
-    setDineroAportado(String(Math.ceil(totalPagar)))
+    setDineroAportado(totalPagar.toFixed(2))
     setReferenciaTarjeta('')
     setErrorPago('')
     setModalPagoAbierto(true)
   }
 
   const aportadoNumerico = Number(dineroAportado) || 0
-  const vuelto = aportadoNumerico - totalPagar
+  const vuelto = (Math.round(aportadoNumerico * 100) - Math.round(totalPagar * 100)) / 100
 
-  function procesarPago(evento) {
+  function cerrarPago() {
+    if (!enviandoPago.current && !pendiente) setModalPagoAbierto(false)
+  }
+
+  function guardarPendiente(solicitud) {
+    setPendiente(solicitud)
+    try {
+      if (solicitud) sessionStorage.setItem(clavePendiente, JSON.stringify(solicitud))
+      else sessionStorage.removeItem(clavePendiente)
+    } catch {
+      // Los reintentos siguen disponibles en memoria si el navegador bloquea el almacenamiento.
+    }
+  }
+
+  async function actualizarCatalogo(detalles) {
+    try {
+      const lista = await cargarProductos()
+      setProductos(lista)
+      if (detalles) {
+        const productosPorId = new Map(lista.map((producto) => [producto.id, producto]))
+        setItemsFactura(detalles.flatMap(({ producto: id, cantidad }) => {
+          const producto = productosPorId.get(id)
+          if (!producto) return itemsFactura.filter((item) => item.producto.id === id)
+          const precioUnitario = Number(producto.precio)
+          return [{ producto, cantidad, precioUnitario, precioTotal: cantidad * precioUnitario }]
+        }))
+      }
+    } catch {
+      setErrorProductos('No se pudo actualizar el catálogo. Volvé a abrir Ventas para recargarlo.')
+    }
+  }
+
+  async function procesarPago(evento) {
     evento.preventDefault()
-    setErrorPago('')
-
-    if (metodoPago === 'efectivo' && aportadoNumerico < totalPagar) {
-      setErrorPago(
-        `El dinero aportado es insuficiente. Faltan ${formatoCRC.format(
-          totalPagar - aportadoNumerico
-        )}`
-      )
+    if (enviandoPago.current) return
+    if (!pendiente && metodoPago === 'efectivo' && vuelto < 0) {
+      setErrorPago('El dinero aportado es insuficiente.')
       return
     }
 
-    const facturaGenerada = {
-      numero: `FAC-${Date.now().toString().slice(-6)}`,
-      fechaHora: new Date().toLocaleString('es-CR'),
-      cajero: usuario?.nombre || 'Cajero de turno',
-      items: [...itemsFactura],
-      subtotal,
-      descuento: montoDescuento,
-      porcentajeDescuento,
-      total: totalPagar,
-      metodoPago,
-      dineroAportado: metodoPago === 'efectivo' ? aportadoNumerico : totalPagar,
-      vuelto: metodoPago === 'efectivo' ? vuelto : 0,
-      referenciaTarjeta: metodoPago === 'tarjeta' ? referenciaTarjeta : null
+    const referencia = referenciaTarjeta.trim()
+    if (!pendiente && metodoPago === 'tarjeta' && (
+      !/^[A-Za-z0-9 _./-]{0,64}$/.test(referencia)
+      || /[0-9]{13,}/.test(referencia.replace(/[ _./-]/g, ''))
+    )) {
+      setErrorPago('Ingresá únicamente el código de autorización del datáfono.')
+      return
     }
 
-    setVentaExitosa(facturaGenerada)
-    setModalPagoAbierto(false)
-    setItemsFactura([])
-    setPorcentajeDescuento(0)
+    enviandoPago.current = true
+    setGuardandoPago(true)
+    setErrorPago('')
+    try {
+      const solicitud = pendiente || {
+        clave_solicitud: obtenerClaveBorrador(),
+        detalles: itemsFactura.map((item) => ({
+          producto: item.producto.id, cantidad: item.cantidad
+        })),
+        metodo_pago: metodoPago,
+        total_esperado: totalPagar.toFixed(2),
+        porcentaje_descuento: porcentajeDescuento.toFixed(2),
+        ...(porcentajeDescuento > 0 && { autorizacion }),
+        ...(metodoPago === 'efectivo'
+          ? { dinero_aportado: aportadoNumerico.toFixed(2) }
+          : { referencia_tarjeta: referencia })
+      }
+      guardarPendiente(solicitud)
+      const respuesta = await enviarVenta('/api/ventas/', solicitud)
+      const datos = await respuesta.json()
+      if (!respuesta.ok) {
+        if (respuesta.status === 400 || respuesta.status === 409) {
+          guardarPendiente(null)
+          if (!itemsFactura.length) {
+            setMetodoPago(solicitud.metodo_pago)
+            setDineroAportado(solicitud.dinero_aportado || '')
+            setReferenciaTarjeta(solicitud.referencia_tarjeta || '')
+            setPorcentajeDescuento(Number(solicitud.porcentaje_descuento))
+            setAutorizacion(solicitud.autorizacion || '')
+          }
+          await actualizarCatalogo(solicitud.detalles)
+        }
+        setErrorPago(mensajeApi(datos, 'No se pudo registrar la venta. Reintentá el registro.'))
+        return
+      }
+
+      setVentaExitosa({
+        numero: 'FAC-' + datos.id_venta,
+        fechaHora: new Date(datos.fecha).toLocaleString('es-CR'),
+        items: datos.detalles.map((item) => ({
+          cantidad: item.cantidad,
+          producto: { nombre: item.producto_nombre },
+          precioTotal: Number(item.subtotal)
+        })),
+        descuento: Number(datos.descuento),
+        total: Number(datos.total),
+        metodoPago: datos.metodo_pago,
+        dineroAportado: Number(datos.dinero_aportado),
+        vuelto: Number(datos.vuelto),
+        referenciaTarjeta: datos.referencia_tarjeta
+      })
+      guardarPendiente(null)
+      setModalPagoAbierto(false)
+      setItemsFactura([])
+      setPorcentajeDescuento(0)
+      setAutorizacion('')
+      claveBorrador.current = null
+      await actualizarCatalogo()
+    } catch {
+      setErrorPago('No se pudo confirmar el registro. Reintentá antes de cobrar otra vez.')
+    } finally {
+      enviandoPago.current = false
+      setGuardandoPago(false)
+    }
   }
 
   function nuevaVenta() {
@@ -376,6 +486,8 @@ function Ventas({ cambiarPagina, usuario }) {
                   if (window.confirm('¿Deseás reiniciar la factura actual?')) {
                     setItemsFactura([])
                     setPorcentajeDescuento(0)
+                    setAutorizacion('')
+                    claveBorrador.current = null
                   }
                 }}
               >
@@ -459,10 +571,10 @@ function Ventas({ cambiarPagina, usuario }) {
                         <button
                           type="button"
                           className="btn-eliminar-articulo"
-                          onClick={() => solicitarEliminarArticulo(it)}
-                          title="Eliminar artículo (Requiere PIN del administrador)"
+                          onClick={() => eliminarArticulo(it.producto.id)}
+                          title="Eliminar artículo"
                         >
-                          <span className="candado-mini">🔒</span>
+                          <span className="candado-mini" aria-hidden="true">×</span>
                           <span>Eliminar</span>
                         </button>
                       </td>
@@ -533,7 +645,7 @@ function Ventas({ cambiarPagina, usuario }) {
       {modalAdminAbierto && (
         <div
           className="modal-fondo"
-          onClick={() => setModalAdminAbierto(false)}
+          onClick={() => !autorizando && setModalAdminAbierto(false)}
         >
           <div
             className="modal-caja modal-admin-card"
@@ -543,45 +655,39 @@ function Ventas({ cambiarPagina, usuario }) {
           >
             <div className="modal-admin-icono">🔐</div>
             <h3 className="modal-admin-titulo">
-              {accionAdmin === 'eliminar'
-                ? 'Autorización Requerida: Eliminar Artículo'
-                : 'Autorización Requerida: Aplicar Descuento'}
+              Autorización Requerida: Aplicar Descuento
             </h3>
 
             <p className="modal-admin-descripcion">
-              {accionAdmin === 'eliminar'
-                ? `Ingresá la clave del administrador para eliminar "${itemParaEliminar?.producto.nombre}" de la venta.`
-                : 'Ingresá la clave del administrador para autorizar un descuento sobre el total de la venta.'}
+              Ingresá la clave del administrador para autorizar un descuento sobre el total de la venta.
             </p>
 
-            <form onSubmit={autorizarAccionAdmin} className="modal-admin-form">
-              {accionAdmin === 'descuento' && (
-                <div className="form-campo-grupo">
-                  <label htmlFor="input-porcentaje-descuento">
-                    Porcentaje de descuento (%):
-                  </label>
-                  <div className="input-con-sufijo">
-                    <input
-                      id="input-porcentaje-descuento"
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={descuentoTemporal}
-                      onChange={(e) => setDescuentoTemporal(e.target.value)}
-                      required
-                    />
-                    <span className="sufijo">%</span>
-                  </div>
-                  <div className="descuento-vista-previa">
-                    Descuento calculado:{' '}
-                    <strong>
-                      {formatoCRC.format(
-                        (subtotal * (Number(descuentoTemporal) || 0)) / 100
-                      )}
-                    </strong>
-                  </div>
+            <form onSubmit={autorizarDescuento} className="modal-admin-form">
+              <div className="form-campo-grupo">
+                <label htmlFor="input-porcentaje-descuento">
+                  Porcentaje de descuento (%):
+                </label>
+                <div className="input-con-sufijo">
+                  <input
+                    id="input-porcentaje-descuento"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={descuentoTemporal}
+                    onChange={(e) => setDescuentoTemporal(e.target.value)}
+                    required
+                  />
+                  <span className="sufijo">%</span>
                 </div>
-              )}
+                <div className="descuento-vista-previa">
+                  Descuento calculado:{' '}
+                  <strong>
+                    {formatoCRC.format(
+                      (subtotal * (Number(descuentoTemporal) || 0)) / 100
+                    )}
+                  </strong>
+                </div>
+              </div>
 
               {/* INPUT DE PIN CON BOTÓN PARA MOSTRAR/OCULTAR PIN */}
               <div className="form-campo-grupo">
@@ -608,9 +714,6 @@ function Ventas({ cambiarPagina, usuario }) {
                     {mostrarPin ? 'Ocultar PIN' : 'Mostrar PIN'}
                   </button>
                 </div>
-                <small className="pin-hint">
-                  (PIN por defecto: <strong>1234</strong>)
-                </small>
               </div>
 
               {errorPin && (
@@ -623,12 +726,12 @@ function Ventas({ cambiarPagina, usuario }) {
                 <button
                   type="button"
                   className="productos-boton-secundario"
-                  onClick={() => setModalAdminAbierto(false)}
+                  onClick={() => !autorizando && setModalAdminAbierto(false)}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="boton-volver btn-confirmar-admin">
-                  {accionAdmin === 'eliminar' ? 'Eliminar Artículo' : 'Aplicar Descuento'}
+                <button type="submit" className="boton-volver btn-confirmar-admin" disabled={autorizando}>
+                  Aplicar Descuento
                 </button>
               </div>
             </form>
@@ -642,7 +745,7 @@ function Ventas({ cambiarPagina, usuario }) {
       {modalPagoAbierto && (
         <div
           className="modal-fondo"
-          onClick={() => setModalPagoAbierto(false)}
+          onClick={cerrarPago}
         >
           <div
             className="modal-caja modal-pago-card"
@@ -658,7 +761,8 @@ function Ventas({ cambiarPagina, usuario }) {
               <button
                 type="button"
                 className="btn-cerrar-modal"
-                onClick={() => setModalPagoAbierto(false)}
+                disabled={guardandoPago || Boolean(pendiente)}
+                onClick={cerrarPago}
               >
                 ✕
               </button>
@@ -668,7 +772,7 @@ function Ventas({ cambiarPagina, usuario }) {
             <div className="total-destacado-pago">
               <span className="etiqueta-total-pago">Total a Pagar</span>
               <strong className="monto-total-pago">
-                {formatoCRC.format(totalPagar)}
+                {formatoCRC.format(pendiente ? Number(pendiente.total_esperado) : totalPagar)}
               </strong>
             </div>
 
@@ -676,6 +780,7 @@ function Ventas({ cambiarPagina, usuario }) {
             <div className="selector-metodo-pago">
               <button
                 type="button"
+                disabled={guardandoPago || Boolean(pendiente)}
                 className={`btn-selector ${metodoPago === 'efectivo' ? 'activo' : ''}`}
                 onClick={() => {
                   setMetodoPago('efectivo')
@@ -688,6 +793,7 @@ function Ventas({ cambiarPagina, usuario }) {
 
               <button
                 type="button"
+                disabled={guardandoPago || Boolean(pendiente)}
                 className={`btn-selector ${metodoPago === 'tarjeta' ? 'activo' : ''}`}
                 onClick={() => {
                   setMetodoPago('tarjeta')
@@ -701,7 +807,7 @@ function Ventas({ cambiarPagina, usuario }) {
 
             <form onSubmit={procesarPago} className="formulario-pago">
               {/* OPCIÓN EFECTIVO */}
-              {metodoPago === 'efectivo' && (
+              {!pendiente && metodoPago === 'efectivo' && (
                 <div className="bloque-efectivo">
                   <label htmlFor="input-dinero-recibido">
                     Dinero aportado / recibido del cliente:
@@ -711,7 +817,8 @@ function Ventas({ cambiarPagina, usuario }) {
                     <input
                       id="input-dinero-recibido"
                       type="number"
-                      step="any"
+                      step="0.01"
+                      disabled={guardandoPago || Boolean(pendiente)}
                       min="0"
                       value={dineroAportado}
                       onChange={(e) => {
@@ -728,7 +835,8 @@ function Ventas({ cambiarPagina, usuario }) {
                   <div className="atajos-billetes">
                     <button
                       type="button"
-                      onClick={() => setDineroAportado(String(Math.ceil(totalPagar)))}
+                      disabled={guardandoPago || Boolean(pendiente)}
+                      onClick={() => setDineroAportado(totalPagar.toFixed(2))}
                     >
                       Monto Exacto
                     </button>
@@ -736,6 +844,7 @@ function Ventas({ cambiarPagina, usuario }) {
                       <button
                         key={b}
                         type="button"
+                        disabled={guardandoPago || Boolean(pendiente)}
                         onClick={() => setDineroAportado(String(b))}
                       >
                         {formatoCRC.format(b)}
@@ -762,7 +871,7 @@ function Ventas({ cambiarPagina, usuario }) {
               )}
 
               {/* OPCIÓN TARJETA */}
-              {metodoPago === 'tarjeta' && (
+              {!pendiente && metodoPago === 'tarjeta' && (
                 <div className="bloque-tarjeta">
                   <div className="tarjeta-indicacion">
                     <span className="icono-datafono">📟</span>
@@ -778,7 +887,10 @@ function Ventas({ cambiarPagina, usuario }) {
                   <input
                     id="input-tarjeta-ref"
                     type="text"
-                    placeholder="Ej. AUT-594830"
+                    placeholder="Código de autorización del datáfono"
+                    disabled={guardandoPago || Boolean(pendiente)}
+                    maxLength={64}
+                    autoComplete="off"
                     value={referenciaTarjeta}
                     onChange={(e) => setReferenciaTarjeta(e.target.value)}
                   />
@@ -795,16 +907,17 @@ function Ventas({ cambiarPagina, usuario }) {
                 <button
                   type="button"
                   className="productos-boton-secundario"
-                  onClick={() => setModalPagoAbierto(false)}
+                  disabled={guardandoPago || Boolean(pendiente)}
+                  onClick={cerrarPago}
                 >
                   Volver a la Factura
                 </button>
                 <button
                   type="submit"
                   className="boton-volver btn-confirmar-pago"
-                  disabled={metodoPago === 'efectivo' && aportadoNumerico < totalPagar}
+                  disabled={guardandoPago || (!pendiente && (!itemsFactura.length || (metodoPago === 'efectivo' && vuelto < 0)))}
                 >
-                  ✓ Confirmar y Facturar
+                  {guardandoPago ? 'Registrando…' : pendiente ? 'Reintentar registro' : '✓ Confirmar y Facturar'}
                 </button>
               </div>
             </form>
@@ -849,7 +962,13 @@ function Ventas({ cambiarPagina, usuario }) {
               <div className="desglose-linea">
                 <span>Método:</span>
                 <span>
-                  {ventaExitosa.metodoPago === 'efectivo' ? 'Efectivo' : 'Tarjeta de Crédito'}
+                  {ventaExitosa.referenciaTarjeta && (
+                <div className="desglose-linea">
+                  <span>Referencia:</span>
+                  <span>{ventaExitosa.referenciaTarjeta}</span>
+                </div>
+              )}
+              {ventaExitosa.metodoPago === 'efectivo' ? 'Efectivo' : 'Tarjeta de Crédito'}
                 </span>
               </div>
               {ventaExitosa.metodoPago === 'efectivo' && (
