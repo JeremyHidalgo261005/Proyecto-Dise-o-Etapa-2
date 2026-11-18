@@ -418,7 +418,7 @@ function cambiarCampo(evento) {
                   name="nombre"
                   value={formulario.nombre}
                   onChange={cambiarCampo}
-                  placeholder="Ejemplo: Distribuidora Central"
+                  placeholder="Distribuidora Central"
                   required
                 />
               </label>
@@ -447,7 +447,7 @@ function cambiarCampo(evento) {
                   name="correo"
                   value={formulario.correo}
                   onChange={cambiarCampo}
-                  placeholder="Ejemplo: ventas@proveedor.com"
+                  placeholder="ventas@proveedor.com"
                 />
               </label>
 
@@ -458,7 +458,7 @@ function cambiarCampo(evento) {
                   value={formulario.direccion}
                   onChange={cambiarCampo}
                   rows={3}
-                  placeholder="Dirección del proveedor"
+                  placeholder="San José, Costa Rica"
                 />
               </label>
 

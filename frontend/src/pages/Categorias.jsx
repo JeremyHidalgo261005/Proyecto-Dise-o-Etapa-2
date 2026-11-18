@@ -362,7 +362,7 @@ function Categorias({ cambiarPagina }) {
                   value={formulario.nombre}
                   onChange={cambiarCampo}
                   maxLength={100}
-                  placeholder="Ejemplo: Lácteos"
+                  placeholder="Lácteos"
                   required
                 />
               </label>
@@ -374,7 +374,7 @@ function Categorias({ cambiarPagina }) {
                   value={formulario.descripcion}
                   onChange={cambiarCampo}
                   rows={3}
-                  placeholder="Descripción de la categoría"
+                  placeholder="Productos derivados de la leche"
                 />
               </label>
 

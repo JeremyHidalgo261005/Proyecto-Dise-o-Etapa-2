@@ -105,7 +105,7 @@ function Login({ onLogin, aviso = '' }) {
                 type="text"
                 value={usuario}
                 onChange={(e) => setUsuario(e.target.value)}
-                placeholder="Tu nombre de usuario"
+                placeholder="juan.perez"
                 autoComplete="username"
                 maxLength={150}
                 required
@@ -121,7 +121,7 @@ function Login({ onLogin, aviso = '' }) {
                   type={mostrar ? 'text' : 'password'}
                   value={contrasena}
                   onChange={(e) => setContrasena(e.target.value)}
-                  placeholder="Tu contraseña"
+                  placeholder="••••••••"
                   autoComplete="current-password"
                   required
                 />

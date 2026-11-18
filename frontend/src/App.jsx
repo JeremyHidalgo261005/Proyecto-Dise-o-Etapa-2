@@ -9,6 +9,7 @@ import Categorias from './pages/Categorias'
 import Proveedores from './pages/Proveedores'
 import Ventas from './pages/Ventas'
 import Inventario from './pages/Inventario'
+import ImportarCSV from './pages/ImportarCSV'
 
 import './App.css'
 
@@ -208,12 +209,20 @@ function App() {
         return (
           <Ventas
             cambiarPagina={cambiarPagina}
+            usuario={usuarioActual}
           />
         )
 
       case 'Inventario':
         return (
           <Inventario
+            cambiarPagina={cambiarPagina}
+          />
+        )
+
+      case 'Importar CSV':
+        return (
+          <ImportarCSV
             cambiarPagina={cambiarPagina}
           />
         )

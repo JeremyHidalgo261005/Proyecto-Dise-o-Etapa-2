@@ -1,0 +1,1089 @@
+/* =========================================================
+   MÓDULO DE VENTAS / PUNTO DE VENTA (POS)
+   ========================================================= */
+
+.ventas-modulo {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Cabecera superior */
+.ventas-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ventas-cabecera h2 {
+  margin: 0 0 6px;
+  color: #21162f;
+  font-size: 26px;
+}
+
+.ventas-cabecera p {
+  margin: 0;
+  color: #60556b;
+  font-size: 14px;
+}
+
+/* Disposición principal en 2 columnas */
+.ventas-pantalla-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .ventas-pantalla-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   PANEL IZQUIERDO: CATÁLOGO DE PRODUCTOS
+   ========================================================= */
+.ventas-panel-catalogo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 580px;
+}
+
+.catalogo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.catalogo-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #21162f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.atajo-info {
+  font-size: 12px;
+  color: #7b6f88;
+  background: #f1ebf7;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.catalogo-buscador {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.catalogo-buscador input {
+  width: 100%;
+  padding: 13px 40px 13px 14px;
+  border: 1px solid #d8cde2;
+  border-radius: 12px;
+  background: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  color: #21162f;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.catalogo-buscador input:focus {
+  outline: none;
+  border-color: #8e6adf;
+  box-shadow: 0 0 0 3px rgba(142, 106, 223, 0.15);
+}
+
+.btn-limpiar-busqueda {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #9283a0;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 50%;
+}
+
+.btn-limpiar-busqueda:hover {
+  background: #f0ecf4;
+  color: #21162f;
+}
+
+.catalogo-scroll {
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #cfbfdf #faf7fc;
+}
+
+.catalogo-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.catalogo-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #e5dceb;
+  border-radius: 14px;
+  padding: 14px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.catalogo-item:hover {
+  transform: translateY(-2px);
+  border-color: #a482ea;
+  box-shadow: 0 6px 16px rgba(106, 56, 179, 0.08);
+}
+
+.item-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #7b6f88;
+  margin-bottom: 6px;
+}
+
+.item-codigo {
+  font-family: monospace;
+  background: #f4eff9;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.item-stock {
+  color: #3b7e56;
+  font-weight: 600;
+}
+
+.item-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: #271a39;
+  line-height: 1.3;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.item-precio-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.item-precio {
+  font-size: 15px;
+  font-weight: 800;
+  color: #552787;
+}
+
+.item-btn-agregar {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #73459c;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.catalogo-item:hover .item-btn-agregar {
+  background: #5c2f82;
+}
+
+.catalogo-cargando,
+.catalogo-vacio-texto,
+.catalogo-error {
+  padding: 30px;
+  text-align: center;
+  color: #72677f;
+}
+
+.catalogo-error {
+  color: #b02a23;
+  background: #fff2f1;
+  border-radius: 12px;
+}
+
+/* =========================================================
+   PANEL DERECHO: FACTURA EN TIEMPO REAL
+   ========================================================= */
+.ventas-panel-factura {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 580px;
+  background: #ffffff;
+  border: 1px solid #e7dfed;
+  box-shadow: 0 8px 24px rgba(45, 23, 72, 0.05);
+}
+
+.factura-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #efe8f3;
+  margin-bottom: 14px;
+}
+
+.factura-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #21162f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.factura-subtitulo {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #7b6f88;
+}
+
+.btn-vaciar-factura {
+  background: #fcedec;
+  border: 1px solid #f7cfcd;
+  color: #ad2b24;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-vaciar-factura:hover {
+  background: #f9dedd;
+}
+
+/* Tabla de factura */
+.factura-cuerpo-tabla {
+  flex: 1;
+  max-height: 380px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cfbfdf #faf7fc;
+}
+
+.factura-vacia-aviso {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8c7f99;
+}
+
+.factura-icono-vacio {
+  font-size: 44px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.factura-vacia-aviso h4 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: #4b3d5b;
+}
+
+.factura-vacia-aviso p {
+  margin: 0;
+  font-size: 13px;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.tabla-factura {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-factura th {
+  background: #f8f4fb;
+  color: #554865;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 8px;
+  border-bottom: 1px solid #ebdff2;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.tabla-factura td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #f3eef7;
+  font-size: 13px;
+  color: #271a39;
+  vertical-align: middle;
+}
+
+.tabla-factura .centrado {
+  text-align: center;
+}
+
+.tabla-factura .alineado-derecha {
+  text-align: right;
+}
+
+.col-articulo {
+  max-width: 170px;
+}
+
+.nombre-prod {
+  display: block;
+  font-weight: 700;
+  color: #21162f;
+  line-height: 1.3;
+}
+
+.cod-prod {
+  display: block;
+  font-size: 11px;
+  color: #7b6f88;
+  font-family: monospace;
+}
+
+/* Control de cantidad en tabla */
+.control-cantidad {
+  display: inline-flex;
+  align-items: center;
+  background: #f4eff9;
+  border: 1px solid #ded3e8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.btn-cambio-cant {
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  font-weight: 800;
+  width: 26px;
+  height: 28px;
+  color: #4b2d6a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.btn-cambio-cant:hover {
+  background: #e6dbf2;
+}
+
+.control-cantidad input {
+  width: 32px;
+  height: 28px;
+  border: none;
+  text-align: center;
+  font-weight: 700;
+  background: #ffffff;
+  color: #21162f;
+  font-size: 13px;
+  padding: 0;
+}
+
+/* Botón de eliminar con candado (requiere PIN) */
+.btn-eliminar-articulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff4f3;
+  border: 1px solid #f5cfcc;
+  color: #b02a23;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-eliminar-articulo:hover {
+  background: #fce4e2;
+  border-color: #ebaca7;
+  transform: scale(1.02);
+}
+
+.candado-mini {
+  font-size: 11px;
+}
+
+/* Sección de totales */
+.factura-totales-seccion {
+  border-top: 2px dashed #ebdff2;
+  padding-top: 16px;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.totales-linea {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #554865;
+}
+
+.fila-descuento {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.btn-quitar-desc {
+  background: transparent;
+  border: none;
+  color: #9283a0;
+  font-size: 11px;
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.btn-quitar-desc:hover {
+  background: #f0ecf4;
+  color: #b02a23;
+}
+
+.fila-total-grande {
+  padding-top: 6px;
+  border-top: 1px solid #efe8f3;
+  font-size: 17px;
+  font-weight: 800;
+  color: #1e122d;
+}
+
+.cifra-total-grande {
+  font-size: 26px;
+  font-weight: 900;
+  color: #4a1d77;
+}
+
+/* Botones de acción final de factura */
+.factura-acciones-botones {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btn-aplicar-descuento {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 14px;
+  background: #f5f0fa;
+  border: 1px solid #d8c8e8;
+  color: #552787;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-aplicar-descuento:hover:not(:disabled) {
+  background: #eae0f5;
+}
+
+.btn-procesar-pago {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 18px;
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  border: none;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 15px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(46, 125, 50, 0.28);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-procesar-pago:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(46, 125, 50, 0.38);
+}
+
+.btn-aplicar-descuento:disabled,
+.btn-procesar-pago:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* =========================================================
+   ESTILOS GENERALES DE MODALES (VENTANAS EMERGENTES)
+   Fondo oscuro sólido y tarjeta completamente opaca blanca
+   ========================================================= */
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(18, 9, 28, 0.75) !important;
+  backdrop-filter: blur(6px);
+}
+
+.modal-caja {
+  background: #ffffff !important;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 24px 60px rgba(18, 9, 32, 0.40);
+  border: 1px solid #dcd1e6;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   MODAL 1: AUTORIZACIÓN PIN ADMINISTRADOR
+   ========================================================= */
+.modal-admin-card {
+  max-width: 480px;
+  background: #ffffff !important;
+  text-align: center;
+}
+
+.modal-admin-icono {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  background: #f4effb;
+  border: 1px solid #dccbe9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+}
+
+.modal-admin-titulo {
+  margin: 0 0 8px;
+  color: #21162f;
+  font-size: 20px;
+}
+
+.modal-admin-descripcion {
+  margin: 0 0 20px;
+  color: #635770;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.modal-admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+.form-campo-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-campo-grupo label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4b3d5b;
+}
+
+.input-con-sufijo {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-con-sufijo input {
+  width: 100%;
+  padding: 12px 36px 12px 14px;
+  border: 1px solid #d8cde2;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 15px;
+  color: #21162f;
+}
+
+.sufijo {
+  position: absolute;
+  right: 14px;
+  font-weight: 700;
+  color: #6d5f7c;
+}
+
+.descuento-vista-previa {
+  font-size: 12px;
+  color: #3b7e56;
+  background: #f0f9f3;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+/* Input PIN con botón Mostrar / Ocultar PIN */
+.input-pin-caja {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-pin-caja input {
+  width: 100%;
+  padding: 12px 105px 12px 14px;
+  border: 1px solid #d8cde2;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: #21162f;
+  box-sizing: border-box;
+}
+
+.input-pin-caja input:focus {
+  outline: none;
+  border-color: #8e6adf;
+  box-shadow: 0 0 0 3px rgba(142, 106, 223, 0.15);
+}
+
+.btn-toggle-ver-pin {
+  position: absolute;
+  right: 8px;
+  background: #f1eaf7;
+  border: 1px solid #dfd1ec;
+  color: #552787;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-toggle-ver-pin:hover {
+  background: #e5d7f1;
+}
+
+.pin-hint {
+  font-size: 11px;
+  color: #837593;
+}
+
+.modal-error-alerta {
+  background: #fff0ef;
+  border: 1px solid #f3c1bb;
+  color: #a12620;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.modal-admin-botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.btn-confirmar-admin {
+  background: linear-gradient(135deg, #743e9d 0%, #4f2175 100%);
+}
+
+/* =========================================================
+   MODAL 2: PROCESAR PAGO (EFECTIVO O TARJETA)
+   ========================================================= */
+.modal-pago-card {
+  max-width: 540px;
+  background: #ffffff !important;
+}
+
+.modal-pago-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.modal-pago-header h3 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  color: #21162f;
+}
+
+.modal-pago-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #726482;
+}
+
+.btn-cerrar-modal {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #8c7f9a;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.btn-cerrar-modal:hover {
+  color: #21162f;
+}
+
+.total-destacado-pago {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #241432 0%, #462562 100%);
+  color: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 20px rgba(45, 23, 72, 0.15);
+}
+
+.etiqueta-total-pago {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #dfceef;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.monto-total-pago {
+  font-size: 34px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+/* Selector Efectivo vs Tarjeta */
+.selector-metodo-pago {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.btn-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  background: #f8f4fb;
+  border: 2px solid #e2d7ec;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #4b3d5b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-selector:hover {
+  border-color: #aa86e3;
+}
+
+.btn-selector.activo {
+  background: #f2e9fc;
+  border-color: #6d35a5;
+  color: #4a1d77;
+  box-shadow: 0 4px 12px rgba(109, 53, 165, 0.12);
+}
+
+.icono-metodo {
+  font-size: 24px;
+}
+
+.formulario-pago {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bloque-efectivo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bloque-efectivo label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4b3d5b;
+}
+
+.input-dinero-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.simbolo-dinero {
+  position: absolute;
+  left: 16px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #552787;
+}
+
+.input-monto-recibido {
+  width: 100%;
+  padding: 14px 14px 14px 44px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #21162f;
+  border: 2px solid #d0c1e0;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.input-monto-recibido:focus {
+  outline: none;
+  border-color: #7b42ad;
+  box-shadow: 0 0 0 3px rgba(123, 66, 173, 0.15);
+}
+
+/* Atajos de billetes */
+.atajos-billetes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.atajos-billetes button {
+  background: #f4eff9;
+  border: 1px solid #dccbe9;
+  color: #4f2e71;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.atajos-billetes button:hover {
+  background: #e6daf2;
+}
+
+/* Caja de vuelto en tiempo real */
+.caja-vuelto-real {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 14px;
+  margin-top: 6px;
+  transition: all 0.2s ease;
+}
+
+.caja-vuelto-real.vuelto-ok {
+  background: #eaf7ee;
+  border: 1px solid #b7e4c3;
+  color: #17663d;
+}
+
+.caja-vuelto-real.vuelto-insuficiente {
+  background: #fff1f0;
+  border: 1px solid #f6c5c1;
+  color: #a8231c;
+}
+
+.vuelto-titulo {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.vuelto-valor {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+/* Vista tarjeta */
+.bloque-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tarjeta-indicacion {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f3ecfb;
+  border: 1px solid #dcceeb;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.icono-datafono {
+  font-size: 32px;
+}
+
+.tarjeta-indicacion p {
+  margin: 0;
+  font-size: 14px;
+  color: #402360;
+  line-height: 1.4;
+}
+
+.bloque-tarjeta label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4b3d5b;
+}
+
+.bloque-tarjeta input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d8cde2;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.modal-pago-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.btn-confirmar-pago {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+}
+
+/* =========================================================
+   MODAL 3: COMPROBANTE FINAL (VENTA EXITOSA)
+   ========================================================= */
+.comprobante-modal {
+  max-width: 500px;
+  background: #ffffff !important;
+  text-align: center;
+}
+
+.comprobante-check {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  background: #e8f5e9;
+  border: 2px solid #81c784;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 900;
+  color: #2e7d32;
+}
+
+.comprobante-modal h3 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  color: #21162f;
+}
+
+.comprobante-sub {
+  margin: 0 0 18px;
+  color: #726482;
+  font-size: 13px;
+}
+
+.comprobante-articulos-lista {
+  max-height: 180px;
+  overflow-y: auto;
+  border-top: 1px dashed #e2d6ec;
+  border-bottom: 1px dashed #e2d6ec;
+  padding: 12px 0;
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.comprobante-articulo-fila {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 6px;
+  font-size: 13px;
+  color: #38294a;
+}
+
+.comprobante-desglose-pago {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  margin-bottom: 22px;
+}
+
+.desglose-linea {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #605170;
+}
+
+.desglose-linea.total {
+  font-size: 16px;
+  font-weight: 800;
+  color: #21162f;
+  padding-top: 4px;
+  border-top: 1px solid #eee5f5;
+}
+
+.vuelto-resaltado {
+  color: #17663d;
+  font-weight: 800;
+  font-size: 15px;
+  background: #f0f9f3;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.comprobante-acciones {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
