@@ -4,27 +4,36 @@ import json
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
+
+
+from .models import PerfilUsuario
 
 
 def obtener_rol(usuario):
     if usuario.is_staff:
         return 'Administrador'
 
-    if usuario.groups.filter(name='Cajero').exists():
+    if any(grupo.name == 'Cajero' for grupo in usuario.groups.all()):
         return 'Cajero'
 
     return None
 
 
 def datos_usuario(usuario):
+    version = PerfilUsuario.objects.filter(usuario=usuario).values_list(
+        'imagen_actualizada', flat=True
+    ).first()
+    imagen_url = reverse('perfil-imagen') + '?v=' + str(version.timestamp()) if version else None
     return {
         'id': usuario.id,
         'usuario': usuario.username,
         'nombre': usuario.get_full_name() or usuario.username,
-        'rol': obtener_rol(usuario)
+        'rol': obtener_rol(usuario),
+        'imagen_url': imagen_url
     }
 
 

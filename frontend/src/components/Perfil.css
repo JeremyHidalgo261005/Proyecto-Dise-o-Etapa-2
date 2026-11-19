@@ -1,0 +1,111 @@
+.encabezado.encabezado-con-perfil {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.encabezado-con-perfil h1 {
+  overflow-wrap: anywhere;
+}
+
+.perfil-menu-contenedor {
+  position: relative;
+  justify-self: end;
+}
+
+.perfil-menu-boton {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 5px 5px 5px 13px;
+  border: 1px solid #e2d8eb;
+  border-radius: 999px;
+  background: #fff;
+  color: #342349;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.perfil-menu-nombre {
+  max-width: clamp(75px, 20vw, 180px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.perfil-avatar {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffb199, #ff8e72);
+  color: #342349;
+  font-weight: 800;
+}
+
+.perfil-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.perfil-menu {
+  position: absolute;
+  inset: calc(100% + 8px) 0 auto auto;
+  z-index: 20;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  padding: 6px;
+  border: 1px solid #e2d8eb;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 30px #37245724;
+  animation: perfil-aparecer 150ms ease-out both;
+}
+
+.perfil-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 13px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #342349;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.perfil-menu button:hover,
+.perfil-menu button:focus-visible {
+  background: #f1e9fb;
+}
+
+.perfil-menu svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
+
+@keyframes perfil-aparecer {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .encabezado.encabezado-con-perfil { gap: 8px; }
+  .perfil-menu-boton { gap: 5px; padding-left: 8px; font-size: 13px; }
+  .perfil-menu-boton .perfil-avatar { width: 33px; height: 33px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .perfil-menu { animation: none; }
+}

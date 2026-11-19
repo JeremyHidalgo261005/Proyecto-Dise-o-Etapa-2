@@ -153,7 +153,7 @@ function Login({ onLogin, aviso = '' }) {
               >
                 {cargando
                   ? 'Verificando acceso...'
-                  : 'Ingresar al sistema'}
+                  : 'Ingresar'}
                 <span aria-hidden="true">→</span>
               </button>
             </form>

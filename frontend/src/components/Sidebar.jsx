@@ -7,8 +7,6 @@ function Sidebar({
   pagina,
   cambiarPagina,
   usuario,
-  onCerrarSesion,
-  cerrandoSesion,
   contraido,
   alternarSidebar
 }) {
@@ -53,10 +51,6 @@ function Sidebar({
     cambiarPagina(opcion)
     setMenuMovilAbierto(false)
   }
-
-  // Obtener inicial del usuario
-  const nombreUsuario = usuario?.nombre || 'Usuario'
-  const inicialUsuario = nombreUsuario.charAt(0).toUpperCase()
 
   return (
     <aside className={`sidebar ${contraido ? 'contraido' : ''} ${menuMovilAbierto ? 'movil-abierto' : ''}`}>
@@ -137,46 +131,7 @@ function Sidebar({
           ))}
         </nav>
 
-        {/* INFORMACIÓN DEL USUARIO Y CIERRE DE SESIÓN */}
-        <div className="sidebar-footer">
 
-          <div className="sidebar-usuario">
-
-            <div className="usuario-avatar">
-              {inicialUsuario}
-            </div>
-
-            <div className="usuario-datos">
-              <p className="usuario-nombre">
-                {nombreUsuario}
-              </p>
-
-              <span className="usuario-rol">
-                {usuario?.rol}
-              </span>
-            </div>
-
-          </div>
-
-          <button
-            type="button"
-            className="sidebar-cerrar-sesion"
-            onClick={onCerrarSesion}
-            disabled={cerrandoSesion}
-            title={contraido ? 'Cerrar sesión' : undefined}
-          >
-            <span className="cerrar-sesion-icono" aria-hidden="true">
-              ↪
-            </span>
-
-            <span className="cerrar-sesion-texto">
-              {cerrandoSesion
-                ? 'Cerrando...'
-                : 'Cerrar sesión'}
-            </span>
-          </button>
-
-        </div>
       </div>
 
     </aside>

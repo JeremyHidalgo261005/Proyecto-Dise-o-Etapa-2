@@ -9,6 +9,8 @@ import Categorias from './pages/Categorias'
 import Proveedores from './pages/Proveedores'
 import Ventas from './pages/Ventas'
 import HistorialVentas from './pages/HistorialVentas'
+import MiPerfil from './pages/MiPerfil'
+import AdministrarUsuarios from './pages/AdministrarUsuarios'
 import Inventario from './pages/Inventario'
 import ImportarCSV from './pages/ImportarCSV'
 
@@ -36,7 +38,6 @@ function App() {
   const [usuarioActual, setUsuarioActual] = useState(null)
 
   const [verificandoSesion, setVerificandoSesion] = useState(true)
-  const [cerrandoSesion, setCerrandoSesion] = useState(false)
 
   const [errorSesion, setErrorSesion] = useState('')
   const [errorAcceso, setErrorAcceso] = useState('')
@@ -123,33 +124,23 @@ function App() {
 
   // Cerrar sesión en Django
   async function cerrarSesion() {
-    setCerrandoSesion(true)
+    const token = await obtenerTokenCSRF()
+    const respuesta = await fetch('/api/auth/logout/', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRFToken': token }
+    })
+
+    if (!respuesta.ok) throw new Error('No se pudo cerrar la sesión.')
+
+    setUsuarioActual(null)
+    setPagina('Dashboard')
     setErrorAcceso('')
+    setErrorSesion('')
+  }
 
-    try {
-      const token = await obtenerTokenCSRF()
-
-      const respuesta = await fetch('/api/auth/logout/', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'X-CSRFToken': token
-        }
-      })
-
-      if (!respuesta.ok) {
-        throw new Error('No se pudo cerrar la sesión.')
-      }
-
-      setUsuarioActual(null)
-      setPagina('Dashboard')
-      setErrorSesion('')
-
-    } catch (error) {
-      setErrorAcceso(error.message)
-    } finally {
-      setCerrandoSesion(false)
-    }
+  function actualizarPerfil(datos) {
+    setUsuarioActual((actual) => ({ ...actual, ...datos }))
   }
 
   // Controlar la navegación según el rol
@@ -158,12 +149,13 @@ function App() {
       'Dashboard',
       'Inventario',
       'Ventas',
-      'Historial de ventas'
+      'Historial de ventas',
+      'Mi perfil'
     ]
 
     if (
-      usuarioActual?.rol === 'Cajero' &&
-      !paginasCajero.includes(destino)
+      (destino === 'Administrar usuarios' && usuarioActual?.rol !== 'Administrador') ||
+      (usuarioActual?.rol === 'Cajero' && !paginasCajero.includes(destino))
     ) {
       setErrorAcceso(
         'No tenés permiso para ingresar a esta sección.'
@@ -210,6 +202,13 @@ function App() {
             cambiarPagina={cambiarPagina}
           />
         )
+
+      case 'Mi perfil':
+        return <MiPerfil cambiarPagina={cambiarPagina} onPerfilActualizado={actualizarPerfil} />
+
+      case 'Administrar usuarios':
+        return <AdministrarUsuarios usuarioActual={usuarioActual} cambiarPagina={cambiarPagina}
+          onPerfilActualizado={actualizarPerfil} />
 
       case 'Historial de ventas':
         return <HistorialVentas cambiarPagina={cambiarPagina} origen={origenHistorial} />
@@ -275,7 +274,6 @@ function App() {
       cambiarPagina={cambiarPagina}
       usuario={usuarioActual}
       onCerrarSesion={cerrarSesion}
-      cerrandoSesion={cerrandoSesion}
     >
       {errorAcceso && (
         <p className="sesion-error" role="alert">

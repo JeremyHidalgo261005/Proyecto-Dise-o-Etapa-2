@@ -106,3 +106,26 @@ desde el historial conserva el carrito abierto.
 Para verificar las consultas y las regresiones en una base temporal, ejecutá
 `python manage.py test modulos.ventas modulos.movimientos_inventario` desde
 `backend` apuntando las variables de conexión a ese entorno de pruebas.
+
+
+## Perfil y administración de usuarios
+
+En el botón de perfil del encabezado podés abrir **Mi perfil** para editar
+nombre, apellidos, correo e imagen. El cambio de contraseña requiere la
+contraseña actual, la nueva y su confirmación, y conserva abierta la sesión
+desde la que se solicitó. Las imágenes JPEG, PNG y WebP se validan, se reducen
+a 512 px como máximo y se guardan en PostgreSQL. El archivo original puede
+pesar hasta 5 MB y tener hasta 16 megapíxeles.
+
+Desde **Administrar usuarios**, un administrador puede buscar, registrar y
+editar usuarios, asignar los roles Administrador y Cajero y activar o
+desactivar cuentas. Desactivar una cuenta revoca sus sesiones vigentes y
+conserva el usuario asociado a sus ventas y movimientos. Los cambios de rol y
+estado protegen la cuenta propia y al último administrador activo. El panel
+de Django también bloquea el borrado de cuentas y reserva sus cambios de
+rol y estado a la gestión de MiniGestor.
+
+Para desplegar esta versión, instalá las dependencias de `backend/requirements.txt`
+y aplicá la migración `usuarios.0001_perfil_usuario`. Para probar, apuntá las
+variables de conexión a un PostgreSQL temporal y ejecutá
+`python manage.py test modulos.usuarios` desde `backend`.

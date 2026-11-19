@@ -223,11 +223,13 @@
 
 .login-boton {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  align-self: center;
+  gap: 12px;
   align-items: center;
-  width: 100%;
+  width: 88%;
   margin-top: 16px;
-  padding: 16px 20px;
+  padding: 13px 20px;
   background: linear-gradient(135deg, #382047, #7950a6);
   border: none;
   border-radius: 14px;

@@ -1,14 +1,14 @@
 
 import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
+import MenuPerfil from '../components/MenuPerfil'
 
 function MainLayout({
   pagina,
   cambiarPagina,
   children,
   usuario,
-  onCerrarSesion,
-  cerrandoSesion
+  onCerrarSesion
 }) {
 
   // Controlar el estado del Sidebar
@@ -27,8 +27,6 @@ function MainLayout({
         pagina={pagina}
         cambiarPagina={cambiarPagina}
         usuario={usuario}
-        onCerrarSesion={onCerrarSesion}
-        cerrandoSesion={cerrandoSesion}
         contraido={contraido}
         alternarSidebar={alternarSidebar}
       />
@@ -37,12 +35,13 @@ function MainLayout({
       <main className="contenido">
 
         {/* ENCABEZADO DE LA PÁGINA */}
-        <header className="encabezado">
+        <header className="encabezado encabezado-con-perfil">
           <div>
             <h1>{pagina === 'Categorias' ? 'Categorías' : pagina}</h1>
 
             <p>{pagina === 'Dashboard' ? 'Te damos la bienvenida, ' + usuario.nombre : 'Sistema de administración de MiniGestor'}</p>
           </div>
+          <MenuPerfil usuario={usuario} cambiarPagina={cambiarPagina} onCerrarSesion={onCerrarSesion} />
         </header>
 
         {/* CONTENIDO DE CADA MÓDULO */}

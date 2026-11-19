@@ -1,7 +1,10 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import './ConfirmarEliminacion.css'
 
-function ConfirmarEliminacion({ titulo, nombre, mensaje, onCancelar, onEliminar }) {
+function ConfirmarEliminacion({
+  titulo, nombre, mensaje, onCancelar, onEliminar, accion = 'Eliminar',
+  procesando = 'Eliminando…', peligro = true
+}) {
   const dialogo = useRef(null)
   const cancelar = useRef(null)
   const enviando = useRef(false)
@@ -46,7 +49,7 @@ function ConfirmarEliminacion({ titulo, nombre, mensaje, onCancelar, onEliminar 
       await onEliminar()
       onCancelar()
     } catch (error) {
-      setError(error.message || 'No se pudo completar la eliminación.')
+      setError(error.message || 'No se pudo completar la acción.')
       enviando.current = false
       setEliminando(false)
     }
@@ -69,9 +72,9 @@ function ConfirmarEliminacion({ titulo, nombre, mensaje, onCancelar, onEliminar 
           disabled={eliminando} onClick={onCancelar}>
           Cancelar
         </button>
-        <button type="button" className="confirmar-eliminacion-boton"
+        <button type="button" className={peligro ? 'confirmar-eliminacion-boton' : 'boton-volver'}
           disabled={eliminando} onClick={confirmar}>
-          {eliminando ? 'Eliminando…' : 'Eliminar'}
+          {eliminando ? procesando : accion}
         </button>
       </div>
     </dialog>

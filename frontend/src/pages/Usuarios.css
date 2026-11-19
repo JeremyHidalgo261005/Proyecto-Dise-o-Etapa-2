@@ -1,0 +1,63 @@
+.usuarios-fila-completa {
+  grid-column: 1 / -1;
+}
+
+.usuarios-acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.usuarios-busqueda {
+  max-width: none;
+  margin: 0 0 20px;
+}
+
+.usuarios-busqueda input {
+  flex: 1 1 200px;
+  width: auto;
+}
+
+.usuarios-editor {
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #e2d8eb;
+  border-radius: 16px;
+  background: #fbf8fe;
+}
+
+.usuarios-editor h3 {
+  margin: 0 0 14px;
+}
+
+.usuarios-formulario input::placeholder,
+.usuarios-formulario select:required:invalid {
+  color: #6b6570;
+  opacity: 1;
+}
+
+.usuarios-formulario select option:not([value=""]) {
+  color: #21162f;
+}
+
+.usuario-obligatorio {
+  color: #a82034;
+}
+
+.usuarios-tabla {
+  min-width: 700px;
+}
+
+.perfil-personal-avatar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 14px 0 20px;
+}
+
+.perfil-personal-avatar .perfil-avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 24px;
+}
