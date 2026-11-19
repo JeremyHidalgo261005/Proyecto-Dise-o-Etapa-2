@@ -1,3 +1,5 @@
+import { BloqueCarga, IndicadorCarga } from '../components/CargaUI'
+import { useErrorConAviso, useNotificar } from '../components/avisos'
 import { useEffect, useRef, useState } from 'react'
 import AvatarPerfil from '../components/AvatarPerfil'
 import { consultarUsuarios, guardarUsuarios } from './apiUsuarios'
@@ -22,8 +24,9 @@ function MiPerfil({ cambiarPagina, onPerfilActualizado }) {
   const [vista, setVista] = useState(null)
   const [cambiarContrasena, setCambiarContrasena] = useState(false)
   const [guardando, setGuardando] = useState(false)
-  const [error, setError] = useState('')
-  const [mensaje, setMensaje] = useState('')
+  const enviandoFormulario = useRef(false)
+  const [error, setError] = useErrorConAviso()
+  const notificar = useNotificar()
   const inputImagen = useRef(null)
 
   useEffect(() => {
@@ -35,7 +38,7 @@ function MiPerfil({ cambiarPagina, onPerfilActualizado }) {
       if (error.name !== 'AbortError') setError(error.message)
     })
     return () => controlador.abort()
-  }, [])
+  }, [setError])
 
   useEffect(() => () => { if (vista) URL.revokeObjectURL(vista) }, [vista])
 
@@ -68,9 +71,8 @@ function MiPerfil({ cambiarPagina, onPerfilActualizado }) {
 
   async function guardar(evento) {
     evento.preventDefault()
-    if (guardando) return
+    if (enviandoFormulario.current) return
     setError('')
-    setMensaje('')
     const faltantes = camposPersonales.filter(([campo]) => !formulario[campo].trim())
     if (faltantes.length) {
       setError('Completá los campos obligatorios: ' + faltantes.map(([, titulo]) => titulo).join(', ') + '.')
@@ -90,6 +92,7 @@ function MiPerfil({ cambiarPagina, onPerfilActualizado }) {
       setError('Las contraseñas nuevas no coinciden.')
       return
     }
+    enviandoFormulario.current = true
     setGuardando(true)
     try {
       const datos = new FormData()
@@ -105,10 +108,11 @@ function MiPerfil({ cambiarPagina, onPerfilActualizado }) {
       setPerfil(guardado)
       limpiarCambios(guardado)
       onPerfilActualizado(guardado)
-      setMensaje('Perfil actualizado correctamente.')
+      notificar('Perfil actualizado correctamente.', 'exito')
     } catch (error) {
       setError(error.message)
     } finally {
+      enviandoFormulario.current = false
       setGuardando(false)
     }
   }
@@ -121,8 +125,7 @@ function MiPerfil({ cambiarPagina, onPerfilActualizado }) {
       <section className="seccion panel">
         <h2>Datos personales</h2>
         {error && <p className="productos-error" role="alert">{error}</p>}
-        {mensaje && <p role="status">{mensaje}</p>}
-        {!perfil && !error && <p role="status">Consultando tu perfil…</p>}
+        {!perfil && !error && <BloqueCarga mensaje="Consultando tu perfil…" />}
         {perfil && formulario && (
           <>
             <div className="perfil-personal-avatar">
@@ -165,7 +168,7 @@ function MiPerfil({ cambiarPagina, onPerfilActualizado }) {
                   Cancelar
                 </button>
                 <button type="submit" className="boton-volver" disabled={guardando}>
-                  {guardando ? 'Guardando…' : 'Guardar cambios'}
+                  {guardando ? <IndicadorCarga>Guardando…</IndicadorCarga> : 'Guardar cambios'}
                 </button>
               </div>
             </form>

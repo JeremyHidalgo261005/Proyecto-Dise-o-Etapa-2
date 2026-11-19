@@ -91,10 +91,18 @@ registrarse.
 
 ## Dashboard e historial de ventas
 
-El Dashboard consulta PostgreSQL para mostrar los productos registrados, los
-que alcanzaron su stock mínimo o están por debajo, las ventas del día y las
-tres ventas más recientes. Las fechas se muestran y filtran en la zona horaria
-de Costa Rica.
+El Dashboard consulta PostgreSQL para mostrar los productos registrados y
+la suma de existencias de productos activos, las ventas del día y su variación
+frente a ayer, los productos con stock bajo y los agotados, y las tres ventas
+más recientes. Si ayer hubo cero ventas, se muestra ese estado sin calcular
+un porcentaje. Las fechas se muestran y filtran en la zona horaria de Costa Rica.
+
+Las ayudas contextuales aparecen al pasar el mouse o al enfocar un control con
+el teclado y se cierran con Escape. Las tablas y tarjetas muestran indicadores
+mientras esperan la respuesta de la API. Los avisos de éxito e información
+se cierran automáticamente. Las advertencias y los errores permanecen hasta
+que se descartan. Las confirmaciones de acciones se mantienen y las animaciones
+respetan la preferencia de movimiento reducido del sistema.
 
 Abrí el historial con **Ver todas las ventas** desde el Dashboard o con
 **Historial de ventas** desde el punto de venta. Podés buscar por número de
@@ -102,6 +110,30 @@ factura (por ejemplo, FAC-123), combinar fecha y método de pago, navegar por
 páginas de 15 ventas y consultar los artículos de cada factura. El historial
 es de consulta y conserva los permisos de Ventas. Volver al punto de venta
 desde el historial conserva el carrito abierto.
+
+### Selección y acciones en tablas
+
+El checkbox del encabezado selecciona las filas visibles de la página actual.
+El contador y las acciones aparecen encima de la tabla. Una búsqueda, un
+cambio de filtro o de página borra la selección. Editar, ver el detalle e
+imprimir una factura requieren seleccionar una sola fila.
+
+Eliminación y cambios de estado se confirman antes de enviarse. Cada registro
+pasa por el endpoint y las validaciones de Django. El resultado puede ser
+parcial y el diálogo indica los nombres y motivos de los rechazos. En usuarios,
+el número junto a Activar o Desactivar indica cuántas cuentas seleccionadas
+admiten esa acción.
+
+### Posible corrección de ventas
+
+Una corrección futura podría registrarse como un documento vinculado a la
+factura original, con motivo, responsable, fecha y detalle del cambio. El
+documento original y sus movimientos se conservarían. Si la corrección implica
+devolver unidades, el servicio podría registrar movimientos compensatorios
+en la misma transacción y proteger el registro contra reintentos duplicados.
+Antes de implementarlo se debe definir qué rol autoriza la corrección, cómo
+se documenta el efecto sobre el cobro y cuándo corresponde reponer inventario.
+
 
 Para verificar las consultas y las regresiones en una base temporal, ejecutá
 `python manage.py test modulos.ventas modulos.movimientos_inventario` desde

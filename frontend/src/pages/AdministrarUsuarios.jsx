@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react'
-import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
+import { EsqueletoTabla, IndicadorCarga } from '../components/CargaUI'
+import { useErrorConAviso, useNotificar } from '../components/avisos'
+import { useEffect, useRef, useState } from 'react'
+import ConfirmarLote from '../components/ConfirmarLote'
+import { BarraSeleccion, CabeceraSeleccion, CeldaSeleccion } from '../components/SeleccionTabla'
+import { useSeleccionTabla } from '../components/useSeleccionTabla'
 import { consultarUsuarios, guardarUsuarios } from './apiUsuarios'
 import './Usuarios.css'
 
@@ -28,9 +32,10 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
   const [edicion, setEdicion] = useState(null)
   const [porCambiar, setPorCambiar] = useState(null)
   const [guardando, setGuardando] = useState(false)
-  const [error, setError] = useState('')
-  const [errorFormulario, setErrorFormulario] = useState('')
-  const [mensaje, setMensaje] = useState('')
+  const enviandoFormulario = useRef(false)
+  const [error, setError] = useErrorConAviso()
+  const [errorFormulario, setErrorFormulario] = useErrorConAviso()
+  const notificar = useNotificar()
 
   useEffect(() => {
     const controlador = new AbortController()
@@ -41,11 +46,12 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
       if (!controlador.signal.aborted) setCargando(false)
     })
     return () => controlador.abort()
-  }, [consulta])
+  }, [consulta, setError])
 
   function listar(buscar = consulta.buscar) {
     setCargando(true)
     setError('')
+    seleccion.limpiar()
     setConsulta({ buscar })
   }
 
@@ -65,7 +71,7 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
 
   async function guardar(evento) {
     evento.preventDefault()
-    if (guardando) return
+    if (enviandoFormulario.current) return
     const obligatorios = [
       ...camposPersonales,
       ...(!esCuentaPropia ? [['rol', 'Rol']] : []),
@@ -88,6 +94,7 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
       return
     }
 
+    enviandoFormulario.current = true
     setGuardando(true)
     setErrorFormulario('')
     try {
@@ -101,24 +108,30 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
         })
       }
       setFormulario(null)
-      setMensaje(edicion ? 'Usuario actualizado.' : 'Usuario registrado.')
+      notificar(edicion ? 'Usuario actualizado.' : 'Usuario registrado.', 'exito')
       listar()
     } catch (error) {
       setErrorFormulario(error.message)
     } finally {
+      enviandoFormulario.current = false
       setGuardando(false)
     }
   }
 
-  async function cambiarEstado() {
-    const activo = !porCambiar.is_active
-    await guardarUsuarios('usuarios/' + porCambiar.id + '/estado/', 'PATCH', { activo })
-    setMensaje(activo ? 'Cuenta activada.' : 'Cuenta desactivada.')
-    listar()
-  }
-
+  const seleccion = useSeleccionTabla(cargando || error ? [] : usuarios)
+  const [registro] = seleccion.elegidos
   const esCuentaPropia = edicion?.id === usuarioActual.id
-  const accion = porCambiar?.is_active ? 'Desactivar' : 'Activar'
+  const cuentas = seleccion.elegidos.filter((usuario) => usuario.editable && usuario.id !== usuarioActual.id)
+  const accionesEstado = [true, false].map((activo) => {
+    const registros = cuentas.filter((usuario) => usuario.is_active !== activo)
+    const accion = activo ? 'Activar' : 'Desactivar'
+    return registros.length > 0 && {
+      icono: accion.toLowerCase(),
+      texto: accion + (registros.length < seleccion.elegidos.length ? ' (' + registros.length + ')' : ''),
+      deshabilitada: guardando,
+      ejecutar: () => setPorCambiar({ registros, activo, accion })
+    }
+  })
 
   return (
     <>
@@ -132,7 +145,6 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
             + Nuevo usuario
           </button>
         </header>
-        {mensaje && <p role="status">{mensaje}</p>}
 
         {formulario && (
           <section className="usuarios-editor">
@@ -165,7 +177,7 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
                 <button type="button" className="productos-boton-secundario" disabled={guardando}
                   onClick={() => setFormulario(null)}>Cancelar</button>
                 <button type="submit" className="boton-volver" disabled={guardando}>
-                  {guardando ? 'Guardando…' : 'Guardar usuario'}
+                  {guardando ? <IndicadorCarga>Guardando…</IndicadorCarga> : 'Guardar usuario'}
                 </button>
               </div>
             </form>
@@ -176,41 +188,38 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
           onSubmit={(evento) => { evento.preventDefault(); listar(busqueda.trim()) }}>
           <label htmlFor="buscar-usuario">Buscar usuarios</label>
           <div className="usuarios-acciones">
-            <input id="buscar-usuario" type="search" value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)} placeholder="Nombre, usuario o correo" />
+            <input id="buscar-usuario" type="search" data-tooltip="Buscar por nombre, usuario o correo" value={busqueda}
+              onChange={(evento) => { seleccion.limpiar(); setBusqueda(evento.target.value) }} placeholder="Nombre, usuario o correo" />
             <button type="submit" className="boton-volver">Buscar</button>
           </div>
         </form>
 
+        <BarraSeleccion seleccion={seleccion} acciones={[
+          seleccion.elegidos.length === 1 && registro.editable && {
+            icono: 'editar', texto: 'Editar', ejecutar: () => editar(registro), deshabilitada: guardando
+          },
+          ...accionesEstado
+        ]} />
         <div className="tabla-contenedor" role="region" aria-label="Usuarios registrados" tabIndex={0}>
           <table className="usuarios-tabla">
-            <thead><tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <thead><tr><CabeceraSeleccion seleccion={seleccion} deshabilitada={cargando || Boolean(error) || !usuarios.length} /><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th></tr></thead>
             <tbody>
               {!cargando && !error && usuarios.map((usuario) => (
-                <tr key={usuario.id}>
+                <tr key={usuario.id} data-seleccionada={seleccion.marcada(usuario)}>
+                  <CeldaSeleccion marcada={seleccion.marcada(usuario)} nombre={nombreCompleto(usuario)}
+                    onChange={() => seleccion.alternar(usuario.id)} />
                   <td>{usuario.username}</td>
                   <td>{nombreCompleto(usuario)}</td>
                   <td>{usuario.email || '—'}</td>
                   <td>{usuario.rol || 'Sin rol'}</td>
                   <td>{usuario.is_active ? 'Activa' : 'Inactiva'}</td>
-                  <td>
-                    <div className="usuarios-acciones">
-                      <button type="button" className="productos-boton-secundario"
-                        disabled={!usuario.editable || guardando} onClick={() => editar(usuario)}>Editar</button>
-                      {usuario.id !== usuarioActual.id && (
-                        <button type="button" className="productos-boton-secundario"
-                          disabled={!usuario.editable || guardando} onClick={() => setPorCambiar(usuario)}>
-                          {usuario.is_active ? 'Desactivar' : 'Activar'}
-                        </button>
-                      )}
-                    </div>
-                  </td>
                 </tr>
               ))}
-              {(cargando || error || !usuarios.length) && (
+              {cargando && <EsqueletoTabla columnas={6} mensaje="Consultando usuarios…" />}
+              {!cargando && (error || !usuarios.length) && (
                 <tr><td className="tabla-vacia" colSpan="6">
                   {error ? <span role="alert">{error}</span>
-                    : cargando ? 'Consultando usuarios…' : 'No hay usuarios para esta búsqueda.'}
+                    : 'No hay usuarios para esta búsqueda.'}
                 </td></tr>
               )}
             </tbody>
@@ -219,11 +228,12 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
       </section>
 
       {porCambiar && (
-        <ConfirmarEliminacion titulo={accion + ' cuenta'} nombre={nombreCompleto(porCambiar)}
-          mensaje={porCambiar.is_active ? 'La persona perderá el acceso a MiniGestor.'
-            : 'La persona recuperará el acceso según su rol.'}
-          accion={accion} procesando="Guardando…" peligro={porCambiar.is_active}
-          onCancelar={() => setPorCambiar(null)} onEliminar={cambiarEstado} />
+        <ConfirmarLote registros={porCambiar.registros} nombre={nombreCompleto} accion={porCambiar.accion}
+          mensaje={porCambiar.activo ? 'Las cuentas recuperarán el acceso según su rol.'
+            : 'Las cuentas seleccionadas perderán el acceso a MiniGestor.'}
+          onCancelar={() => setPorCambiar(null)}
+          ejecutar={(usuario) => guardarUsuarios('usuarios/' + usuario.id + '/estado/', 'PATCH', { activo: porCambiar.activo })}
+          alTerminar={() => listar()} />
       )}
     </>
   )

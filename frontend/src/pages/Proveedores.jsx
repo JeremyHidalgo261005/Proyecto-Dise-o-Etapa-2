@@ -1,6 +1,11 @@
+import { IndicadorCarga, TablaEnCarga } from '../components/CargaUI'
+import { useErrorConAviso, useNotificar } from '../components/avisos'
+import { cerrarConAnimacion } from '../components/transiciones'
 
-import { useEffect, useState } from 'react'
-import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import ConfirmarLote from '../components/ConfirmarLote'
+import { BarraSeleccion, CabeceraSeleccion, CeldaSeleccion } from '../components/SeleccionTabla'
+import { useSeleccionTabla } from '../components/useSeleccionTabla'
 import './Proveedores.css'
 
 const formularioInicial = {
@@ -103,16 +108,16 @@ function Proveedores({ cambiarPagina }) {
 
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
-  const [eliminandoId, setEliminandoId] = useState(null)
+  const enviandoFormulario = useRef(false)
+  const fondoModal = useRef(null)
   const [porEliminar, setPorEliminar] = useState(null)
 
-  const [errorCarga, setErrorCarga] = useState('')
-  const [error, setError] = useState('')
-  const [mensaje, setMensaje] = useState('')
+  const [errorCarga, setErrorCarga] = useErrorConAviso()
+  const [error, setError] = useErrorConAviso()
+  const notificar = useNotificar()
 
   const modoEdicion = editandoId !== null
   const [modalAbierto, setModalAbierto] = useState(false)
-  const errorPagina = modalAbierto ? errorCarga : (error || errorCarga)
 
   // READ: cargar proveedores desde PostgreSQL
   useEffect(() => {
@@ -142,18 +147,7 @@ function Proveedores({ cambiarPagina }) {
     cargarDatos()
 
     return () => controlador.abort()
-  }, [])
-
-  useEffect(() => {
-    if (!modalAbierto) return
-
-    function alPresionar(evento) {
-      if (evento.key === 'Escape') cerrarModal()
-    }
-
-    window.addEventListener('keydown', alPresionar)
-    return () => window.removeEventListener('keydown', alPresionar)
-  }, [modalAbierto, guardando])
+  }, [setErrorCarga])
 
   
 function cambiarCampo(evento) {
@@ -178,11 +172,11 @@ function cambiarCampo(evento) {
   }
 
 
-  function limpiarFormulario() {
+  const limpiarFormulario = useCallback(() => {
     setFormulario({ ...formularioInicial })
     setEditandoId(null)
     setError('')
-  }
+  }, [setError])
 
   // Preparar formulario para editar un proveedor
   function editarProveedor(proveedor) {
@@ -196,29 +190,44 @@ function cambiarCampo(evento) {
     })
 
     setError('')
-    setMensaje('')
 
     setModalAbierto(true)
   }
 
   function abrirModalNuevo() {
     limpiarFormulario()
-    setMensaje('')
     setModalAbierto(true)
   }
 
-  function cerrarModal() {
-    if (guardando) return
-    limpiarFormulario()
-    setModalAbierto(false)
-  }
+  const cerrarFormulario = useCallback(() => {
+    cerrarConAnimacion(fondoModal.current, () => {
+      limpiarFormulario()
+      setModalAbierto(false)
+    })
+  }, [limpiarFormulario])
+
+  const cerrarModal = useCallback(() => {
+    if (!enviandoFormulario.current) cerrarFormulario()
+  }, [cerrarFormulario])
+
+  useEffect(() => {
+    if (!modalAbierto) return
+
+    function alPresionar(evento) {
+      if (evento.key === 'Escape') cerrarModal()
+    }
+
+    window.addEventListener('keydown', alPresionar)
+    return () => window.removeEventListener('keydown', alPresionar)
+  }, [modalAbierto, cerrarModal])
+
 
   // CREATE y UPDATE
   async function guardarProveedor(evento) {
     evento.preventDefault()
+    if (enviandoFormulario.current) return
 
     setError('')
-    setMensaje('')
 
     if (!formulario.nombre.trim()) {
       setError('El nombre del proveedor es obligatorio.')
@@ -241,6 +250,7 @@ function cambiarCampo(evento) {
       direccion: formulario.direccion.trim()
     }
 
+    enviandoFormulario.current = true
     setGuardando(true)
 
     try {
@@ -266,7 +276,7 @@ function cambiarCampo(evento) {
           )
         )
 
-        setMensaje('Proveedor actualizado correctamente.')
+        notificar('Proveedor actualizado correctamente.', 'exito')
       } else {
         // CREATE: registrar proveedor
         const creado = await solicitarAPI(
@@ -286,14 +296,14 @@ function cambiarCampo(evento) {
           creado
         ])
 
-        setMensaje('Proveedor registrado correctamente.')
+        notificar('Proveedor registrado correctamente.', 'exito')
       }
 
-      limpiarFormulario()
-      setModalAbierto(false)
+      cerrarFormulario()
     } catch (err) {
       setError(err.message)
     } finally {
+      enviandoFormulario.current = false
       setGuardando(false)
     }
   }
@@ -301,38 +311,29 @@ function cambiarCampo(evento) {
   // DELETE: eliminar proveedor
   async function eliminarProveedor(proveedor) {
     setError('')
-    setMensaje('')
 
     const token = obtenerCSRF()
 
     if (!token) throw new Error('Iniciá sesión nuevamente como administrador.')
 
-    setEliminandoId(proveedor.id)
-
-    try {
-      await solicitarAPI(
-        `/api/proveedores/${proveedor.id}/`,
-        {
-          method: 'DELETE',
-          headers: {
-            'X-CSRFToken': token
-          }
+    await solicitarAPI(
+      `/api/proveedores/${proveedor.id}/`,
+      {
+        method: 'DELETE',
+        headers: {
+          'X-CSRFToken': token
         }
-      )
-
-      setProveedores((anteriores) =>
-        anteriores.filter((item) =>
-          item.id !== proveedor.id
-        )
-      )
-
-      if (editandoId === proveedor.id) {
-        limpiarFormulario()
       }
+    )
 
-      setMensaje('Proveedor eliminado correctamente.')
-    } finally {
-      setEliminandoId(null)
+    setProveedores((anteriores) =>
+      anteriores.filter((item) =>
+        item.id !== proveedor.id
+      )
+    )
+
+    if (editandoId === proveedor.id) {
+      limpiarFormulario()
     }
   }
 
@@ -351,12 +352,15 @@ function cambiarCampo(evento) {
     return texto.includes(busqueda.trim().toLowerCase())
   })
 
+  const seleccion = useSeleccionTabla(proveedoresFiltrados)
+  const [registro] = seleccion.elegidos
+
   return (
     <div className="proveedores-pagina">
       {porEliminar && (
-        <ConfirmarEliminacion titulo="Eliminar proveedor" nombre={porEliminar.nombre}
-          mensaje="¿Querés eliminar este registro? Esta acción no se puede deshacer."
-          onCancelar={() => setPorEliminar(null)} onEliminar={() => eliminarProveedor(porEliminar)} />
+        <ConfirmarLote registros={porEliminar} nombre={(registro) => registro.nombre}
+          mensaje="¿Querés eliminar la selección? Esta acción no se puede deshacer."
+          onCancelar={() => setPorEliminar(null)} ejecutar={eliminarProveedor} alTerminar={seleccion.limpiar} />
       )}
 
 
@@ -369,7 +373,7 @@ function cambiarCampo(evento) {
 
       {/* FORMULARIO */}
       {modalAbierto && (
-        <div className="modal-fondo" onClick={cerrarModal}>
+        <div className="modal-fondo" ref={fondoModal} onClick={cerrarModal}>
           <section
             className="modal-caja panel"
             role="dialog"
@@ -469,7 +473,7 @@ function cambiarCampo(evento) {
                   }
                 >
                   {guardando
-                    ? 'Guardando...'
+                    ? <IndicadorCarga>Guardando…</IndicadorCarga>
                     : modoEdicion
                       ? 'Guardar cambios'
                       : 'Registrar proveedor'}
@@ -478,13 +482,6 @@ function cambiarCampo(evento) {
             </form>
           </section>
         </div>
-      )}
-
-      {/* MENSAJES */}
-      {mensaje && (
-        <p className="proveedores-exito" role="status">
-          {mensaje}
-        </p>
       )}
 
       {(error || errorCarga) && (
@@ -521,17 +518,21 @@ function cambiarCampo(evento) {
 
           <input
             id="buscar-proveedores"
+            data-tooltip="Buscar proveedores por nombre"
             type="search"
             value={busqueda}
-            onChange={(evento) =>
-              setBusqueda(evento.target.value)
-            }
+            onChange={(evento) => { seleccion.limpiar(); setBusqueda(evento.target.value) }}
             placeholder="Buscar por nombre, teléfono, correo..."
           />
         </div>
 
+        <BarraSeleccion seleccion={seleccion} acciones={[
+          seleccion.elegidos.length === 1 && { icono: 'editar', texto: 'Editar', ejecutar: () => editarProveedor(registro), deshabilitada: guardando },
+          { icono: 'eliminar', texto: 'Eliminar', ejecutar: () => setPorEliminar(seleccion.elegidos), deshabilitada: guardando }
+        ]} />
+
         {cargando ? (
-          <p>Cargando proveedores...</p>
+          <TablaEnCarga columnas={6} mensaje="Cargando proveedores…" />
         ) : !errorCarga && (
           <div
             className="tabla-contenedor proveedores-tabla-scroll"
@@ -542,12 +543,12 @@ function cambiarCampo(evento) {
             <table>
               <thead>
                 <tr>
+                  <CabeceraSeleccion seleccion={seleccion} deshabilitada={!proveedoresFiltrados.length} />
                   <th>ID</th>
                   <th>Nombre</th>
                   <th>Teléfono</th>
                   <th>Correo</th>
                   <th>Dirección</th>
-                  <th>Acciones</th>
                 </tr>
               </thead>
 
@@ -560,46 +561,15 @@ function cambiarCampo(evento) {
                   </tr>
                 ) : (
                   proveedoresFiltrados.map((proveedor) => (
-                    <tr key={proveedor.id}>
+                    <tr key={proveedor.id} data-seleccionada={seleccion.marcada(proveedor)}>
+                      <CeldaSeleccion marcada={seleccion.marcada(proveedor)} nombre={proveedor.nombre}
+                        onChange={() => seleccion.alternar(proveedor.id)} />
                       <td>{proveedor.id}</td>
                       <td>{proveedor.nombre}</td>
                       <td>{proveedor.telefono || '—'}</td>
                       <td>{proveedor.correo || '—'}</td>
                       <td>{proveedor.direccion || '—'}</td>
 
-                      <td>
-                        <div className="proveedores-acciones">
-                          <button
-                            type="button"
-                            className="proveedores-editar"
-                            onClick={() =>
-                              editarProveedor(proveedor)
-                            }
-                            disabled={
-                              guardando ||
-                              eliminandoId !== null
-                            }
-                          >
-                            Editar
-                          </button>
-
-                          <button
-                            type="button"
-                            className="proveedores-eliminar"
-                            onClick={() =>
-                              setPorEliminar(proveedor)
-                            }
-                            disabled={
-                              guardando ||
-                              eliminandoId !== null
-                            }
-                          >
-                            {eliminandoId === proveedor.id
-                              ? 'Eliminando...'
-                              : 'Eliminar'}
-                          </button>
-                        </div>
-                      </td>
                     </tr>
                   ))
                 )}

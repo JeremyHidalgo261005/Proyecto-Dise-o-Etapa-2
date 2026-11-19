@@ -53,22 +53,23 @@ function MenuPerfil({ usuario, cambiarPagina, onCerrarSesion }) {
   return (
     <div className="perfil-menu-contenedor" ref={menu}>
       <button ref={boton} type="button" className="perfil-menu-boton" aria-expanded={abierto}
-        aria-controls="opciones-perfil" aria-label={'Opciones de perfil de ' + usuario.nombre}
+        data-tooltip={abierto ? "Cerrar opciones de perfil" : "Abrir opciones de perfil"} aria-controls="opciones-perfil" aria-label={'Opciones de perfil de ' + usuario.nombre}
         onClick={() => setAbierto((actual) => !actual)}>
         <span className="perfil-menu-nombre">{usuario.nombre}</span>
         <AvatarPerfil nombre={usuario.nombre} imagen={usuario.imagen_url} />
       </button>
 
-      <div className="perfil-menu" id="opciones-perfil" hidden={!abierto}>
-        <button type="button" onClick={() => navegar('Mi perfil')}>
+      <div className="perfil-menu" id="opciones-perfil" data-abierto={abierto} inert={!abierto}>
+        <button type="button" data-tooltip="Editar tus datos personales" onClick={() => navegar('Mi perfil')}>
           <IconoPerfil tipo="perfil" /> Mi perfil
         </button>
         {usuario.rol === 'Administrador' && (
-          <button type="button" onClick={() => navegar('Administrar usuarios')}>
+          <button type="button" data-tooltip="Gestionar cuentas y permisos" onClick={() => navegar('Administrar usuarios')}>
             <IconoPerfil tipo="usuarios" /> Administrar usuarios
           </button>
         )}
-        <button type="button" onClick={() => { setAbierto(false); setConfirmarSalida(true) }}>
+        <button type="button" data-tooltip="Cerrar tu sesión en MiniGestor"
+          onClick={() => { setAbierto(false); setConfirmarSalida(true) }}>
           <IconoPerfil tipo="salir" /> Cerrar sesión
         </button>
       </div>

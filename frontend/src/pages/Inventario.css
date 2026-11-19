@@ -19,3 +19,13 @@
   box-sizing: border-box;
   overscroll-behavior: contain;
 }
+
+
+dialog.movimiento-detalle dl {
+  display: grid;
+  grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr);
+  gap: 10px 12px;
+}
+
+.movimiento-detalle dt { font-weight: 700; }
+.movimiento-detalle dd { margin: 0; overflow-wrap: anywhere; }

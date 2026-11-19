@@ -1,15 +1,18 @@
+import { IndicadorCarga } from './CargaUI'
+import { useErrorConAviso } from './avisos'
+import { cerrarConAnimacion } from './transiciones'
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import './ConfirmarEliminacion.css'
 
 function ConfirmarEliminacion({
   titulo, nombre, mensaje, onCancelar, onEliminar, accion = 'Eliminar',
-  procesando = 'Eliminando…', peligro = true
+  procesando = 'Eliminando…', peligro = true, soloCerrar = false, resultado
 }) {
   const dialogo = useRef(null)
   const cancelar = useRef(null)
   const enviando = useRef(false)
   const [eliminando, setEliminando] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useErrorConAviso()
   const id = useId()
 
   useLayoutEffect(() => {
@@ -40,14 +43,26 @@ function ConfirmarEliminacion({
     }
   }, [])
 
+  useLayoutEffect(() => {
+    if (soloCerrar) cancelar.current.focus({ preventScroll: true })
+  }, [soloCerrar])
+
+  function cerrar() {
+    cerrarConAnimacion(dialogo.current, onCancelar)
+  }
+
   async function confirmar() {
     if (enviando.current) return
     enviando.current = true
     setEliminando(true)
     setError('')
     try {
-      await onEliminar()
-      onCancelar()
+      if (await onEliminar() !== false) {
+        cerrar()
+        return
+      }
+      enviando.current = false
+      setEliminando(false)
     } catch (error) {
       setError(error.message || 'No se pudo completar la acción.')
       enviando.current = false
@@ -60,22 +75,25 @@ function ConfirmarEliminacion({
       aria-labelledby={id + '-titulo'} aria-describedby={id + '-mensaje'}
       onCancel={(evento) => {
         evento.preventDefault()
-        if (!enviando.current) onCancelar()
+        if (!enviando.current) cerrar()
       }}>
       <span className="confirmar-eliminacion-icono" aria-hidden="true">!</span>
       <h2 id={id + '-titulo'}>{titulo}</h2>
       {nombre && <p className="confirmar-eliminacion-nombre">{nombre}</p>}
       <p id={id + '-mensaje'}>{mensaje}</p>
       {error && <p className="confirmar-eliminacion-error" role="alert">{error}</p>}
+      {resultado}
       <div className="confirmar-eliminacion-acciones">
         <button ref={cancelar} type="button" className="productos-boton-secundario"
-          disabled={eliminando} onClick={onCancelar}>
-          Cancelar
+          disabled={eliminando} onClick={cerrar}>
+          {soloCerrar ? 'Cerrar' : 'Cancelar'}
         </button>
-        <button type="button" className={peligro ? 'confirmar-eliminacion-boton' : 'boton-volver'}
-          disabled={eliminando} onClick={confirmar}>
-          {eliminando ? procesando : accion}
-        </button>
+        {!soloCerrar && (
+          <button type="button" className={peligro ? 'confirmar-eliminacion-boton' : 'boton-volver'}
+            disabled={eliminando} onClick={confirmar}>
+            {eliminando ? <IndicadorCarga>{procesando}</IndicadorCarga> : accion}
+          </button>
+        )}
       </div>
     </dialog>
   )

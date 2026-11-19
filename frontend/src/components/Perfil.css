@@ -65,7 +65,16 @@
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 12px 30px #37245724;
-  animation: perfil-aparecer 150ms ease-out both;
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 -5px;
+  transition: opacity 170ms ease, translate 170ms ease, visibility 170ms;
+}
+
+.perfil-menu[data-abierto="true"] {
+  opacity: 1;
+  visibility: visible;
+  translate: 0 0;
 }
 
 .perfil-menu button {
@@ -95,11 +104,6 @@
   flex: 0 0 20px;
 }
 
-@keyframes perfil-aparecer {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 @media (max-width: 480px) {
   .encabezado.encabezado-con-perfil { gap: 8px; }
   .perfil-menu-boton { gap: 5px; padding-left: 8px; font-size: 13px; }
@@ -107,5 +111,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .perfil-menu { animation: none; }
+  .perfil-menu { transition: none; translate: none; }
 }

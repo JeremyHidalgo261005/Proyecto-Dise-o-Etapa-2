@@ -1,3 +1,6 @@
+import { BloqueCarga, IndicadorCarga } from '../components/CargaUI'
+import { useErrorConAviso, useNotificar } from '../components/avisos'
+import { cerrarConAnimacion } from '../components/transiciones'
 import { useState, useEffect, useRef } from 'react'
 import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
 import './Ventas.css'
@@ -51,13 +54,18 @@ function Ventas({ cambiarPagina, usuario }) {
   })
   const enviandoPago = useRef(false)
   const claveBorrador = useRef(pendiente?.clave_solicitud || null)
+  const notificar = useNotificar()
+  const fondoPin = useRef(null)
+  const fondoPago = useRef(null)
+  const fondoComprobante = useRef(null)
+  const enviandoPin = useRef(false)
   const [guardandoPago, setGuardandoPago] = useState(false)
   const [autorizando, setAutorizando] = useState(false)
   const [autorizacion, setAutorizacion] = useState('')
   // Estado de catálogo de productos
   const [productos, setProductos] = useState([])
   const [cargandoProductos, setCargandoProductos] = useState(true)
-  const [errorProductos, setErrorProductos] = useState('')
+  const [errorProductos, setErrorProductos] = useErrorConAviso()
   const [busqueda, setBusqueda] = useState('')
 
   // Estado de la factura actual (tiempo real)
@@ -70,14 +78,14 @@ function Ventas({ cambiarPagina, usuario }) {
   const [descuentoTemporal, setDescuentoTemporal] = useState(10)
   const [pinAdmin, setPinAdmin] = useState('')
   const [mostrarPin, setMostrarPin] = useState(false)
-  const [errorPin, setErrorPin] = useState('')
+  const [errorPin, setErrorPin] = useErrorConAviso()
 
   // 2. Modal de Procesar Pago
   const [modalPagoAbierto, setModalPagoAbierto] = useState(Boolean(pendiente))
   const [metodoPago, setMetodoPago] = useState('efectivo') // 'efectivo' | 'tarjeta'
   const [dineroAportado, setDineroAportado] = useState('')
   const [referenciaTarjeta, setReferenciaTarjeta] = useState('')
-  const [errorPago, setErrorPago] = useState(pendiente ? 'Hay un registro pendiente de confirmar. Reintentá el registro antes de cobrar otra vez.' : '')
+  const [errorPago, setErrorPago] = useErrorConAviso(pendiente ? 'Hay un registro pendiente de confirmar. Reintentá el registro antes de cobrar otra vez.' : '')
 
   // 3. Modal de Venta Exitosa (Ticket / Factura final)
   const [ventaExitosa, setVentaExitosa] = useState(null)
@@ -106,7 +114,7 @@ function Ventas({ cambiarPagina, usuario }) {
 
     cargarCatalogo()
     return () => controlador.abort()
-  }, [])
+  }, [setErrorProductos])
 
   // ==========================================
   // AGREGAR / MODIFICAR PRODUCTOS EN FACTURA
@@ -188,6 +196,10 @@ function Ventas({ cambiarPagina, usuario }) {
     setModalAdminAbierto(true)
   }
 
+  function cerrarPin() {
+    if (!enviandoPin.current) cerrarConAnimacion(fondoPin.current, () => setModalAdminAbierto(false))
+  }
+
   function obtenerClaveBorrador() {
     claveBorrador.current ??= crypto.randomUUID()
     return claveBorrador.current
@@ -195,7 +207,8 @@ function Ventas({ cambiarPagina, usuario }) {
 
   async function autorizarDescuento(evento) {
     evento.preventDefault()
-    if (autorizando) return
+    if (enviandoPin.current) return
+    enviandoPin.current = true
     setAutorizando(true)
     setErrorPin('')
     try {
@@ -210,11 +223,12 @@ function Ventas({ cambiarPagina, usuario }) {
 
       setPorcentajeDescuento(porcentaje)
       setAutorizacion(datos.autorizacion)
-      setModalAdminAbierto(false)
+      cerrarConAnimacion(fondoPin.current, () => setModalAdminAbierto(false))
     } catch (error) {
       setErrorPin(error.message)
     } finally {
       setPinAdmin('')
+      enviandoPin.current = false
       setAutorizando(false)
     }
   }
@@ -235,7 +249,9 @@ function Ventas({ cambiarPagina, usuario }) {
   const vuelto = (Math.round(aportadoNumerico * 100) - Math.round(totalPagar * 100)) / 100
 
   function cerrarPago() {
-    if (!enviandoPago.current && !pendiente) setModalPagoAbierto(false)
+    if (!enviandoPago.current && !pendiente) {
+      cerrarConAnimacion(fondoPago.current, () => setModalPagoAbierto(false))
+    }
   }
 
   function guardarPendiente(solicitud) {
@@ -319,6 +335,7 @@ function Ventas({ cambiarPagina, usuario }) {
         return
       }
 
+      notificar('Venta FAC-' + datos.id_venta + ' registrada correctamente.', 'exito')
       setVentaExitosa({
         numero: 'FAC-' + datos.id_venta,
         fechaHora: new Date(datos.fecha).toLocaleString('es-CR'),
@@ -350,9 +367,11 @@ function Ventas({ cambiarPagina, usuario }) {
   }
 
   function nuevaVenta() {
-    setVentaExitosa(null)
-    setItemsFactura([])
-    setPorcentajeDescuento(0)
+    cerrarConAnimacion(fondoComprobante.current, () => {
+      setVentaExitosa(null)
+      setItemsFactura([])
+      setPorcentajeDescuento(0)
+    })
   }
 
   // Filtro de productos en catálogo
@@ -433,6 +452,7 @@ function Ventas({ cambiarPagina, usuario }) {
               ref={inputBuscarRef}
               type="text"
               placeholder="Buscar por nombre o código de barras..."
+              aria-label="Buscar productos" data-tooltip="Buscar por nombre o código de barras"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               onKeyDown={manejarEnterBusqueda}
@@ -443,7 +463,7 @@ function Ventas({ cambiarPagina, usuario }) {
                 type="button"
                 className="btn-limpiar-busqueda"
                 onClick={() => setBusqueda('')}
-                title="Limpiar"
+                aria-label="Limpiar" data-tooltip="Limpiar"
               >
                 ✕
               </button>
@@ -451,9 +471,9 @@ function Ventas({ cambiarPagina, usuario }) {
           </div>
 
           {cargandoProductos ? (
-            <div className="catalogo-cargando">Cargando productos...</div>
+            <BloqueCarga mensaje="Cargando productos…" />
           ) : errorProductos ? (
-            <div className="catalogo-error">⚠️ {errorProductos}</div>
+            <div className="catalogo-error" role="alert">⚠️ {errorProductos}</div>
           ) : (
             <div className="catalogo-scroll">
               {productosFiltrados.length === 0 ? (
@@ -511,7 +531,10 @@ function Ventas({ cambiarPagina, usuario }) {
           </div>
 
           {/* TABLA DE LA FACTURA */}
-          <div className="factura-cuerpo-tabla">
+          <div className="factura-cuerpo-tabla"
+            role={itemsFactura.length ? 'region' : undefined}
+            aria-label={itemsFactura.length ? 'Artículos de la factura' : undefined}
+            tabIndex={itemsFactura.length ? 0 : undefined}>
             {itemsFactura.length === 0 ? (
               <div className="factura-vacia-aviso">
                 <div className="factura-icono-vacio">🛒</div>
@@ -545,7 +568,7 @@ function Ventas({ cambiarPagina, usuario }) {
                             onClick={() =>
                               modificarCantidad(it.producto.id, it.cantidad - 1)
                             }
-                            title="Restar"
+                            aria-label="Restar" data-tooltip="Restar"
                           >
                             -
                           </button>
@@ -566,7 +589,7 @@ function Ventas({ cambiarPagina, usuario }) {
                             onClick={() =>
                               modificarCantidad(it.producto.id, it.cantidad + 1)
                             }
-                            title="Sumar"
+                            aria-label="Sumar" data-tooltip="Sumar"
                           >
                             +
                           </button>
@@ -586,7 +609,7 @@ function Ventas({ cambiarPagina, usuario }) {
                           type="button"
                           className="btn-eliminar-articulo"
                           onClick={() => eliminarArticulo(it.producto.id)}
-                          title="Eliminar artículo"
+                          aria-label="Eliminar artículo" data-tooltip="Eliminar artículo"
                         >
                           <span className="candado-mini" aria-hidden="true">×</span>
                           <span>Eliminar</span>
@@ -614,7 +637,7 @@ function Ventas({ cambiarPagina, usuario }) {
                     type="button"
                     className="btn-quitar-desc"
                     onClick={() => setPorcentajeDescuento(0)}
-                    title="Eliminar descuento"
+                    aria-label="Eliminar descuento" data-tooltip="Eliminar descuento"
                   >
                     ✕
                   </button>
@@ -658,8 +681,8 @@ function Ventas({ cambiarPagina, usuario }) {
       {/* ========================================================= */}
       {modalAdminAbierto && (
         <div
-          className="modal-fondo"
-          onClick={() => !autorizando && setModalAdminAbierto(false)}
+          className="modal-fondo" ref={fondoPin}
+          onClick={cerrarPin}
         >
           <div
             className="modal-caja modal-admin-card"
@@ -723,7 +746,7 @@ function Ventas({ cambiarPagina, usuario }) {
                     type="button"
                     className="btn-toggle-ver-pin"
                     onClick={() => setMostrarPin(!mostrarPin)}
-                    title={mostrarPin ? 'Ocultar PIN' : 'Mostrar PIN'}
+                    data-tooltip={mostrarPin ? 'Ocultar PIN' : 'Mostrar PIN'}
                   >
                     {mostrarPin ? 'Ocultar PIN' : 'Mostrar PIN'}
                   </button>
@@ -740,12 +763,12 @@ function Ventas({ cambiarPagina, usuario }) {
                 <button
                   type="button"
                   className="productos-boton-secundario"
-                  onClick={() => !autorizando && setModalAdminAbierto(false)}
+                  onClick={cerrarPin}
                 >
                   Cancelar
                 </button>
                 <button type="submit" className="boton-volver btn-confirmar-admin" disabled={autorizando}>
-                  Aplicar Descuento
+                  {autorizando ? <IndicadorCarga>Autorizando…</IndicadorCarga> : "Aplicar Descuento"}
                 </button>
               </div>
             </form>
@@ -758,7 +781,7 @@ function Ventas({ cambiarPagina, usuario }) {
       {/* ========================================================= */}
       {modalPagoAbierto && (
         <div
-          className="modal-fondo"
+          className="modal-fondo" ref={fondoPago}
           onClick={cerrarPago}
         >
           <div
@@ -774,7 +797,7 @@ function Ventas({ cambiarPagina, usuario }) {
               </div>
               <button
                 type="button"
-                className="btn-cerrar-modal"
+                className="btn-cerrar-modal" aria-label="Cerrar pago" data-tooltip="Cerrar pago"
                 disabled={guardandoPago || Boolean(pendiente)}
                 onClick={cerrarPago}
               >
@@ -796,6 +819,7 @@ function Ventas({ cambiarPagina, usuario }) {
                 type="button"
                 disabled={guardandoPago || Boolean(pendiente)}
                 className={`btn-selector ${metodoPago === 'efectivo' ? 'activo' : ''}`}
+                aria-pressed={metodoPago === 'efectivo'}
                 onClick={() => {
                   setMetodoPago('efectivo')
                   setErrorPago('')
@@ -809,6 +833,7 @@ function Ventas({ cambiarPagina, usuario }) {
                 type="button"
                 disabled={guardandoPago || Boolean(pendiente)}
                 className={`btn-selector ${metodoPago === 'tarjeta' ? 'activo' : ''}`}
+                aria-pressed={metodoPago === 'tarjeta'}
                 onClick={() => {
                   setMetodoPago('tarjeta')
                   setErrorPago('')
@@ -931,7 +956,7 @@ function Ventas({ cambiarPagina, usuario }) {
                   className="boton-volver btn-confirmar-pago"
                   disabled={guardandoPago || (!pendiente && (!itemsFactura.length || (metodoPago === 'efectivo' && vuelto < 0)))}
                 >
-                  {guardandoPago ? 'Registrando…' : pendiente ? 'Reintentar registro' : '✓ Confirmar y Facturar'}
+                  {guardandoPago ? <IndicadorCarga>Registrando…</IndicadorCarga> : pendiente ? 'Reintentar registro' : '✓ Confirmar y Facturar'}
                 </button>
               </div>
             </form>
@@ -943,7 +968,7 @@ function Ventas({ cambiarPagina, usuario }) {
       {/* MODAL 3: COMPROBANTE FINAL (VENTA EXITOSA)                */}
       {/* ========================================================= */}
       {ventaExitosa && (
-        <div className="modal-fondo">
+        <div className="modal-fondo" ref={fondoComprobante}>
           <div className="modal-caja comprobante-modal" role="dialog" aria-modal="true">
             <div className="comprobante-check">✓</div>
             <h3>¡Venta Registrada con Éxito!</h3>

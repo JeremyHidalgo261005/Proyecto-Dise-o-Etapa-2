@@ -1,5 +1,7 @@
+import { IndicadorCarga } from '../components/CargaUI'
+import { useErrorConAviso } from '../components/avisos'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import './Login.css'
 
 function Login({ onLogin, aviso = '' }) {
@@ -7,10 +9,12 @@ function Login({ onLogin, aviso = '' }) {
   const [contrasena, setContrasena] = useState('')
   const [mostrar, setMostrar] = useState(false)
   const [cargando, setCargando] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useErrorConAviso()
+  const enviando = useRef(false)
 
   async function manejarIngreso(evento) {
     evento.preventDefault()
+    if (enviando.current) return
     setError('')
 
     if (!usuario.trim() || !contrasena) {
@@ -18,6 +22,7 @@ function Login({ onLogin, aviso = '' }) {
       return
     }
 
+    enviando.current = true
     setCargando(true)
 
     try {
@@ -28,6 +33,7 @@ function Login({ onLogin, aviso = '' }) {
     } catch (err) {
       setError(err.message)
     } finally {
+      enviando.current = false
       setCargando(false)
     }
   }
@@ -129,6 +135,7 @@ function Login({ onLogin, aviso = '' }) {
                 <button
                   type="button"
                   className="login-mostrar"
+                  data-tooltip={mostrar ? "Ocultar contraseña" : "Mostrar contraseña"}
                   onClick={() => setMostrar(!mostrar)}
                   aria-label={
                     mostrar
@@ -152,7 +159,7 @@ function Login({ onLogin, aviso = '' }) {
                 disabled={cargando}
               >
                 {cargando
-                  ? 'Verificando acceso...'
+                  ? <IndicadorCarga>Verificando acceso…</IndicadorCarga>
                   : 'Ingresar'}
                 <span aria-hidden="true">→</span>
               </button>

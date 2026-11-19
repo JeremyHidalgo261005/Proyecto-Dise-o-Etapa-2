@@ -93,7 +93,7 @@ function Sidebar({
           onClick={alternarSidebar}
           aria-label={contraido ? 'Expandir menú' : 'Contraer menú'}
           aria-expanded={!contraido}
-          title={contraido ? 'Expandir menú' : 'Contraer menú'}
+          data-tooltip={contraido ? 'Expandir menú' : 'Contraer menú'}
         >
           {contraido ? '»' : '«'}
         </button>
@@ -118,7 +118,8 @@ function Sidebar({
               aria-current={
                 pagina === opcion ? 'page' : undefined
               }
-              title={contraido ? obtenerNombre(opcion) : undefined}
+              aria-label={obtenerNombre(opcion)}
+              data-tooltip={obtenerNombre(opcion)}
             >
               <span className="menu-icono" aria-hidden="true">
                 <IconoNavegacion destino={opcion} />

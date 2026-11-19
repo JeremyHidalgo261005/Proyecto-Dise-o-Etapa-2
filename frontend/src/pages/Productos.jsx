@@ -1,6 +1,11 @@
+import { IndicadorCarga, TablaEnCarga } from '../components/CargaUI'
+import { useErrorConAviso, useNotificar } from '../components/avisos'
+import { cerrarConAnimacion } from '../components/transiciones'
 
-import { useEffect, useState } from 'react'
-import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import ConfirmarLote from '../components/ConfirmarLote'
+import { BarraSeleccion, CabeceraSeleccion, CeldaSeleccion } from '../components/SeleccionTabla'
+import { useSeleccionTabla } from '../components/useSeleccionTabla'
 import './Productos.css'
 
 const formularioInicial = {
@@ -129,12 +134,13 @@ function Productos({ cambiarPagina, usuario }) {
 
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
-  const [eliminandoId, setEliminandoId] = useState(null)
+  const enviandoFormulario = useRef(false)
+  const fondoModal = useRef(null)
   const [porEliminar, setPorEliminar] = useState(null)
 
-  const [errorCarga, setErrorCarga] = useState('')
-  const [errorFormulario, setErrorFormulario] = useState('')
-  const [mensaje, setMensaje] = useState('')
+  const [errorCarga, setErrorCarga] = useErrorConAviso()
+  const [errorFormulario, setErrorFormulario] = useErrorConAviso()
+  const notificar = useNotificar()
 
   const modoEdicion = editandoId !== null
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -192,18 +198,7 @@ function Productos({ cambiarPagina, usuario }) {
     cargarDatos()
 
     return () => controlador.abort()
-  }, [esAdministrador])
-
-  useEffect(() => {
-    if (!modalAbierto) return
-
-    function alPresionar(evento) {
-      if (evento.key === 'Escape') cerrarModal()
-    }
-
-    window.addEventListener('keydown', alPresionar)
-    return () => window.removeEventListener('keydown', alPresionar)
-  }, [modalAbierto, guardando])
+  }, [esAdministrador, setErrorCarga])
 
   // Actualizar los campos del formulario
   function cambiarCampo(evento) {
@@ -218,25 +213,41 @@ function Productos({ cambiarPagina, usuario }) {
   }
 
   // Limpiar el formulario
-  function limpiarFormulario() {
+  const limpiarFormulario = useCallback(() => {
     setFormulario({ ...formularioInicial })
     setEditandoId(null)
     setErrorFormulario('')
-  }
+  }, [setErrorFormulario])
 
   function abrirModalNuevo() {
     if (!esAdministrador) return
 
     limpiarFormulario()
-    setMensaje('')
     setModalAbierto(true)
   }
 
-  function cerrarModal() {
-    if (guardando) return
-    limpiarFormulario()
-    setModalAbierto(false)
-  }
+  const cerrarFormulario = useCallback(() => {
+    cerrarConAnimacion(fondoModal.current, () => {
+      limpiarFormulario()
+      setModalAbierto(false)
+    })
+  }, [limpiarFormulario])
+
+  const cerrarModal = useCallback(() => {
+    if (!enviandoFormulario.current) cerrarFormulario()
+  }, [cerrarFormulario])
+
+  useEffect(() => {
+    if (!modalAbierto) return
+
+    function alPresionar(evento) {
+      if (evento.key === 'Escape') cerrarModal()
+    }
+
+    window.addEventListener('keydown', alPresionar)
+    return () => window.removeEventListener('keydown', alPresionar)
+  }, [modalAbierto, cerrarModal])
+
 
   // Cargar un producto para editarlo
   function editarProducto(producto) {
@@ -258,7 +269,6 @@ function Productos({ cambiarPagina, usuario }) {
 
     setModalAbierto(true)
     setErrorFormulario('')
-    setMensaje('')
   }
 
   // Comprobar los datos antes de enviarlos
@@ -321,10 +331,10 @@ function Productos({ cambiarPagina, usuario }) {
   async function guardarProducto(evento) {
     evento.preventDefault()
 
-    if (!esAdministrador || guardando) return
+    if (!esAdministrador || enviandoFormulario.current) return
 
     setErrorFormulario('')
-    setMensaje('')
+    enviandoFormulario.current = true
     setGuardando(true)
 
     try {
@@ -379,9 +389,7 @@ function Productos({ cambiarPagina, usuario }) {
           )
         )
 
-        setMensaje(
-          'Producto actualizado correctamente.'
-        )
+        notificar('Producto actualizado correctamente.', 'exito')
 
       } else {
         // CREATE
@@ -402,58 +410,44 @@ function Productos({ cambiarPagina, usuario }) {
           creado
         ])
 
-        setMensaje(
-          'Producto registrado correctamente.'
-        )
+        notificar('Producto registrado correctamente.', 'exito')
       }
 
-      limpiarFormulario()
-      setModalAbierto(false)
-
+      cerrarFormulario()
     } catch (error) {
       setErrorFormulario(error.message)
     } finally {
+      enviandoFormulario.current = false
       setGuardando(false)
     }
   }
 
   // DELETE
   async function eliminarProducto(producto) {
-    if (!esAdministrador || eliminandoId !== null) return
+    if (!esAdministrador) return
 
     setErrorFormulario('')
-    setMensaje('')
-    setEliminandoId(producto.id)
 
-    try {
-      const token = await obtenerTokenCSRF()
+    const token = await obtenerTokenCSRF()
 
-      await solicitarAPI(
-        `/api/productos/${producto.id}/`,
-        {
-          method: 'DELETE',
-          headers: {
-            'X-CSRFToken': token
-          }
+    await solicitarAPI(
+      `/api/productos/${producto.id}/`,
+      {
+        method: 'DELETE',
+        headers: {
+          'X-CSRFToken': token
         }
-      )
-
-      setProductos((anteriores) =>
-        anteriores.filter((item) =>
-          item.id !== producto.id
-        )
-      )
-
-      if (editandoId === producto.id) {
-        limpiarFormulario()
       }
+    )
 
-      setMensaje(
-        'Producto eliminado correctamente.'
+    setProductos((anteriores) =>
+      anteriores.filter((item) =>
+        item.id !== producto.id
       )
+    )
 
-    } finally {
-      setEliminandoId(null)
+    if (editandoId === producto.id) {
+      limpiarFormulario()
     }
   }
 
@@ -492,12 +486,15 @@ function Productos({ cambiarPagina, usuario }) {
     maximumFractionDigits: 2
   })
 
+  const seleccion = useSeleccionTabla(productosFiltrados)
+  const [registro] = seleccion.elegidos
+
   return (
     <div className="productos-pagina">
       {porEliminar && (
-        <ConfirmarEliminacion titulo="Eliminar producto" nombre={porEliminar.nombre}
-          mensaje="¿Querés eliminar este registro? Esta acción no se puede deshacer."
-          onCancelar={() => setPorEliminar(null)} onEliminar={() => eliminarProducto(porEliminar)} />
+        <ConfirmarLote registros={porEliminar} nombre={(registro) => registro.nombre}
+          mensaje="¿Querés eliminar la selección? Esta acción no se puede deshacer."
+          onCancelar={() => setPorEliminar(null)} ejecutar={eliminarProducto} alTerminar={seleccion.limpiar} />
       )}
 
 
@@ -510,7 +507,7 @@ function Productos({ cambiarPagina, usuario }) {
 
       {/* FORMULARIO EXCLUSIVO DEL ADMINISTRADOR */}
       {esAdministrador && modalAbierto && (
-        <div className="modal-fondo" onClick={cerrarModal}>
+        <div className="modal-fondo" ref={fondoModal} onClick={cerrarModal}>
           <section
             className="modal-caja modal-caja-ancha panel"
             role="dialog"
@@ -709,7 +706,7 @@ function Productos({ cambiarPagina, usuario }) {
                   }
                 >
                   {guardando
-                    ? 'Guardando...'
+                    ? <IndicadorCarga>Guardando…</IndicadorCarga>
                     : modoEdicion
                       ? 'Guardar cambios'
                       : 'Registrar producto'}
@@ -718,13 +715,6 @@ function Productos({ cambiarPagina, usuario }) {
             </form>
           </section>
         </div>
-      )}
-
-      {/* MENSAJES */}
-      {mensaje && (
-        <p className="productos-exito" role="status">
-          {mensaje}
-        </p>
       )}
 
       {!modalAbierto && errorFormulario && (
@@ -775,17 +765,21 @@ function Productos({ cambiarPagina, usuario }) {
 
           <input
             id="buscar-productos"
+            data-tooltip="Buscar por nombre o código"
             type="search"
             placeholder="Buscar por nombre o código..."
             value={busqueda}
-            onChange={(evento) =>
-              setBusqueda(evento.target.value)
-            }
+            onChange={(evento) => { seleccion.limpiar(); setBusqueda(evento.target.value) }}
           />
         </div>
 
+        <BarraSeleccion seleccion={seleccion} acciones={esAdministrador ? [
+          seleccion.elegidos.length === 1 && { icono: 'editar', texto: 'Editar', ejecutar: () => editarProducto(registro), deshabilitada: guardando },
+          { icono: 'eliminar', texto: 'Eliminar', ejecutar: () => setPorEliminar(seleccion.elegidos), deshabilitada: guardando }
+        ] : []} />
+
         {cargando ? (
-          <p>Cargando productos...</p>
+          <TablaEnCarga columnas={esAdministrador ? 10 : 6} mensaje="Cargando productos…" />
         ) : !errorCarga && (
           <div
             className="tabla-contenedor productos-tabla-scroll"
@@ -796,6 +790,7 @@ function Productos({ cambiarPagina, usuario }) {
             <table>
               <thead>
                 <tr>
+                  <CabeceraSeleccion seleccion={seleccion} deshabilitada={!productosFiltrados.length} />
                   <th>Código</th>
                   <th>Nombre</th>
                   <th>Precio</th>
@@ -811,10 +806,6 @@ function Productos({ cambiarPagina, usuario }) {
                   )}
 
                   <th>Estado</th>
-
-                  {esAdministrador && (
-                    <th>Acciones</th>
-                  )}
                 </tr>
               </thead>
 
@@ -822,7 +813,7 @@ function Productos({ cambiarPagina, usuario }) {
                 {productosFiltrados.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={esAdministrador ? 10 : 5}
+                      colSpan={esAdministrador ? 10 : 6}
                       className="tabla-vacia"
                     >
                       No se encontraron productos.
@@ -830,7 +821,9 @@ function Productos({ cambiarPagina, usuario }) {
                   </tr>
                 ) : (
                   productosFiltrados.map((producto) => (
-                    <tr key={producto.id}>
+                    <tr key={producto.id} data-seleccionada={seleccion.marcada(producto)}>
+                      <CeldaSeleccion marcada={seleccion.marcada(producto)} nombre={producto.nombre}
+                        onChange={() => seleccion.alternar(producto.id)} />
                       <td>{producto.codigo}</td>
 
                       <td>{producto.nombre}</td>
@@ -881,41 +874,6 @@ function Productos({ cambiarPagina, usuario }) {
                         </span>
                       </td>
 
-                      {esAdministrador && (
-                        <td>
-                          <div className="productos-acciones">
-                            <button
-                              type="button"
-                              className="productos-editar"
-                              onClick={() =>
-                                editarProducto(producto)
-                              }
-                              disabled={
-                                guardando ||
-                                eliminandoId !== null
-                              }
-                            >
-                              Editar
-                            </button>
-
-                            <button
-                              type="button"
-                              className="productos-eliminar"
-                              onClick={() =>
-                                setPorEliminar(producto)
-                              }
-                              disabled={
-                                guardando ||
-                                eliminandoId !== null
-                              }
-                            >
-                              {eliminandoId === producto.id
-                                ? 'Eliminando...'
-                                : 'Eliminar'}
-                            </button>
-                          </div>
-                        </td>
-                      )}
                     </tr>
                   ))
                 )}

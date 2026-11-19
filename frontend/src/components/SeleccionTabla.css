@@ -1,0 +1,62 @@
+.tabla-casilla {
+  width: 1%;
+  padding-inline: 12px;
+  text-align: center;
+}
+
+.tabla-casilla input {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  accent-color: #70479d;
+  cursor: pointer;
+}
+
+tr[data-seleccionada="true"] > td {
+  background: #efe5fa;
+}
+
+.tabla-barra-seleccion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  margin-block: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e4d5ef;
+  border-radius: 12px;
+  background: #f6f0fb;
+  color: #453057;
+  font-size: .85rem;
+  animation: ui-subir 180ms ease-out;
+}
+
+.tabla-acciones-seleccion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tabla-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #dfd2eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #453057;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.tabla-accion svg { width: 16px; height: 16px; }
+.tabla-accion:hover:not(:disabled) { background: #ecdef8; }
+.tabla-accion:disabled { opacity: .55; cursor: default; }
+.tabla-accion-peligro { color: #a72837; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tabla-barra-seleccion { animation: none; }
+}

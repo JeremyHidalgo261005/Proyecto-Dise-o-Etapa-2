@@ -1,4 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { BarraSeleccion, CabeceraSeleccion, CeldaSeleccion } from '../components/SeleccionTabla'
+import { useSeleccionTabla } from '../components/useSeleccionTabla'
+import { EsqueletoTabla, IndicadorCarga } from '../components/CargaUI'
+import { useErrorConAviso, useNotificar } from '../components/avisos'
+import { cerrarConAnimacion } from '../components/transiciones'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import './Productos.css'
 import './Inventario.css'
@@ -127,21 +132,40 @@ function useModalEnPantalla(abierto, fondoRef) {
   }, [abierto, fondoRef])
 }
 
+function datosDetalle(movimiento) {
+  const [anterior, nuevo] = valoresHistorial(movimiento)
+  const cantidad = movimiento.tipo_movimiento === 'venta' ? -movimiento.cantidad : movimiento.cantidad
+  return [
+    ['Fecha', fecha.format(new Date(movimiento.fecha))],
+    ['Producto', movimiento.producto_nombre],
+    ['Tipo', opciones[movimiento.tipo_movimiento]?.titulo || tiposAutomaticos[movimiento.tipo_movimiento]],
+    ['Cantidad', cantidad],
+    ['Responsable', movimiento.usuario_nombre],
+    ['Anterior', anterior],
+    ['Nuevo', nuevo],
+    ['Motivo', movimiento.motivo || '—']
+  ]
+}
+
 function Inventario({ cambiarPagina, usuario }) {
   const esAdministrador = usuario?.rol === 'Administrador'
   const [movimientos, setMovimientos] = useState([])
   const [catalogos, setCatalogos] = useState({ productos: [], proveedores: [], categorias: [] })
+  const seleccion = useSeleccionTabla(movimientos, 'id_movimiento')
+  const [movimientoElegido] = seleccion.elegidos
+  const [detalleHistorial, setDetalleHistorial] = useState(null)
+  const dialogoHistorial = useRef(null)
   const [cargando, setCargando] = useState(true)
-  const [errorHistorial, setErrorHistorial] = useState('')
-  const [errorCatalogo, setErrorCatalogo] = useState('')
+  const [errorHistorial, setErrorHistorial] = useErrorConAviso()
+  const [errorCatalogo, setErrorCatalogo] = useErrorConAviso()
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [productoId, setProductoId] = useState('')
   const [tipo, setTipo] = useState('')
   const [detalle, setDetalle] = useState(detalleInicial)
   const [guardando, setGuardando] = useState(false)
   const enviando = useRef(false)
-  const [mensaje, setMensaje] = useState('')
-  const [errorFormulario, setErrorFormulario] = useState('')
+  const notificar = useNotificar()
+  const [errorFormulario, setErrorFormulario] = useErrorConAviso()
   const producto = catalogos.productos.find((item) => String(item.id) === productoId)
   const opcion = opciones[tipo]
   const modalAbierto = Boolean(mostrarFormulario && producto && opcion)
@@ -173,7 +197,7 @@ function Inventario({ cambiarPagina, usuario }) {
       })
     }
     return () => controlador.abort()
-  }, [esAdministrador])
+  }, [esAdministrador, setErrorHistorial, setErrorCatalogo])
 
   function limpiarDetalle() {
     setDetalle(detalleInicial)
@@ -181,9 +205,14 @@ function Inventario({ cambiarPagina, usuario }) {
   }
 
   function cancelar() {
-    if (enviando.current) return
-    setTipo('')
-    limpiarDetalle()
+    if (!enviando.current) cerrarDetalle()
+  }
+
+  function cerrarDetalle() {
+    cerrarConAnimacion(fondoModalRef.current, () => {
+      setTipo('')
+      limpiarDetalle()
+    })
   }
 
   function cambiarDetalle(evento) {
@@ -212,7 +241,6 @@ function Inventario({ cambiarPagina, usuario }) {
     enviando.current = true
     setGuardando(true)
     setErrorFormulario('')
-    setMensaje('')
     try {
       const { csrfToken } = await solicitar('/api/auth/csrf/')
       const movimiento = await solicitar(RUTA, {
@@ -225,9 +253,8 @@ function Inventario({ cambiarPagina, usuario }) {
         })
       })
       setMovimientos((anteriores) => [movimiento, ...anteriores])
-      setTipo('')
-      limpiarDetalle()
-      setMensaje('Movimiento registrado correctamente.')
+      cerrarDetalle()
+      notificar('Movimiento registrado correctamente.', 'exito')
       await Promise.allSettled([
         refrescarProducto(producto.id).catch(() => {
           setErrorCatalogo('El movimiento se guardó. Volvé a abrir Movimientos para actualizar el producto.')
@@ -269,7 +296,6 @@ function Inventario({ cambiarPagina, usuario }) {
           )}
         </header>
 
-        {mensaje && <p role="status">{mensaje}</p>}
         {mostrarFormulario && (
           <div className="productos-formulario movimientos-selectores">
             <label>
@@ -346,7 +372,7 @@ function Inventario({ cambiarPagina, usuario }) {
                     Cancelar
                   </button>
                   <button type="submit" className="boton-volver" disabled={guardando}>
-                    {guardando ? 'Guardando…' : 'Guardar'}
+                    {guardando ? <IndicadorCarga>Guardando…</IndicadorCarga> : 'Guardar'}
                   </button>
                 </div>
               </form>
@@ -355,10 +381,17 @@ function Inventario({ cambiarPagina, usuario }) {
           document.body
         )}
 
-        <div className="tabla-contenedor">
+        <BarraSeleccion seleccion={seleccion} acciones={seleccion.elegidos.length === 1 ? [{
+          icono: 'detalle', texto: 'Ver detalle', ejecutar: () => {
+            setDetalleHistorial(movimientoElegido)
+            dialogoHistorial.current.showModal()
+          }
+        }] : []} />
+        <div className="tabla-contenedor" role="region" aria-label="Historial de movimientos" tabIndex={0}>
           <table>
             <thead>
               <tr>
+                <CabeceraSeleccion seleccion={seleccion} deshabilitada={!movimientos.length} />
                 <th>Fecha</th>
                 <th>Producto</th>
                 <th>Tipo</th>
@@ -370,26 +403,19 @@ function Inventario({ cambiarPagina, usuario }) {
               </tr>
             </thead>
             <tbody>
-              {movimientos.map((movimiento) => {
-                const [anterior, nuevo] = valoresHistorial(movimiento)
-                const cantidad = movimiento.tipo_movimiento === 'venta' ? -movimiento.cantidad : movimiento.cantidad
-                return (
-                  <tr key={movimiento.id_movimiento}>
-                    <td>{fecha.format(new Date(movimiento.fecha))}</td>
-                    <td>{movimiento.producto_nombre}</td>
-                    <td>{opciones[movimiento.tipo_movimiento]?.titulo || tiposAutomaticos[movimiento.tipo_movimiento]}</td>
-                    <td>{cantidad ?? '—'}</td>
-                    <td>{movimiento.usuario_nombre}</td>
-                    <td>{anterior ?? '—'}</td>
-                    <td>{nuevo ?? '—'}</td>
-                    <td>{movimiento.motivo || '—'}</td>
-                  </tr>
-                )
-              })}
-              {movimientos.length === 0 && !errorHistorial && (
+              {movimientos.map((movimiento) => (
+                <tr key={movimiento.id_movimiento} data-seleccionada={seleccion.marcada(movimiento)}>
+                  <CeldaSeleccion marcada={seleccion.marcada(movimiento)}
+                    nombre={'movimiento ' + movimiento.id_movimiento + ' de ' + movimiento.producto_nombre}
+                    onChange={() => seleccion.alternar(movimiento.id_movimiento)} />
+                  {datosDetalle(movimiento).map(([campo, valor]) => <td key={campo}>{valor ?? '—'}</td>)}
+                </tr>
+              ))}
+              {cargando && <EsqueletoTabla columnas={9} mensaje="Cargando movimientos…" />}
+              {!cargando && movimientos.length === 0 && !errorHistorial && (
                 <tr>
-                  <td colSpan="8" className="tabla-vacia">
-                    {cargando ? 'Cargando movimientos…' : 'Todavía no tenemos movimientos registrados.'}
+                  <td colSpan="9" className="tabla-vacia">
+                    Todavía no tenemos movimientos registrados.
                   </td>
                 </tr>
               )}
@@ -397,6 +423,28 @@ function Inventario({ cambiarPagina, usuario }) {
           </table>
         </div>
       </section>
+      <dialog ref={dialogoHistorial} className="panel modal-caja historial-detalle movimiento-detalle"
+        aria-labelledby="detalle-movimiento" onClose={() => setDetalleHistorial(null)}
+        onCancel={(evento) => {
+          evento.preventDefault()
+          const dialogo = dialogoHistorial.current
+          cerrarConAnimacion(dialogo, () => dialogo.close())
+        }}>
+        <header className="productos-encabezado">
+          <h2 id="detalle-movimiento">Movimiento {detalleHistorial?.id_movimiento}</h2>
+          <button type="button" className="productos-boton-secundario" onClick={() => {
+            const dialogo = dialogoHistorial.current
+            cerrarConAnimacion(dialogo, () => dialogo.close())
+          }}>Cerrar</button>
+        </header>
+        {detalleHistorial && (
+          <dl>
+            {datosDetalle(detalleHistorial).map(([campo, valor]) => (
+              <Fragment key={campo}><dt>{campo}</dt><dd>{valor ?? '—'}</dd></Fragment>
+            ))}
+          </dl>
+        )}
+      </dialog>
     </>
   )
 }

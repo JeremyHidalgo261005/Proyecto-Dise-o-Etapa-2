@@ -1,3 +1,6 @@
+import { IndicadorCarga } from '../components/CargaUI'
+import { useErrorConAviso, useNotificar } from '../components/avisos'
+import { cerrarConAnimacion } from '../components/transiciones'
 import { useState, useRef } from 'react'
 import './ImportarCSV.css'
 
@@ -16,7 +19,10 @@ function ImportarCSV({ cambiarPagina }) {
   const [archivo, setArchivo] = useState(null)
   const [arrastrando, setArrastrando] = useState(false)
   const [cargando, setCargando] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useErrorConAviso()
+  const notificar = useNotificar()
+  const enviando = useRef(false)
+  const fondoModal = useRef(null)
   const [resultadoModal, setResultadoModal] = useState(null) // { creados, actualizados, omitidos }
   const inputRef = useRef(null)
 
@@ -50,7 +56,8 @@ function ImportarCSV({ cambiarPagina }) {
   }
 
   async function procesarSubida() {
-    if (!archivo) return
+    if (!archivo || enviando.current) return
+    enviando.current = true
 
     setCargando(true)
     setError('')
@@ -76,11 +83,19 @@ function ImportarCSV({ cambiarPagina }) {
       }
 
       setResultadoModal(datos)
+      if (datos.omitidos > 0) {
+        notificar('Importación completada. Filas omitidas: ' + datos.omitidos + '.', 'advertencia')
+      } else if (datos.creados || datos.actualizados) {
+        notificar('Archivo CSV importado correctamente.', 'exito')
+      } else {
+        notificar('La importación terminó sin cambios.', 'info')
+      }
       setArchivo(null)
       if (inputRef.current) inputRef.current.value = ''
     } catch (err) {
       setError(err.message)
     } finally {
+      enviando.current = false
       setCargando(false)
     }
   }
@@ -112,7 +127,7 @@ function ImportarCSV({ cambiarPagina }) {
       </button>
 
       {error && (
-        <div className="mensaje-alerta error">
+        <div className="mensaje-alerta error" role="alert">
           <span>⚠️</span> {error}
         </div>
       )}
@@ -144,7 +159,7 @@ function ImportarCSV({ cambiarPagina }) {
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
-            onClick={() => inputRef.current && inputRef.current.click()}
+            onClick={() => inputRef.current?.click()}
           >
             {/* Icono de nube con flecha estilizado */}
             <svg
@@ -171,7 +186,7 @@ function ImportarCSV({ cambiarPagina }) {
               className="boton-examinar"
               onClick={(e) => {
                 e.stopPropagation()
-                inputRef.current && inputRef.current.click()
+                inputRef.current?.click()
               }}
             >
               Explorar archivos
@@ -187,7 +202,7 @@ function ImportarCSV({ cambiarPagina }) {
               <button
                 type="button"
                 className="boton-quitar-archivo"
-                title="Quitar archivo"
+                aria-label="Quitar archivo" data-tooltip="Quitar archivo"
                 onClick={() => {
                   setArchivo(null)
                   if (inputRef.current) inputRef.current.value = ''
@@ -204,7 +219,7 @@ function ImportarCSV({ cambiarPagina }) {
             disabled={!archivo || cargando}
             onClick={procesarSubida}
           >
-            {cargando ? 'Procesando e importando datos...' : 'Procesar e Importar CSV'}
+            {cargando ? <IndicadorCarga>Procesando e importando datos…</IndicadorCarga> : 'Procesar e Importar CSV'}
           </button>
         </div>
 
@@ -278,8 +293,8 @@ function ImportarCSV({ cambiarPagina }) {
          ======================================================== */}
       {resultadoModal && (
         <div
-          className="modal-overlay"
-          onClick={() => setResultadoModal(null)}
+          className="modal-overlay" ref={fondoModal}
+          onClick={() => cerrarConAnimacion(fondoModal.current, () => setResultadoModal(null))}
         >
           <div
             className="modal-contenido"
@@ -320,10 +335,7 @@ function ImportarCSV({ cambiarPagina }) {
             <button
               type="button"
               className="modal-boton-cerrar"
-              onClick={() => {
-                setResultadoModal(null)
-                cambiarPagina('Inventario')
-              }}
+              onClick={() => cerrarConAnimacion(fondoModal.current, () => cambiarPagina('Inventario'))}
             >
               Ver productos en el inventario
             </button>

@@ -14,6 +14,7 @@ import AdministrarUsuarios from './pages/AdministrarUsuarios'
 import Inventario from './pages/Inventario'
 import ImportarCSV from './pages/ImportarCSV'
 
+import { IndicadorCarga } from './components/CargaUI'
 import './App.css'
 
 // Obtener token de seguridad de Django
@@ -252,7 +253,7 @@ function App() {
   if (verificandoSesion) {
     return (
       <div className="login-cargando" role="status">
-        Comprobando sesión de MiniGestor...
+        <IndicadorCarga>Comprobando sesión de MiniGestor…</IndicadorCarga>
       </div>
     )
   }
@@ -282,11 +283,11 @@ function App() {
       )}
 
       {(pagina === 'Ventas' || (pagina === 'Historial de ventas' && origenHistorial === 'Ventas')) && (
-        <div hidden={pagina !== 'Ventas'}>
+        <div className="ui-vista-modulo" hidden={pagina !== 'Ventas'}>
           <Ventas cambiarPagina={cambiarPagina} usuario={usuarioActual} />
         </div>
       )}
-      {pagina !== 'Ventas' && mostrarPagina()}
+      {pagina !== 'Ventas' && <div className="ui-vista-modulo" key={pagina}>{mostrarPagina()}</div>}
     </MainLayout>
   )
 }

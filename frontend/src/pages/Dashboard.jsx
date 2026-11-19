@@ -1,7 +1,25 @@
 import { useEffect, useState } from 'react'
 import { consultarVentas, factura, fechaVenta, metodoPago, monto } from './apiVentas'
 import IconoNavegacion from '../components/IconoNavegacion'
+import { EsqueletoTabla } from '../components/CargaUI'
+import { useErrorConAviso } from '../components/avisos'
 import './Dashboard.css'
+
+const porcentaje = new Intl.NumberFormat('es-CR', {
+  style: 'percent', signDisplay: 'exceptZero', maximumFractionDigits: 1
+})
+
+function cantidadConEtiqueta(cantidad, etiqueta, faltante) {
+  if (cantidad == null) return faltante + ': —'
+  return cantidad + ' ' + etiqueta + (cantidad === 1 ? '' : 's')
+}
+
+function compararVentas(hoy, ayer) {
+  if (hoy == null || ayer == null) return 'Comparación no disponible'
+  if (ayer === 0) return hoy === 0 ? 'Sin ventas ayer ni hoy' : 'Sin ventas ayer'
+  if (hoy === ayer) return 'Sin cambio frente a ayer'
+  return porcentaje.format((hoy - ayer) / ayer) + ' frente a ayer'
+}
 
 function Acceso({ titulo, descripcion, color, destino, cambiarPagina }) {
   return (
@@ -20,7 +38,7 @@ function Dashboard({ cambiarPagina, usuario }) {
   const esAdministrador = usuario?.rol === 'Administrador'
   const [mostrarGestion, setMostrarGestion] = useState(false)
   const [resumen, setResumen] = useState(null)
-  const [error, setError] = useState('')
+  const [error, setError] = useErrorConAviso()
 
   useEffect(() => {
     const controlador = new AbortController()
@@ -28,14 +46,22 @@ function Dashboard({ cambiarPagina, usuario }) {
       if (error.name !== 'AbortError') setError(error.message)
     })
     return () => controlador.abort()
-  }, [])
+  }, [setError])
 
   const tarjetas = [
-    ['Productos registrados', resumen?.productos_registrados],
-    ['Ventas del día', resumen?.ventas_del_dia],
-    ['Productos con stock bajo', resumen?.productos_stock_bajo]
+    ['Productos registrados', resumen?.productos_registrados,
+      <span className="dashboard-unidades" key="unidades"><IconoNavegacion destino="Inventario" />
+        {resumen?.unidades_inventario == null ? '—' : resumen.unidades_inventario.toLocaleString('es-CR')} unidades en inventario
+      </span>,
+      'Total de productos registrados y suma de las existencias actuales de los productos activos.'],
+    ['Ventas del día', resumen?.ventas_del_dia, compararVentas(resumen?.ventas_del_dia, resumen?.ventas_ayer),
+      'Cantidad de ventas registradas hoy. Se compara con ayer usando la hora de Costa Rica.'],
+    ['Productos con stock bajo', resumen?.productos_stock_bajo,
+      cantidadConEtiqueta(resumen?.productos_agotados, 'agotado', 'Agotados'),
+      'Productos con existencias iguales o inferiores al mínimo. Los agotados tienen cero unidades.']
   ]
-  const recientes = resumen?.ventas_recientes || []
+  const cargando = !resumen && !error
+  const recientes = resumen?.ventas_recientes?.slice(0, 3) || []
 
   return (
     <div className="dashboard">
@@ -48,6 +74,7 @@ function Dashboard({ cambiarPagina, usuario }) {
             {esAdministrador && (
               <button type="button" className="atajo-opciones"
                 aria-label={mostrarGestion ? 'Ocultar accesos de gestión' : 'Mostrar accesos de gestión'}
+                data-tooltip={mostrarGestion ? 'Ocultar accesos de gestión' : 'Mostrar accesos de gestión'}
                 aria-expanded={mostrarGestion} aria-controls="accesos-gestion"
                 onClick={() => setMostrarGestion(!mostrarGestion)}>
                 <span aria-hidden="true">{mostrarGestion ? '×' : '⋮'}</span>
@@ -72,11 +99,22 @@ function Dashboard({ cambiarPagina, usuario }) {
         )}
       </section>
 
-      <section className="resumen-grid" aria-label="Resumen general" aria-busy={!resumen && !error}>
-        {tarjetas.map(([titulo, numero]) => (
-          <article className="resumen-card dashboard-indicador" key={titulo}>
+      <section className="resumen-grid" aria-label="Resumen general" aria-busy={cargando}>
+        {tarjetas.map(([titulo, numero, detalle, ayuda]) => (
+          <article className="resumen-card dashboard-indicador" key={titulo}
+            data-tooltip={ayuda} tabIndex={0}>
             <h3>{titulo}</h3>
-            <p>{numero ?? '—'}</p>
+            {cargando ? (
+              <>
+                <span className="ui-esqueleto ui-esqueleto-numero" aria-hidden="true" />
+                <span className="ui-esqueleto ui-esqueleto-linea" aria-hidden="true" />
+              </>
+            ) : (
+              <>
+                <p className="dashboard-indicador-numero">{numero ?? '—'}</p>
+                <small className="dashboard-indicador-detalle">{detalle}</small>
+              </>
+            )}
           </article>
         ))}
       </section>
@@ -89,7 +127,7 @@ function Dashboard({ cambiarPagina, usuario }) {
             Ver todas las ventas
           </button>
         </header>
-        <div className="tabla-contenedor" role="region" aria-label="Ventas recientes" tabIndex={0}>
+        <div className="dashboard-ventas-tabla">
           <table>
             <thead>
               <tr><th>Factura</th><th>Fecha y hora</th><th>Total</th><th>Método de pago</th></tr>
@@ -103,10 +141,11 @@ function Dashboard({ cambiarPagina, usuario }) {
                   <td>{metodoPago(venta.metodo_pago)}</td>
                 </tr>
               ))}
-              {recientes.length === 0 && (
+              {cargando && <EsqueletoTabla columnas={4} mensaje="Consultando ventas…" />}
+              {!cargando && recientes.length === 0 && (
                 <tr><td colSpan="4" className="tabla-vacia">
                   {error ? <span role="alert">{error}</span>
-                    : resumen ? 'Todavía no hay ventas registradas.' : 'Consultando ventas…'}
+                    : 'Todavía no hay ventas registradas.'}
                 </td></tr>
               )}
             </tbody>

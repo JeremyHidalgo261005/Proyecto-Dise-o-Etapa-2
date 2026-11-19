@@ -80,3 +80,11 @@ dialog.confirmar-eliminacion {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+ul.confirmar-eliminacion-error {
+  padding-inline-start: 28px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+ul.confirmar-eliminacion-error li + li { margin-top: 6px; }

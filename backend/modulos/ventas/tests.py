@@ -1,4 +1,4 @@
-from datetime import datetime, timezone as zona_utc
+from datetime import datetime, timedelta, timezone as zona_utc
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from pathlib import Path
@@ -283,9 +283,35 @@ class HistorialYDashboardTests(TestCase):
         self.assertEqual(respuesta.status_code, 200, respuesta.data)
         self.assertEqual(respuesta.data['productos_registrados'], 2)
         self.assertEqual(respuesta.data['productos_stock_bajo'], 1)
+        self.assertEqual(respuesta.data['unidades_inventario'], 16)
         self.assertEqual(respuesta.data['ventas_del_dia'], 4)
+        self.assertEqual(respuesta.data['ventas_ayer'], 13)
+        self.assertEqual(respuesta.data['productos_activos'], 2)
+        self.assertEqual(respuesta.data['productos_agotados'], 0)
         self.assertEqual([v['id_venta'] for v in respuesta.data['ventas_recientes']],
                          [v.pk for v in self.ventas[-1:-4:-1]])
+
+    def test_resumen_distingue_productos_activos_y_agotados_y_dias_sin_ventas(self):
+        producto = crear_producto('AGOTADO-INACTIVO', stock=0)
+        producto.estado = False
+        producto.save(update_fields=['estado'])
+        sin_ventas = self.justamente_hoy + timedelta(days=3)
+
+        with patch('modulos.ventas.views.timezone.now', return_value=sin_ventas):
+            respuesta = self.api.get(self.resumen)
+
+        self.assertEqual(respuesta.status_code, 200, respuesta.data)
+        self.assertEqual(respuesta.data['productos_registrados'], 3)
+        self.assertEqual(respuesta.data['productos_activos'], 2)
+        self.assertEqual(respuesta.data['productos_agotados'], 1)
+        self.assertEqual(respuesta.data['ventas_del_dia'], 0)
+        self.assertEqual(respuesta.data['ventas_ayer'], 0)
+
+    def test_unidades_de_inventario_solo_suma_productos_activos(self):
+        Producto.objects.filter(pk=self.producto.pk).update(estado=False)
+        self.assertEqual(self.api.get(self.resumen).data['unidades_inventario'], 12)
+        Producto.objects.update(estado=False)
+        self.assertEqual(self.api.get(self.resumen).data['unidades_inventario'], 0)
 
     def test_historial_paginado_en_orden_estable(self):
         primera = self.api.get(self.historial)

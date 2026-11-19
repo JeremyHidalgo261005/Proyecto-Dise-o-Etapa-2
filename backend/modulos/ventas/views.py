@@ -93,6 +93,9 @@ class VentaViewSet(
     def resumen(self, request):
         productos = Producto.objects.aggregate(
             productos_registrados=Count('pk'),
+            productos_activos=Count('pk', filter=Q(estado=True)),
+            unidades_inventario=Sum('stock_actual', filter=Q(estado=True), default=0),
+            productos_agotados=Count('pk', filter=Q(stock_actual=0)),
             productos_stock_bajo=Count('pk', filter=Q(stock_actual__lte=F('stock_minimo'))),
         )
         fecha = timezone.localdate(timezone=ZONA_NEGOCIO)
@@ -102,6 +105,7 @@ class VentaViewSet(
         return Response({
             **productos,
             'ventas_del_dia': ventas_en_fecha(ventas, fecha).count(),
+            'ventas_ayer': ventas_en_fecha(ventas, fecha - timedelta(days=1)).count(),
             'ventas_recientes': VentaHistorialSerializer(recientes, many=True).data,
         })
 

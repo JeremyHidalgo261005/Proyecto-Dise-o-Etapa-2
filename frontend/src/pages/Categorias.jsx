@@ -1,6 +1,11 @@
+import { IndicadorCarga, TablaEnCarga } from '../components/CargaUI'
+import { useErrorConAviso, useNotificar } from '../components/avisos'
+import { cerrarConAnimacion } from '../components/transiciones'
 
-import { useEffect, useState } from 'react'
-import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import ConfirmarLote from '../components/ConfirmarLote'
+import { BarraSeleccion, CabeceraSeleccion, CeldaSeleccion } from '../components/SeleccionTabla'
+import { useSeleccionTabla } from '../components/useSeleccionTabla'
 import './Categorias.css'
 
 const formularioInicial = {
@@ -70,12 +75,13 @@ function Categorias({ cambiarPagina }) {
 
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
-  const [eliminandoId, setEliminandoId] = useState(null)
+  const enviandoFormulario = useRef(false)
+  const fondoModal = useRef(null)
   const [porEliminar, setPorEliminar] = useState(null)
 
-  const [errorCarga, setErrorCarga] = useState('')
-  const [error, setError] = useState('')
-  const [mensaje, setMensaje] = useState('')
+  const [errorCarga, setErrorCarga] = useErrorConAviso()
+  const [error, setError] = useErrorConAviso()
+  const notificar = useNotificar()
   const [modalAbierto, setModalAbierto] = useState(false)
 
   const modoEdicion = editandoId !== null
@@ -108,18 +114,7 @@ function Categorias({ cambiarPagina }) {
     cargarCategorias()
 
     return () => controlador.abort()
-  }, [])
-
-  useEffect(() => {
-    if (!modalAbierto) return
-
-    function alPresionar(evento) {
-      if (evento.key === 'Escape') cerrarModal()
-    }
-
-    window.addEventListener('keydown', alPresionar)
-    return () => window.removeEventListener('keydown', alPresionar)
-  }, [modalAbierto, guardando])
+  }, [setErrorCarga])
 
   function cambiarCampo(evento) {
     const { name, value } = evento.target
@@ -130,23 +125,39 @@ function Categorias({ cambiarPagina }) {
     }))
   }
 
-  function limpiarFormulario() {
+  const limpiarFormulario = useCallback(() => {
     setFormulario({ ...formularioInicial })
     setEditandoId(null)
     setError('')
-  }
+  }, [setError])
 
   function abrirModalNuevo() {
     limpiarFormulario()
-    setMensaje('')
     setModalAbierto(true)
   }
 
-  function cerrarModal() {
-    if (guardando) return
-    limpiarFormulario()
-    setModalAbierto(false)
-  }
+  const cerrarFormulario = useCallback(() => {
+    cerrarConAnimacion(fondoModal.current, () => {
+      limpiarFormulario()
+      setModalAbierto(false)
+    })
+  }, [limpiarFormulario])
+
+  const cerrarModal = useCallback(() => {
+    if (!enviandoFormulario.current) cerrarFormulario()
+  }, [cerrarFormulario])
+
+  useEffect(() => {
+    if (!modalAbierto) return
+
+    function alPresionar(evento) {
+      if (evento.key === 'Escape') cerrarModal()
+    }
+
+    window.addEventListener('keydown', alPresionar)
+    return () => window.removeEventListener('keydown', alPresionar)
+  }, [modalAbierto, cerrarModal])
+
 
   function editarCategoria(categoria) {
     setFormulario({
@@ -156,7 +167,6 @@ function Categorias({ cambiarPagina }) {
 
     setEditandoId(categoria.id)
     setError('')
-    setMensaje('')
 
     setModalAbierto(true)
   }
@@ -164,8 +174,8 @@ function Categorias({ cambiarPagina }) {
   // CREATE y UPDATE
   async function guardarCategoria(evento) {
     evento.preventDefault()
+    if (enviandoFormulario.current) return
     setError('')
-    setMensaje('')
 
     const nombre = formulario.nombre.trim()
 
@@ -193,6 +203,7 @@ function Categorias({ cambiarPagina }) {
       descripcion: formulario.descripcion.trim()
     }
 
+    enviandoFormulario.current = true
     setGuardando(true)
 
     try {
@@ -217,7 +228,7 @@ function Categorias({ cambiarPagina }) {
           )
         )
 
-        setMensaje('Categoría actualizada correctamente.')
+        notificar('Categoría actualizada correctamente.', 'exito')
       } else {
         const creada = await solicitarAPI(
           '/api/categorias/',
@@ -236,14 +247,14 @@ function Categorias({ cambiarPagina }) {
           creada
         ])
 
-        setMensaje('Categoría registrada correctamente.')
+        notificar('Categoría registrada correctamente.', 'exito')
       }
 
-      limpiarFormulario()
-      setModalAbierto(false)
+      cerrarFormulario()
     } catch (err) {
       setError(err.message)
     } finally {
+      enviandoFormulario.current = false
       setGuardando(false)
     }
   }
@@ -251,38 +262,29 @@ function Categorias({ cambiarPagina }) {
   // DELETE: eliminar categoría
   async function eliminarCategoria(categoria) {
     setError('')
-    setMensaje('')
 
     const token = obtenerCSRF()
 
     if (!token) throw new Error('Iniciá sesión nuevamente como administrador.')
 
-    setEliminandoId(categoria.id)
-
-    try {
-      await solicitarAPI(
-        `/api/categorias/${categoria.id}/`,
-        {
-          method: 'DELETE',
-          headers: {
-            'X-CSRFToken': token
-          }
+    await solicitarAPI(
+      `/api/categorias/${categoria.id}/`,
+      {
+        method: 'DELETE',
+        headers: {
+          'X-CSRFToken': token
         }
-      )
-
-      setCategorias((anteriores) =>
-        anteriores.filter((item) =>
-          item.id !== categoria.id
-        )
-      )
-
-      if (editandoId === categoria.id) {
-        limpiarFormulario()
       }
+    )
 
-      setMensaje('Categoría eliminada correctamente.')
-    } finally {
-      setEliminandoId(null)
+    setCategorias((anteriores) =>
+      anteriores.filter((item) =>
+        item.id !== categoria.id
+      )
+    )
+
+    if (editandoId === categoria.id) {
+      limpiarFormulario()
     }
   }
 
@@ -293,12 +295,15 @@ function Categorias({ cambiarPagina }) {
   )
   const errorPagina = modalAbierto ? errorCarga : (error || errorCarga)
 
+  const seleccion = useSeleccionTabla(categoriasFiltradas)
+  const [registro] = seleccion.elegidos
+
   return (
     <div className="categorias-pagina">
       {porEliminar && (
-        <ConfirmarEliminacion titulo="Eliminar categoría" nombre={porEliminar.nombre}
-          mensaje="¿Querés eliminar este registro? Esta acción no se puede deshacer."
-          onCancelar={() => setPorEliminar(null)} onEliminar={() => eliminarCategoria(porEliminar)} />
+        <ConfirmarLote registros={porEliminar} nombre={(registro) => registro.nombre}
+          mensaje="¿Querés eliminar la selección? Esta acción no se puede deshacer."
+          onCancelar={() => setPorEliminar(null)} ejecutar={eliminarCategoria} alTerminar={seleccion.limpiar} />
       )}
 
 
@@ -310,7 +315,7 @@ function Categorias({ cambiarPagina }) {
       </button>
 
       {modalAbierto && (
-        <div className="modal-fondo" onClick={cerrarModal}>
+        <div className="modal-fondo" ref={fondoModal} onClick={cerrarModal}>
           <section
             className="modal-caja panel"
             role="dialog"
@@ -381,7 +386,7 @@ function Categorias({ cambiarPagina }) {
                 disabled={guardando || cargando || Boolean(errorCarga)}
               >
                 {guardando
-                  ? 'Guardando...'
+                  ? <IndicadorCarga>Guardando…</IndicadorCarga>
                   : modoEdicion
                     ? 'Guardar cambios'
                     : 'Registrar categoría'}
@@ -391,11 +396,6 @@ function Categorias({ cambiarPagina }) {
         </div>
       )}
 
-      {mensaje && (
-        <p className="categorias-exito" role="status">
-          {mensaje}
-        </p>
-      )}
 
       {errorPagina && (
         <p className="categorias-error" role="alert">
@@ -429,26 +429,30 @@ function Categorias({ cambiarPagina }) {
 
           <input
             id="buscar-categorias"
+            data-tooltip="Buscar categorías por nombre"
             type="search"
             value={busqueda}
-            onChange={(evento) =>
-              setBusqueda(evento.target.value)
-            }
+            onChange={(evento) => { seleccion.limpiar(); setBusqueda(evento.target.value) }}
             placeholder="Buscar por nombre o descripción..."
           />
         </div>
 
+        <BarraSeleccion seleccion={seleccion} acciones={[
+          seleccion.elegidos.length === 1 && { icono: 'editar', texto: 'Editar', ejecutar: () => editarCategoria(registro), deshabilitada: guardando },
+          { icono: 'eliminar', texto: 'Eliminar', ejecutar: () => setPorEliminar(seleccion.elegidos), deshabilitada: guardando }
+        ]} />
+
         {cargando ? (
-          <p>Cargando categorías...</p>
+          <TablaEnCarga columnas={4} mensaje="Cargando categorías…" />
         ) : !errorCarga && (
           <div className="tabla-contenedor categorias-tabla-scroll">
             <table>
               <thead>
                 <tr>
+                  <CabeceraSeleccion seleccion={seleccion} deshabilitada={!categoriasFiltradas.length} />
                   <th>ID</th>
                   <th>Nombre</th>
                   <th>Descripción</th>
-                  <th>Acciones</th>
                 </tr>
               </thead>
 
@@ -461,33 +465,12 @@ function Categorias({ cambiarPagina }) {
                   </tr>
                 ) : (
                   categoriasFiltradas.map((categoria) => (
-                    <tr key={categoria.id}>
+                    <tr key={categoria.id} data-seleccionada={seleccion.marcada(categoria)}>
+                      <CeldaSeleccion marcada={seleccion.marcada(categoria)} nombre={categoria.nombre}
+                        onChange={() => seleccion.alternar(categoria.id)} />
                       <td>{categoria.id}</td>
                       <td>{categoria.nombre}</td>
                       <td>{categoria.descripcion || 'Sin descripción'}</td>
-                      <td>
-                        <div className="categorias-acciones">
-                          <button
-                            type="button"
-                            className="categorias-editar"
-                            onClick={() => editarCategoria(categoria)}
-                            disabled={guardando || eliminandoId !== null}
-                          >
-                            Editar
-                          </button>
-
-                          <button
-                            type="button"
-                            className="categorias-eliminar"
-                            onClick={() => setPorEliminar(categoria)}
-                            disabled={guardando || eliminandoId !== null}
-                          >
-                            {eliminandoId === categoria.id
-                              ? 'Eliminando...'
-                              : 'Eliminar'}
-                          </button>
-                        </div>
-                      </td>
                     </tr>
                   ))
                 )}

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { BarraSeleccion, CabeceraSeleccion, CeldaSeleccion } from '../components/SeleccionTabla'
+import { useSeleccionTabla } from '../components/useSeleccionTabla'
+import imprimirFactura from './imprimirFactura'
+import { BloqueCarga, EsqueletoTabla } from '../components/CargaUI'
+import { useErrorConAviso } from '../components/avisos'
+import { cerrarConAnimacion } from '../components/transiciones'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { consultarVentas, factura, fechaVenta, metodoPago, monto } from './apiVentas'
 import './HistorialVentas.css'
 
@@ -8,11 +14,13 @@ function HistorialVentas({ cambiarPagina, origen }) {
   const [filtros, setFiltros] = useState(inicial)
   const [consulta, setConsulta] = useState({ filtros: inicial, pagina: 1 })
   const [resultado, setResultado] = useState(null)
-  const [error, setError] = useState('')
+  const [error, setError] = useErrorConAviso()
   const [seleccion, setSeleccion] = useState(null)
   const [detalle, setDetalle] = useState(null)
-  const [errorDetalle, setErrorDetalle] = useState('')
+  const [errorDetalle, setErrorDetalle] = useErrorConAviso()
   const ventana = useRef(null)
+  const imprimirAlCargar = useRef(false)
+  const contenidoFactura = useRef(null)
 
   useEffect(() => {
     const controlador = new AbortController()
@@ -24,7 +32,7 @@ function HistorialVentas({ cambiarPagina, origen }) {
       if (error.name !== 'AbortError') setError(error.message)
     })
     return () => controlador.abort()
-  }, [consulta])
+  }, [consulta, setError])
 
   useEffect(() => {
     if (!seleccion) return
@@ -33,27 +41,54 @@ function HistorialVentas({ cambiarPagina, origen }) {
       if (error.name !== 'AbortError') setErrorDetalle(error.message)
     })
     return () => controlador.abort()
-  }, [seleccion])
+  }, [seleccion, setErrorDetalle])
+
+  const imprimirDetalle = useCallback(() => {
+    try {
+      imprimirFactura(contenidoFactura.current, factura(seleccion.id_venta))
+    } catch (error) {
+      setErrorDetalle(error.message)
+    }
+  }, [seleccion, setErrorDetalle])
+
+  useEffect(() => {
+    if (detalle && seleccion && imprimirAlCargar.current) {
+      imprimirAlCargar.current = false
+      imprimirDetalle()
+    }
+  }, [detalle, seleccion, imprimirDetalle])
 
   function buscar(pagina, nuevosFiltros = consulta.filtros) {
+    seleccionTabla.limpiar()
     setResultado(null)
     setError('')
     setConsulta({ filtros: nuevosFiltros, pagina })
   }
 
   function cambiarFiltro(evento) {
+    seleccionTabla.limpiar()
     const { name, value } = evento.target
     setFiltros((anteriores) => ({ ...anteriores, [name]: value }))
   }
 
-  function abrirDetalle(venta) {
+  function abrirDetalle(venta, imprimir = false) {
+    imprimirAlCargar.current = imprimir
     setSeleccion(venta)
     setDetalle(null)
     setErrorDetalle('')
     ventana.current.showModal()
   }
 
+  function cerrarDetalle(evento) {
+    evento.preventDefault()
+    imprimirAlCargar.current = false
+    const dialogo = ventana.current
+    cerrarConAnimacion(dialogo, () => dialogo.close())
+  }
+
   const filas = resultado?.results || []
+  const seleccionTabla = useSeleccionTabla(filas, "id_venta")
+  const [ventaElegida] = seleccionTabla.elegidos
 
   return (
     <>
@@ -67,23 +102,23 @@ function HistorialVentas({ cambiarPagina, origen }) {
           onSubmit={(evento) => { evento.preventDefault(); buscar(1, filtros) }}>
           <label>
             Número de factura
-            <input name="factura" placeholder="FAC-123" value={filtros.factura} onChange={cambiarFiltro} />
+            <input name="factura" data-tooltip="Buscar por número de factura" placeholder="FAC-123" value={filtros.factura} onChange={cambiarFiltro} />
           </label>
           <label>
             Fecha
-            <input name="fecha" type="date" value={filtros.fecha} onChange={cambiarFiltro} />
+            <input name="fecha" type="date" data-tooltip="Filtrar por fecha de venta" value={filtros.fecha} onChange={cambiarFiltro} />
           </label>
           <label>
             Método de pago
-            <select name="metodo_pago" value={filtros.metodo_pago} onChange={cambiarFiltro}>
+            <select name="metodo_pago" data-tooltip="Filtrar por método de pago" value={filtros.metodo_pago} onChange={cambiarFiltro}>
               <option value="">Todos los métodos</option>
               <option value="efectivo">Efectivo</option>
               <option value="tarjeta">Tarjeta</option>
             </select>
           </label>
           <div className="historial-acciones">
-            <button type="submit" className="boton-volver">Buscar</button>
-            <button type="button" className="productos-boton-secundario" onClick={() => {
+            <button type="submit" className="boton-volver" data-tooltip="Aplicar los filtros de ventas">Buscar</button>
+            <button type="button" className="productos-boton-secundario" data-tooltip="Borrar los filtros" onClick={() => {
               setFiltros(inicial)
               buscar(1, inicial)
             }}>
@@ -92,17 +127,24 @@ function HistorialVentas({ cambiarPagina, origen }) {
           </div>
         </form>
 
+        <BarraSeleccion seleccion={seleccionTabla} acciones={seleccionTabla.elegidos.length === 1 ? [
+          { icono: 'detalle', texto: 'Ver detalle', ejecutar: () => abrirDetalle(ventaElegida) },
+          { icono: 'imprimir', texto: 'Imprimir factura', ejecutar: () => abrirDetalle(ventaElegida, true) }
+        ] : []} />
         <div className="tabla-contenedor" role="region" aria-label="Historial de ventas" tabIndex={0}>
           <table className="historial-tabla">
             <thead>
               <tr>
+                <CabeceraSeleccion seleccion={seleccionTabla} deshabilitada={!filas.length} />
                 <th>Factura</th><th>Fecha y hora</th><th>Cajero</th><th>Artículos</th>
-                <th>Subtotal</th><th>Descuento</th><th>Total</th><th>Método de pago</th><th>Detalle</th>
+                <th>Subtotal</th><th>Descuento</th><th>Total</th><th>Método de pago</th>
               </tr>
             </thead>
             <tbody>
               {filas.map((venta) => (
-                <tr key={venta.id_venta}>
+                <tr key={venta.id_venta} data-seleccionada={seleccionTabla.marcada(venta)}>
+                  <CeldaSeleccion marcada={seleccionTabla.marcada(venta)} nombre={factura(venta.id_venta)}
+                    onChange={() => seleccionTabla.alternar(venta.id_venta)} />
                   <td>{factura(venta.id_venta)}</td>
                   <td>{fechaVenta(venta.fecha)}</td>
                   <td>{venta.cajero}</td>
@@ -111,18 +153,13 @@ function HistorialVentas({ cambiarPagina, origen }) {
                   <td>{monto(venta.descuento)}</td>
                   <td>{monto(venta.total)}</td>
                   <td>{metodoPago(venta.metodo_pago)}</td>
-                  <td>
-                    <button type="button" className="productos-boton-secundario"
-                      aria-label={'Ver detalle de ' + factura(venta.id_venta)} onClick={() => abrirDetalle(venta)}>
-                      Ver detalle
-                    </button>
-                  </td>
                 </tr>
               ))}
-              {!filas.length && (
+              {!resultado && !error && <EsqueletoTabla columnas={9} mensaje="Consultando ventas…" />}
+              {(error || (resultado && !filas.length)) && (
                 <tr><td colSpan="9" className="tabla-vacia">
                   {error ? <span role="alert">{error}</span>
-                    : resultado ? 'No hay ventas para esta consulta.' : 'Consultando ventas…'}
+                    : 'No hay ventas para esta consulta.'}
                 </td></tr>
               )}
             </tbody>
@@ -145,18 +182,27 @@ function HistorialVentas({ cambiarPagina, origen }) {
       </section>
 
       <dialog ref={ventana} className="panel modal-caja historial-detalle" aria-labelledby="factura-detalle"
-        onClose={() => setSeleccion(null)}>
+        onClose={() => setSeleccion(null)} onCancel={cerrarDetalle}>
         <header className="productos-encabezado">
           <h2 id="factura-detalle">{seleccion ? factura(seleccion.id_venta) : 'Detalle de venta'}</h2>
-          <form method="dialog"><button className="productos-boton-secundario">Cerrar</button></form>
+          <div className="historial-acciones">
+            {detalle && seleccion && (
+              <button type="button" className="productos-boton-secundario" onClick={imprimirDetalle}>Imprimir factura</button>
+            )}
+            <form method="dialog" onSubmit={cerrarDetalle}><button className="productos-boton-secundario">Cerrar</button></form>
+          </div>
         </header>
         {seleccion && (
           <p>{fechaVenta(seleccion.fecha)} · {seleccion.cajero} · {metodoPago(seleccion.metodo_pago)}</p>
         )}
         {errorDetalle && <p role="alert">{errorDetalle}</p>}
-        {seleccion && !detalle && !errorDetalle && <p role="status">Consultando artículos…</p>}
+        {seleccion && !detalle && !errorDetalle && <BloqueCarga mensaje="Consultando artículos…" />}
         {detalle && seleccion && (
-          <>
+          <div ref={contenidoFactura}>
+            <div className="factura-impresa-encabezado">
+              <h1>{factura(seleccion.id_venta)}</h1>
+              <p>{fechaVenta(seleccion.fecha)} · {seleccion.cajero} · {metodoPago(seleccion.metodo_pago)}</p>
+            </div>
             <div className="tabla-contenedor">
               <table>
                 <thead>
@@ -177,7 +223,7 @@ function HistorialVentas({ cambiarPagina, origen }) {
               <dt>Descuento</dt><dd>{monto(seleccion.descuento)}</dd>
               <dt>Total</dt><dd>{monto(seleccion.total)}</dd>
             </dl>
-          </>
+          </div>
         )}
       </dialog>
     </>
