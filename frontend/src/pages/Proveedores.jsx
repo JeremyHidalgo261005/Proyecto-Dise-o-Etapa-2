@@ -368,7 +368,7 @@ function cambiarCampo(evento) {
         className="boton-volver proveedores-volver"
         onClick={() => cambiarPagina('Dashboard')}
       >
-        Volver al Dashboard
+        Volver
       </button>
 
       {/* FORMULARIO */}

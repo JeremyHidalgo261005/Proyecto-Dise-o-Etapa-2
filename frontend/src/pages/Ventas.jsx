@@ -3,7 +3,9 @@ import { useErrorConAviso, useNotificar } from '../components/avisos'
 import { cerrarConAnimacion } from '../components/transiciones'
 import { useState, useEffect, useRef } from 'react'
 import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
+import imprimirFactura from './imprimirFactura'
 import './Ventas.css'
+import './Comprobante.css'
 
 // Formateador en moneda local (Colones costarricenses - CRC)
 const formatoCRC = new Intl.NumberFormat('es-CR', {
@@ -58,6 +60,7 @@ function Ventas({ cambiarPagina, usuario }) {
   const fondoPin = useRef(null)
   const fondoPago = useRef(null)
   const fondoComprobante = useRef(null)
+  const contenidoComprobante = useRef(null)
   const enviandoPin = useRef(false)
   const [guardandoPago, setGuardandoPago] = useState(false)
   const [autorizando, setAutorizando] = useState(false)
@@ -77,7 +80,6 @@ function Ventas({ cambiarPagina, usuario }) {
   const [modalAdminAbierto, setModalAdminAbierto] = useState(false)
   const [descuentoTemporal, setDescuentoTemporal] = useState(10)
   const [pinAdmin, setPinAdmin] = useState('')
-  const [mostrarPin, setMostrarPin] = useState(false)
   const [errorPin, setErrorPin] = useErrorConAviso()
 
   // 2. Modal de Procesar Pago
@@ -191,7 +193,6 @@ function Ventas({ cambiarPagina, usuario }) {
     if (itemsFactura.length === 0) return
     setDescuentoTemporal(porcentajeDescuento || 10)
     setPinAdmin('')
-    setMostrarPin(false)
     setErrorPin('')
     setModalAdminAbierto(true)
   }
@@ -366,6 +367,14 @@ function Ventas({ cambiarPagina, usuario }) {
     }
   }
 
+  function imprimirComprobante() {
+    try {
+      imprimirFactura(contenidoComprobante.current, ventaExitosa.numero)
+    } catch (error) {
+      notificar(error.message, 'error')
+    }
+  }
+
   function nuevaVenta() {
     cerrarConAnimacion(fondoComprobante.current, () => {
       setVentaExitosa(null)
@@ -433,7 +442,7 @@ function Ventas({ cambiarPagina, usuario }) {
             className="boton-volver"
             onClick={() => cambiarPagina('Dashboard')}
           >
-            Volver al Dashboard
+            Volver
           </button>
         </div>
       </div>
@@ -726,13 +735,12 @@ function Ventas({ cambiarPagina, usuario }) {
                 </div>
               </div>
 
-              {/* INPUT DE PIN CON BOTÓN PARA MOSTRAR/OCULTAR PIN */}
               <div className="form-campo-grupo">
                 <label htmlFor="input-pin-admin">Clave / PIN del Administrador:</label>
                 <div className="input-pin-caja">
                   <input
                     id="input-pin-admin"
-                    type={mostrarPin ? 'text' : 'password'}
+                    type="password"
                     placeholder="••••"
                     value={pinAdmin}
                     onChange={(e) => {
@@ -742,14 +750,6 @@ function Ventas({ cambiarPagina, usuario }) {
                     autoFocus
                     required
                   />
-                  <button
-                    type="button"
-                    className="btn-toggle-ver-pin"
-                    onClick={() => setMostrarPin(!mostrarPin)}
-                    data-tooltip={mostrarPin ? 'Ocultar PIN' : 'Mostrar PIN'}
-                  >
-                    {mostrarPin ? 'Ocultar PIN' : 'Mostrar PIN'}
-                  </button>
                 </div>
               </div>
 
@@ -969,7 +969,7 @@ function Ventas({ cambiarPagina, usuario }) {
       {/* ========================================================= */}
       {ventaExitosa && (
         <div className="modal-fondo" ref={fondoComprobante}>
-          <div className="modal-caja comprobante-modal" role="dialog" aria-modal="true">
+          <div className="modal-caja comprobante-modal" role="dialog" aria-modal="true" ref={contenidoComprobante}>
             <div className="comprobante-check">✓</div>
             <h3>¡Venta Registrada con Éxito!</h3>
             <p className="comprobante-sub">
@@ -1024,20 +1024,20 @@ function Ventas({ cambiarPagina, usuario }) {
               )}
             </div>
 
-            <div className="comprobante-acciones">
+            <div className="comprobante-acciones" data-no-imprimir>
               <button
                 type="button"
                 className="productos-boton-secundario"
-                onClick={() => window.print()}
+                onClick={imprimirComprobante}
               >
-                🖨️ Imprimir Factura
+                🖨️ Imprimir
               </button>
               <button
                 type="button"
                 className="boton-volver"
                 onClick={nuevaVenta}
               >
-                + Nueva Venta
+                Cerrar
               </button>
             </div>
           </div>

@@ -311,7 +311,7 @@ function Categorias({ cambiarPagina }) {
         className="boton-volver categorias-volver"
         onClick={() => cambiarPagina('Dashboard')}
       >
-        Volver al Dashboard
+        Volver
       </button>
 
       {modalAbierto && (

@@ -282,7 +282,7 @@ function Inventario({ cambiarPagina, usuario }) {
         className="boton-volver productos-volver"
         onClick={() => cambiarPagina('Dashboard')}
       >
-        Volver al Dashboard
+        Volver
       </button>
 
       <section className="seccion panel">

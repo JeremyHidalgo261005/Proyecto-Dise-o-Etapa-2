@@ -2,6 +2,7 @@ import { IndicadorCarga } from '../components/CargaUI'
 import { useErrorConAviso, useNotificar } from '../components/avisos'
 import { cerrarConAnimacion } from '../components/transiciones'
 import { useState, useRef } from 'react'
+import './Productos.css'
 import './ImportarCSV.css'
 
 async function obtenerTokenCSRF() {
@@ -118,12 +119,8 @@ function ImportarCSV({ cambiarPagina }) {
 
   return (
     <div className="importar-contenedor">
-      <button
-        type="button"
-        className="boton-volver productos-volver"
-        onClick={() => cambiarPagina('Dashboard')}
-      >
-        Volver al Dashboard
+      <button type="button" className="boton-volver productos-volver" onClick={() => cambiarPagina('Dashboard')}>
+        Volver
       </button>
 
       {error && (
@@ -135,11 +132,11 @@ function ImportarCSV({ cambiarPagina }) {
       <div className="importar-grid">
         {/* Lado izquierdo: Zona Drag and Drop para subir CSV */}
         <div className="importar-card">
-          <h3>
-            <span>📤</span> Subir Archivo de Productos
-          </h3>
+          <h2>
+            <span aria-hidden="true">📤</span> Subir archivo
+          </h2>
           <p>
-            Cargá tu archivo CSV para actualizar el inventario existente o dar de alta nuevos productos y proveedores automáticamente.
+            Seleccioná un CSV para actualizar existencias o agregar productos.
           </p>
 
           <input
@@ -177,9 +174,8 @@ function ImportarCSV({ cambiarPagina }) {
             </svg>
 
             <span className="dropzone-texto-principal">
-              Arrastrá y soltá tu archivo aquí
+              Arrastrá el CSV aquí
             </span>
-            <span className="dropzone-separador">o</span>
 
             <button
               type="button"
@@ -189,7 +185,7 @@ function ImportarCSV({ cambiarPagina }) {
                 inputRef.current?.click()
               }}
             >
-              Explorar archivos
+              Explorar
             </button>
           </div>
 
@@ -219,17 +215,17 @@ function ImportarCSV({ cambiarPagina }) {
             disabled={!archivo || cargando}
             onClick={procesarSubida}
           >
-            {cargando ? <IndicadorCarga>Procesando e importando datos…</IndicadorCarga> : 'Procesar e Importar CSV'}
+            {cargando ? <IndicadorCarga>Procesando e importando datos…</IndicadorCarga> : 'Importar'}
           </button>
         </div>
 
         {/* Lado derecho: Guía de formato y ejemplo */}
         <div className="importar-card">
-          <h3>
-            <span>📋</span> Formato de Producto Requerido
-          </h3>
+          <h2>
+            <span aria-hidden="true">📋</span> Formato requerido
+          </h2>
           <p>
-            El sistema detectará automáticamente cada fila. Si el producto ya existe (por código o nombre), <strong>sumará las existencias al stock actual</strong> y actualizará los costos. Si es nuevo, se creará junto a su categoría y proveedor.
+            Si coincide el código o el nombre, se suman existencias y se actualizan los costos. Los productos nuevos se crean con su categoría y proveedor.
           </p>
 
           <div className="formato-guia">
@@ -239,12 +235,12 @@ function ImportarCSV({ cambiarPagina }) {
               <li><strong>precio:</strong> Precio de venta</li>
               <li><strong>categoria:</strong> Categoría</li>
               <li><strong>proveedor:</strong> Proveedor</li>
-              <li><strong>cantidad:</strong> Stock a sumar/ingresar</li>
+              <li><strong>cantidad:</strong> Existencias</li>
               <li><strong>cantidad_minima:</strong> Stock mínimo</li>
               <li><strong>codigo:</strong> Código/SKU (opcional)</li>
             </ul>
 
-            <div className="tabla-ejemplo-wrapper">
+            <div className="tabla-ejemplo-wrapper" role="region" aria-label="Ejemplo de formato CSV" tabIndex={0}>
               <table className="tabla-ejemplo">
                 <thead>
                   <tr>
@@ -283,7 +279,7 @@ function ImportarCSV({ cambiarPagina }) {
             className="boton-descargar-plantilla"
             onClick={descargarEjemploCSV}
           >
-            <span>📥</span> Descargar plantilla de ejemplo (.csv)
+            <span>📥</span> Descargar plantilla
           </button>
         </div>
       </div>

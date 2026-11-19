@@ -45,7 +45,7 @@ export function BarraSeleccion({ seleccion, acciones }) {
             {texto}
           </button>
         ))}
-        <button type="button" className="tabla-accion" onClick={seleccion.limpiar}>Cancelar selección</button>
+        <button type="button" className="tabla-accion" onClick={seleccion.limpiar}>Cancelar</button>
       </div>
     </div>
   )

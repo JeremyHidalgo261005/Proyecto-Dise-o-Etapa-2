@@ -1,0 +1,56 @@
+@page { margin: 18mm; }
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: #21162f;
+  font: 12pt system-ui, sans-serif;
+  print-color-adjust: exact;
+}
+
+.comprobante-modal {
+  margin-inline: auto;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.comprobante-articulos-lista {
+  max-height: none;
+  overflow: visible;
+}
+
+.comprobante-articulo-fila,
+.desglose-linea {
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.comprobante-articulo-fila strong { flex-shrink: 0; }
+.comprobante-desglose-pago { margin-block-end: 0; }
+
+.comprobante-sub,
+.factura-impresa-encabezado { break-after: avoid-page; }
+
+.comprobante-articulo-fila,
+.comprobante-desglose-pago,
+.historial-totales,
+tr { break-inside: avoid; }
+
+table { width: 100%; border-collapse: collapse; }
+thead { display: table-header-group; }
+
+th, td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.historial-totales {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
+  gap: 4px 16px;
+}
+
+dd { margin: 0; text-align: right; font-weight: 700; }

@@ -502,7 +502,7 @@ function Productos({ cambiarPagina, usuario }) {
         className="boton-volver productos-volver"
         onClick={() => cambiarPagina('Dashboard')}
       >
-        Volver al Dashboard
+        Volver
       </button>
 
       {/* FORMULARIO EXCLUSIVO DEL ADMINISTRADOR */}

@@ -1,35 +1,56 @@
-.importar-contenedor {
-  padding: 10px 0;
-  max-width: 1000px;
+.importar-encabezado-titulo { container-type: inline-size; }
+
+.encabezado .importar-encabezado-titulo h1 {
+  font-size: clamp(16px, 7.7cqi, 40px);
+  min-block-size: 40px;
+  align-content: center;
+}
+
+@media (max-width: 768px) {
+  .encabezado .importar-encabezado-titulo h1 {
+    font-size: clamp(16px, 7.7cqi, 32px);
+    min-block-size: 32px;
+  }
+}
+
+/* En este ancho, el titulo de Inventario tambien ocupa dos lineas. */
+@container (width < 150px) {
+  .encabezado .importar-encabezado-titulo h1 {
+    font-size: 20px;
+    min-block-size: 64px;
+  }
 }
 
 .importar-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-top: 20px;
+  grid-template-columns: minmax(0, 35fr) minmax(0, 65fr);
+  gap: 16px;
 }
 
 @media (max-width: 900px) {
-  .importar-grid {
-    grid-template-columns: 1fr;
-  }
+  .importar-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .importar-grid .importar-card { padding: 14px; }
+  .formato-guia .lista-atributos { grid-template-columns: minmax(0, 1fr); }
+  .tabla-ejemplo { min-width: 440px; }
 }
 
 .importar-card {
   background: #ffffff;
   border-radius: 20px;
-  padding: 28px;
+  padding: 18px;
   box-shadow: 0 10px 30px rgba(54, 28, 78, 0.05);
   border: 1px solid rgba(220, 212, 230, 0.5);
   display: flex;
   flex-direction: column;
 }
 
-.importar-card h3 {
+.importar-card h2 {
   font-size: 20px;
   color: #24152f;
-  margin: 0 0 12px 0;
+  margin: 0 0 8px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -40,14 +61,14 @@
   color: #63596d;
   font-size: 14.5px;
   line-height: 1.5;
-  margin: 0 0 20px 0;
+  margin: 0 0 12px;
 }
 
 /* Zona Drag and Drop */
 .dropzone {
   border: 2.5px dashed #b8a9ce;
   border-radius: 20px;
-  padding: 38px 20px;
+  padding: 14px 10px;
   text-align: center;
   background: #fbf9fd;
   cursor: pointer;
@@ -56,7 +77,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 220px;
+  gap: 8px;
 }
 
 .dropzone:hover,
@@ -67,31 +88,22 @@
 }
 
 .dropzone-icono {
-  width: 68px;
-  height: 68px;
+  width: 40px;
+  height: 40px;
   color: #8c68ff;
-  margin-bottom: 14px;
 }
 
 .dropzone-texto-principal {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #3b2c48;
-  margin: 0 0 8px 0;
-}
-
-.dropzone-separador {
-  color: #9c92a6;
-  font-size: 14px;
-  margin: 6px 0 12px 0;
-  font-weight: 500;
 }
 
 .boton-examinar {
   background: transparent;
   color: #7b49a6;
   border: 2px solid #7b49a6;
-  padding: 10px 24px;
+  padding: 7px 16px;
   border-radius: 12px;
   font-size: 14px;
   font-weight: 700;
@@ -106,7 +118,7 @@
 
 .archivo-seleccionado-caja {
   margin-top: 16px;
-  padding: 14px 18px;
+  padding: 8px 12px;
   background: #edf7ed;
   border: 1px solid #c8e6c9;
   border-radius: 14px;
@@ -144,12 +156,12 @@
 }
 
 .boton-procesar-csv {
-  margin-top: 20px;
+  margin-top: 12px;
   width: 100%;
   background: linear-gradient(135deg, #7b49a6 0%, #4c2d68 100%);
   color: white;
   border: none;
-  padding: 14px 20px;
+  padding: 10px 16px;
   border-radius: 14px;
   font-size: 16px;
   font-weight: 700;
@@ -179,8 +191,8 @@
   background: #fdfcff;
   border: 1px solid #e9e3f0;
   border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 10px;
+  margin-bottom: 12px;
 }
 
 .lista-atributos {
@@ -188,16 +200,14 @@
   padding: 0;
   margin: 0 0 14px 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
 }
 
 .lista-atributos li {
   font-size: 13.5px;
   color: #3b2d4c;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  overflow-wrap: anywhere;
 }
 
 .lista-atributos li strong {
@@ -220,16 +230,18 @@
 .tabla-ejemplo th {
   background: #f1ebf7;
   color: #4a2f73;
-  padding: 8px 10px;
+  padding: 7px 8px;
   font-weight: 700;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;;
 }
 
 .tabla-ejemplo td {
-  padding: 8px 10px;
+  padding: 7px 8px;
   border-top: 1px solid #eee8f5;
   color: #554862;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;;
 }
 
 .boton-descargar-plantilla {

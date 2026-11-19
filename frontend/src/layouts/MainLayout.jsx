@@ -11,6 +11,8 @@ function MainLayout({
   onCerrarSesion
 }) {
 
+  const importandoCSV = pagina === 'Importar CSV'
+
   // Controlar el estado del Sidebar
   const [contraido, setContraido] = useState(false)
 
@@ -36,9 +38,8 @@ function MainLayout({
 
         {/* ENCABEZADO DE LA PÁGINA */}
         <header className="encabezado encabezado-con-perfil">
-          <div>
-            <h1>{pagina === 'Categorias' ? 'Categorías' : pagina}</h1>
-
+          <div className={importandoCSV ? 'importar-encabezado-titulo' : undefined}>
+            <h1>{importandoCSV ? 'Importar productos CSV' : pagina === 'Categorias' ? 'Categorías' : pagina}</h1>
             <p>{pagina === 'Dashboard' ? 'Te damos la bienvenida, ' + usuario.nombre : 'Sistema de administración de MiniGestor'}</p>
           </div>
           <MenuPerfil usuario={usuario} cambiarPagina={cambiarPagina} onCerrarSesion={onCerrarSesion} />

@@ -93,10 +93,10 @@ function HistorialVentas({ cambiarPagina, origen }) {
   return (
     <>
       <button type="button" className="boton-volver productos-volver" onClick={() => cambiarPagina(origen)}>
-        {origen === 'Ventas' ? 'Volver a Ventas' : 'Volver al Dashboard'}
+        {origen === 'Ventas' ? 'Volver a Ventas' : 'Volver'}
       </button>
 
-      <section className="seccion panel">
+      <section className="seccion panel historial-ventas">
         <h2>Ventas registradas</h2>
         <form className="productos-formulario historial-filtros"
           onSubmit={(evento) => { evento.preventDefault(); buscar(1, filtros) }}>
@@ -129,7 +129,7 @@ function HistorialVentas({ cambiarPagina, origen }) {
 
         <BarraSeleccion seleccion={seleccionTabla} acciones={seleccionTabla.elegidos.length === 1 ? [
           { icono: 'detalle', texto: 'Ver detalle', ejecutar: () => abrirDetalle(ventaElegida) },
-          { icono: 'imprimir', texto: 'Imprimir factura', ejecutar: () => abrirDetalle(ventaElegida, true) }
+          { icono: 'imprimir', texto: 'Imprimir', ejecutar: () => abrirDetalle(ventaElegida, true) }
         ] : []} />
         <div className="tabla-contenedor" role="region" aria-label="Historial de ventas" tabIndex={0}>
           <table className="historial-tabla">
@@ -187,7 +187,7 @@ function HistorialVentas({ cambiarPagina, origen }) {
           <h2 id="factura-detalle">{seleccion ? factura(seleccion.id_venta) : 'Detalle de venta'}</h2>
           <div className="historial-acciones">
             {detalle && seleccion && (
-              <button type="button" className="productos-boton-secundario" onClick={imprimirDetalle}>Imprimir factura</button>
+              <button type="button" className="productos-boton-secundario historial-imprimir" onClick={imprimirDetalle}>Imprimir</button>
             )}
             <form method="dialog" onSubmit={cerrarDetalle}><button className="productos-boton-secundario">Cerrar</button></form>
           </div>

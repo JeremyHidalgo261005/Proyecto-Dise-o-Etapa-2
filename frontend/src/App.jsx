@@ -242,7 +242,7 @@ function App() {
               className="boton-volver"
               onClick={() => cambiarPagina('Dashboard')}
             >
-              Volver al Dashboard
+              Volver
             </button>
           </section>
         )

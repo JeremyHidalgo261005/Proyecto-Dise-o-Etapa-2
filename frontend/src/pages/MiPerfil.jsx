@@ -120,7 +120,7 @@ function MiPerfil({ cambiarPagina, onPerfilActualizado }) {
   return (
     <>
       <button type="button" className="boton-volver productos-volver" onClick={() => cambiarPagina('Dashboard')}>
-        Volver al Dashboard
+        Volver
       </button>
       <section className="seccion panel">
         <h2>Datos personales</h2>

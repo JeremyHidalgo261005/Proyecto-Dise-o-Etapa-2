@@ -136,7 +136,7 @@ function AdministrarUsuarios({ usuarioActual, cambiarPagina, onPerfilActualizado
   return (
     <>
       <button type="button" className="boton-volver productos-volver" onClick={() => cambiarPagina('Dashboard')}>
-        Volver al Dashboard
+        Volver
       </button>
       <section className="seccion panel">
         <header className="productos-encabezado">
