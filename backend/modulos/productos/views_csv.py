@@ -1,13 +1,17 @@
 import io
 import csv
-from decimal import Decimal
-from django.db import transaction
-from django.db.models import F
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import connection, transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser
+
+from modulos.movimientos_inventario.errores import ManejarErroresMovimientos
+from modulos.movimientos_inventario.servicios import (
+    registrar_atributo, registrar_existencias, registrar_stock_inicial,
+)
 
 from .models import Categoria, Producto
 from modulos.proveedores.models import Proveedor
@@ -26,7 +30,14 @@ def es_nulo(valor):
     return val in ('', 'null', 'none', 'nan')
 
 
-class ImportarCSVProductosView(APIView):
+def buscar_producto(nombre, codigo):
+    return (
+        Producto.objects.filter(codigo=codigo).first()
+        or Producto.objects.filter(nombre__iexact=nombre).first()
+    )
+
+
+class ImportarCSVProductosView(ManejarErroresMovimientos, APIView):
     permission_classes = [IsAdminUser]
     parser_classes = [MultiPartParser, FormParser]
 
@@ -101,24 +112,35 @@ class ImportarCSVProductosView(APIView):
         creados = 0
         actualizados = 0
         omitidos = 0
-        errores_filas = []
+        filas = []
+        for fila in lector:
+            nombre = limpiar_texto(fila.get(col_nombre))
+            if es_nulo(nombre):
+                omitidos += 1
+                continue
+            codigo = limpiar_texto(fila.get(col_codigo)) if col_codigo else ''
+            if es_nulo(codigo):
+                codigo = f"GEN-{hash(nombre) & 0xFFFFFFFF:08X}"
+            filas.append((fila, nombre, codigo))
 
-        # Cache de categorías y proveedores existentes
         categorias_cache = {c.nombre.lower().strip(): c for c in Categoria.objects.all()}
         proveedores_cache = {p.nombre.lower().strip(): p for p in Proveedor.objects.all()}
+        motivo = f'Importación CSV: {archivo.name}'
 
         with transaction.atomic():
-            for num_fila, fila in enumerate(lector, start=2):
-                nombre_raw = limpiar_texto(fila.get(col_nombre))
-                if es_nulo(nombre_raw):
-                    omitidos += 1
-                    continue
+            # Los CSV se serializan entre sí para coordinar las filas que crean productos.
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT pg_advisory_xact_lock(%s, %s)', [17041, 1])
 
-                codigo_raw = limpiar_texto(fila.get(col_codigo)) if col_codigo else ''
-                # Si no trae código, usamos un código derivado del nombre limpio
-                if es_nulo(codigo_raw):
-                    codigo_raw = f"GEN-{hash(nombre_raw) & 0xFFFFFFFF:08X}"
+            ids = {
+                producto.pk
+                for nombre, codigo in {(nombre, codigo) for _, nombre, codigo in filas}
+                if (producto := buscar_producto(nombre, codigo)) is not None
+            }
+            # Usar el mismo orden de bloqueo que emplea el registro de ventas.
+            list(Producto.objects.select_for_update().filter(pk__in=ids).order_by('pk'))
 
+            for fila, nombre_raw, codigo_raw in filas:
                 costo_raw = limpiar_texto(fila.get(col_costo))
                 precio_raw = limpiar_texto(fila.get(col_precio))
                 cat_raw = limpiar_texto(fila.get(col_categoria))
@@ -133,13 +155,15 @@ class ImportarCSVProductosView(APIView):
                 try:
                     costo_val = Decimal(costo_raw.replace('$', '').replace('₡', '').replace(',', '').strip())
                     precio_val = Decimal(precio_raw.replace('$', '').replace('₡', '').replace(',', '').strip())
+                    costo_val = costo_val.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                    precio_val = precio_val.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                     cantidad_val = int(float(cant_raw.replace(',', '').strip())) if not es_nulo(cant_raw) else 0
                     minima_val = int(float(min_raw.replace(',', '').strip())) if not es_nulo(min_raw) else 5
 
-                    if costo_val <= 0 or precio_val <= 0:
+                    if not (0 < costo_val <= Decimal('99999999.99') and 0 < precio_val <= Decimal('99999999.99')):
                         omitidos += 1
                         continue
-                    if cantidad_val < 0 or minima_val < 0:
+                    if not (0 <= cantidad_val <= 2**31 - 1 and 0 <= minima_val <= 2**31 - 1):
                         omitidos += 1
                         continue
                 except Exception:
@@ -160,25 +184,23 @@ class ImportarCSVProductosView(APIView):
                     proveedor_obj, _ = Proveedor.objects.get_or_create(nombre=prov_raw)
                     proveedores_cache[prov_key] = proveedor_obj
 
-                # 3. Verificar si el producto ya existe (por código o por nombre exacto)
-                producto_existente = Producto.objects.filter(codigo=codigo_raw).first()
-                if not producto_existente:
-                    producto_existente = Producto.objects.filter(nombre__iexact=nombre_raw).first()
-
+                producto_existente = buscar_producto(nombre_raw, codigo_raw)
                 if producto_existente:
-                    # Si ya existe, se suma la cantidad (stock) y se actualizan costo y precio recientes
-                    producto_existente.stock_actual = F('stock_actual') + cantidad_val
-                    producto_existente.costo = costo_val
-                    producto_existente.precio = precio_val
-                    producto_existente.categoria = categoria_obj
-                    producto_existente.proveedor = proveedor_obj
+                    producto_existente = Producto.objects.select_for_update().get(pk=producto_existente.pk)
+                    if cantidad_val:
+                        registrar_existencias(producto_existente, request.user, 'ingreso', cantidad_val, motivo)
+                    for campo, valor in (
+                        ('precio', precio_val), ('costo', costo_val),
+                        ('categoria', categoria_obj), ('proveedor', proveedor_obj),
+                    ):
+                        registrar_atributo(producto_existente, request.user, campo, valor, motivo)
                     if minima_val > 0:
                         producto_existente.stock_minimo = minima_val
-                    producto_existente.save(update_fields=['stock_actual', 'costo', 'precio', 'categoria', 'proveedor', 'stock_minimo'])
+                        producto_existente.save(update_fields=['stock_minimo'])
                     actualizados += 1
                 else:
                     # Crear nuevo producto
-                    Producto.objects.create(
+                    producto = Producto.objects.create(
                         nombre=nombre_raw,
                         codigo=codigo_raw,
                         costo=costo_val,
@@ -189,6 +211,7 @@ class ImportarCSVProductosView(APIView):
                         categoria=categoria_obj,
                         proveedor=proveedor_obj
                     )
+                    registrar_stock_inicial(producto, request.user, motivo)
                     creados += 1
 
         return Response({

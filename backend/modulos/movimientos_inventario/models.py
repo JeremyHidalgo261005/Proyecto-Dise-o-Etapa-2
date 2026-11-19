@@ -4,7 +4,7 @@ from django.conf import settings
 
 from django.db.models import Q, F
 
-# Create your models here.
+TIPOS_CON_VALOR = ['cambio_costo', 'cambio_proveedor', 'cambio_categoria']
 
 class MovimientoInventario(models.Model):
 
@@ -14,7 +14,10 @@ class MovimientoInventario(models.Model):
         ('venta', 'Venta'),
         ('ingreso', 'Ingreso'),
         ('ajuste', 'Ajuste'), 
-        ('cambio_precio', 'Cambio de Precio')
+        ('cambio_precio', 'Cambio de Precio'),
+        ('cambio_costo', 'Cambio de Costo'),
+        ('cambio_proveedor', 'Cambio de Proveedor'),
+        ('cambio_categoria', 'Cambio de Categoría'),
     ])
 
     cantidad = models.IntegerField(null=True, blank=True)
@@ -36,6 +39,9 @@ class MovimientoInventario(models.Model):
     precio_anterior = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     precio_nuevo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    valor_anterior = models.TextField(null=True, blank=True)
+    valor_nuevo = models.TextField(null=True, blank=True)
 
     stock_anterior = models.PositiveIntegerField(null=True, blank=True)
 
@@ -60,11 +66,16 @@ class MovimientoInventario(models.Model):
                     ~Q(precio_anterior=F('precio_nuevo'))
                 ) |
                 (
-                    ~Q(tipo_movimiento='cambio_precio') &
+                    ~Q(tipo_movimiento__in=['cambio_precio', *TIPOS_CON_VALOR]) &
                     Q(cantidad__isnull=False) &
                     ~Q(cantidad=0) &
                     Q(precio_anterior__isnull=True) &
                     Q(precio_nuevo__isnull=True)
+                ) |
+                (
+                    Q(tipo_movimiento__in=TIPOS_CON_VALOR, cantidad__isnull=True) &
+                    Q(precio_anterior__isnull=True, precio_nuevo__isnull=True) &
+                    Q(valor_anterior__isnull=False, valor_nuevo__isnull=False)
                 ),
                 name='movimiento_datos_segun_tipo'
             ),
@@ -74,7 +85,7 @@ class MovimientoInventario(models.Model):
                     Q(tipo_movimiento='ingreso', cantidad__gt=0) |
                     Q(tipo_movimiento='venta', cantidad__gt=0) |
                     Q(tipo_movimiento='ajuste') |
-                    Q(tipo_movimiento='cambio_precio')
+                    Q(tipo_movimiento__in=['cambio_precio', *TIPOS_CON_VALOR])
                 ),
                 name='movimiento_cantidad_valida'
             ),
@@ -95,7 +106,8 @@ class MovimientoInventario(models.Model):
                     'venta',
                     'ingreso',
                     'ajuste',
-                    'cambio_precio'
+                    'cambio_precio',
+                    *TIPOS_CON_VALOR,
                 ]),
                 name='movimiento_tipo_valido'
             ), 
@@ -103,13 +115,13 @@ class MovimientoInventario(models.Model):
             models.CheckConstraint(
                 condition=(
                     (
-                        Q(tipo_movimiento='cambio_precio') &
-                        Q(stock_anterior__isnull=False) &
+                        Q(tipo_movimiento__in=['cambio_precio', *TIPOS_CON_VALOR]) &
+                        Q(stock_anterior__isnull=False, stock_resultante__isnull=False) &
                         Q(stock_resultante=F('stock_anterior'))
                     ) |
                     (
-                        ~Q(tipo_movimiento='cambio_precio') &
-                        Q(stock_anterior__isnull=False) &
+                        ~Q(tipo_movimiento__in=['cambio_precio', *TIPOS_CON_VALOR]) &
+                        Q(stock_anterior__isnull=False, stock_resultante__isnull=False) &
                         Q(stock_resultante__isnull=False)
                     )
                 ),

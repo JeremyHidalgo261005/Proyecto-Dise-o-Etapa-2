@@ -103,6 +103,14 @@ function ImportarCSV({ cambiarPagina }) {
 
   return (
     <div className="importar-contenedor">
+      <button
+        type="button"
+        className="boton-volver productos-volver"
+        onClick={() => cambiarPagina('Dashboard')}
+      >
+        Volver al Dashboard
+      </button>
+
       {error && (
         <div className="mensaje-alerta error">
           <span>⚠️</span> {error}
@@ -314,7 +322,7 @@ function ImportarCSV({ cambiarPagina }) {
               className="modal-boton-cerrar"
               onClick={() => {
                 setResultadoModal(null)
-                cambiarPagina('Productos')
+                cambiarPagina('Inventario')
               }}
             >
               Ver productos en el inventario

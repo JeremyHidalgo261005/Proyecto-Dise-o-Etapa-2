@@ -60,6 +60,16 @@
   box-sizing: border-box;
 }
 
+.productos-formulario-alta input::placeholder,
+.productos-formulario-alta select:required:invalid {
+  color: #6b6570;
+  opacity: 1;
+}
+
+.productos-formulario-alta select option:not([value=""]) {
+  color: #21162f;
+}
+
 .productos-formulario input:focus,
 .productos-formulario select:focus,
 .productos-barra-busqueda input:focus {

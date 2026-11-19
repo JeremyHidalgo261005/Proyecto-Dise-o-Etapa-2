@@ -62,3 +62,28 @@ corresponda desplegar esta versión. Para ejecutar las pruebas, dirigí las
 variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD` a una
 instancia de PostgreSQL de pruebas y ejecutá
 `python manage.py test modulos.ventas` desde `backend`.
+
+
+## Movimientos de inventario
+
+Desde **Movimientos → Registrar movimiento**, seleccioná un producto y el tipo
+de cambio. La pantalla abre el formulario correspondiente para ajustar una
+cantidad absoluta o cambiar el precio de venta, costo, proveedor o categoría.
+Seleccioná un motivo y, si elegís **Otro**, escribí el detalle antes de guardar.
+
+Los mismos cambios se registran al editar un producto o importar un CSV. Las
+ventas y el stock inicial de un alta siguen generando sus movimientos
+automáticos. El historial conserva los nombres de proveedores y categorías tal
+como estaban al momento del cambio. Las cargas antiguas que solo establecieron
+un saldo no se reconstruyen.
+
+Para desplegar el módulo se requiere la migración nueva
+`movimientos_inventario.0002_tipos_y_valores_historicos`. Para las pruebas,
+apuntá las variables de conexión a un PostgreSQL temporal y ejecutá
+`python manage.py test modulos.movimientos_inventario modulos.ventas`
+desde `backend`.
+
+Si la aplicación informa que falta la migración de movimientos, completá la
+actualización del esquema en el entorno de despliegue antes de editar productos
+o registrar movimientos. El guardado se revierte si el historial no puede
+registrarse.

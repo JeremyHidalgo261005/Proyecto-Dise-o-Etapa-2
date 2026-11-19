@@ -217,6 +217,7 @@ function App() {
         return (
           <Inventario
             cambiarPagina={cambiarPagina}
+            usuario={usuarioActual}
           />
         )
 

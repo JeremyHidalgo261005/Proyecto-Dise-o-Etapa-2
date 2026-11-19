@@ -1,89 +1,68 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
+from modulos.productos.models import Categoria
+from modulos.proveedores.models import Proveedor
+
 from .models import MovimientoInventario
+from .servicios import CAMPOS_TIPO
 
 
 class MovimientoInventarioSerializer(serializers.ModelSerializer):
+    producto_nombre = serializers.CharField(source='producto.nombre', read_only=True)
+    usuario_nombre = serializers.SerializerMethodField()
+
+    def get_usuario_nombre(self, movimiento):
+        usuario = movimiento.usuario
+        return usuario.get_full_name() or usuario.get_username()
 
     class Meta:
         model = MovimientoInventario
-
         fields = [
-            'id_movimiento',
-            'tipo_movimiento',
-            'cantidad',
-            'fecha',
-            'producto',
-            'usuario',
-            'motivo',
-            'precio_anterior',
-            'precio_nuevo',
-            'stock_anterior',
-            'stock_resultante',
-            'detalle_venta'
+            'id_movimiento', 'tipo_movimiento', 'cantidad', 'fecha', 'producto',
+            'producto_nombre', 'usuario', 'usuario_nombre', 'motivo', 'precio_anterior',
+            'precio_nuevo', 'valor_anterior', 'valor_nuevo', 'stock_anterior',
+            'stock_resultante', 'detalle_venta',
         ]
+        read_only_fields = fields
 
-        read_only_fields = [
-            'id_movimiento',
-            'fecha',
-            'usuario',
-            'precio_anterior',
-            'stock_anterior',
-            'stock_resultante',
-            'detalle_venta'
-        ]
+
+CAMPOS_ENTRADA = {
+    'precio': 'precio_nuevo',
+    'costo': 'costo_nuevo',
+    'proveedor': 'proveedor_nuevo',
+    'categoria': 'categoria_nueva',
+}
+
+
+class RegistroMovimientoSerializer(serializers.Serializer):
+    tipo_movimiento = serializers.ChoiceField(choices=['ingreso', 'ajuste', *CAMPOS_TIPO.values()])
+    producto = serializers.IntegerField(min_value=1, max_value=2**31 - 1)
+    motivo = serializers.CharField()
+    cantidad = serializers.IntegerField(required=False, min_value=-(2**31), max_value=2**31 - 1)
+    stock_nuevo = serializers.IntegerField(required=False, min_value=0, max_value=2**31 - 1)
+    stock_esperado = serializers.IntegerField(required=False, min_value=0, max_value=2**31 - 1)
+    precio_nuevo = serializers.DecimalField(
+        required=False, max_digits=10, decimal_places=2, min_value=Decimal('0.01')
+    )
+    costo_nuevo = serializers.DecimalField(
+        required=False, max_digits=10, decimal_places=2, min_value=Decimal('0.01')
+    )
+    proveedor_nuevo = serializers.PrimaryKeyRelatedField(required=False, queryset=Proveedor.objects.all())
+    categoria_nueva = serializers.PrimaryKeyRelatedField(required=False, queryset=Categoria.objects.all())
 
     def validate(self, datos):
-
-        tipo = datos.get('tipo_movimiento')
-        cantidad = datos.get('cantidad')
-        precio_nuevo = datos.get('precio_nuevo')
-        motivo = datos.get('motivo')
-
-        # No se permiten movimientos de venta manuales
-        if tipo == 'venta':
-            raise serializers.ValidationError(
-                'Los movimientos de venta se generan automáticamente.'
-            )
-
-        # El motivo es obligatorio para movimientos manuales
-        if not motivo or not motivo.strip():
-            raise serializers.ValidationError(
-                {'motivo': 'Debés indicar el motivo del movimiento.'}
-            )
-
-        # Validaciones para ingresos
-        if tipo == 'ingreso':
-            if cantidad is None or cantidad <= 0:
-                raise serializers.ValidationError(
-                    {'cantidad': 'La cantidad del ingreso debe ser mayor que cero.'}
-                )
-
-        # Validaciones para ajustes
-        elif tipo == 'ajuste':
-            if cantidad is None or cantidad == 0:
-                raise serializers.ValidationError(
-                    {'cantidad': 'El ajuste debe tener una cantidad distinta de cero.'}
-                )
-
-        # Validaciones para cambios de precio
-        elif tipo == 'cambio_precio':
-
-            if cantidad is not None:
-                raise serializers.ValidationError(
-                    {'cantidad': 'Un cambio de precio no debe tener cantidad.'}
-                )
-
-            if precio_nuevo is None or precio_nuevo <= 0:
-                raise serializers.ValidationError(
-                    {'precio_nuevo': 'El nuevo precio debe ser mayor que cero.'}
-                )
-
-            producto = datos.get('producto')
-
-            if producto and precio_nuevo == producto.precio:
-                raise serializers.ValidationError(
-                    {'precio_nuevo': 'El nuevo precio debe ser diferente al precio actual.'}
-                )
-
-        return datos
+        tipo = datos['tipo_movimiento']
+        valores = set(datos) - {'producto', 'tipo_movimiento', 'motivo'}
+        if tipo == 'ingreso' and valores == {'cantidad'} and datos['cantidad'] > 0:
+            return datos
+        if tipo == 'ajuste':
+            if valores == {'cantidad'} and datos['cantidad'] != 0:
+                return datos
+            if 'stock_nuevo' in valores and valores <= {'stock_nuevo', 'stock_esperado'}:
+                return datos
+        for campo, tipo_campo in CAMPOS_TIPO.items():
+            if tipo == tipo_campo and valores == {CAMPOS_ENTRADA[campo]}:
+                return datos
+        raise serializers.ValidationError({'detail': 'Indicá un valor válido para el tipo de movimiento.'})

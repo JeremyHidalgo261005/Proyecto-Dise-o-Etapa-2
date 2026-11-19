@@ -7,8 +7,8 @@ const formularioInicial = {
   codigo: '',
   costo: '',
   precio: '',
-  stock_actual: '0',
-  stock_minimo: '0',
+  stock_actual: '',
+  stock_minimo: '',
   categoria: '',
   proveedor: '',
   estado: true
@@ -292,6 +292,7 @@ function Productos({ cambiarPagina, usuario }) {
     const stockMinimo = Number(formulario.stock_minimo)
 
     if (
+      formulario.stock_minimo === '' ||
       !Number.isInteger(stockMinimo) ||
       stockMinimo < 0
     ) {
@@ -300,17 +301,9 @@ function Productos({ cambiarPagina, usuario }) {
       )
     }
 
-    if (!modoEdicion) {
-      const stockInicial = Number(formulario.stock_actual)
-
-      if (
-        !Number.isInteger(stockInicial) ||
-        stockInicial < 0
-      ) {
-        throw new Error(
-          'El stock inicial debe ser un entero no negativo.'
-        )
-      }
+    const stock = Number(formulario.stock_actual)
+    if (formulario.stock_actual === '' || !Number.isInteger(stock) || stock < 0) {
+      throw new Error('El stock debe ser un entero no negativo.')
     }
 
     if (!formulario.categoria) {
@@ -348,13 +341,21 @@ function Productos({ cambiarPagina, usuario }) {
         estado: formulario.estado
       }
 
-      // El stock inicial solo se envía al registrar
+      const stock = Number(formulario.stock_actual)
       if (!modoEdicion) {
-        datosProducto.stock_actual =
-          Number(formulario.stock_actual)
+        datosProducto.stock_actual = stock
       }
 
       if (modoEdicion) {
+        const actual = productos.find((producto) => producto.id === editandoId)
+        if (stock !== actual.stock_actual) {
+          datosProducto.stock_nuevo = stock
+          datosProducto.stock_esperado = actual.stock_actual
+        }
+
+        for (const campo of ['precio', 'costo', 'proveedor', 'categoria']) {
+          if (Number(datosProducto[campo]) === Number(actual[campo])) delete datosProducto[campo]
+        }
         // UPDATE
         const actualizado = await solicitarAPI(
           `/api/productos/${editandoId}/`,
@@ -550,7 +551,7 @@ function Productos({ cambiarPagina, usuario }) {
             )}
 
             <form
-              className="productos-formulario"
+              className={modoEdicion ? 'productos-formulario' : 'productos-formulario productos-formulario-alta'}
               onSubmit={guardarProducto}
             >
               <label>
@@ -558,6 +559,7 @@ function Productos({ cambiarPagina, usuario }) {
                 <input
                   type="text"
                   name="nombre"
+                  placeholder={modoEdicion ? undefined : 'Ej. Arroz 1 kg'}
                   value={formulario.nombre}
                   onChange={cambiarCampo}
                   maxLength={150}
@@ -570,6 +572,7 @@ function Productos({ cambiarPagina, usuario }) {
                 <input
                   type="text"
                   name="codigo"
+                  placeholder={modoEdicion ? undefined : 'Ej. 001234'}
                   value={formulario.codigo}
                   onChange={cambiarCampo}
                   required
@@ -581,6 +584,7 @@ function Productos({ cambiarPagina, usuario }) {
                 <input
                   type="number"
                   name="costo"
+                  placeholder={modoEdicion ? undefined : 'Ej. 800'}
                   value={formulario.costo}
                   onChange={cambiarCampo}
                   min="0.01"
@@ -594,6 +598,7 @@ function Productos({ cambiarPagina, usuario }) {
                 <input
                   type="number"
                   name="precio"
+                  placeholder={modoEdicion ? undefined : 'Ej. 1200'}
                   value={formulario.precio}
                   onChange={cambiarCampo}
                   min="0.01"
@@ -603,22 +608,21 @@ function Productos({ cambiarPagina, usuario }) {
               </label>
 
               <label>
-                Stock actual
+                {modoEdicion ? 'Existencias' : 'Existencias iniciales'}
                 <input
                   type="number"
                   name="stock_actual"
+                  placeholder={modoEdicion ? undefined : 'Ej. 50'}
                   value={formulario.stock_actual}
                   onChange={cambiarCampo}
                   min="0"
                   step="1"
-                  disabled={modoEdicion}
-                  required={!modoEdicion}
+                  required
                 />
 
                 {modoEdicion && (
                   <small>
-                    Las existencias se modificarán desde
-                    movimientos de inventario.
+                    Los cambios se registran en el historial de movimientos.
                   </small>
                 )}
               </label>
@@ -628,6 +632,7 @@ function Productos({ cambiarPagina, usuario }) {
                 <input
                   type="number"
                   name="stock_minimo"
+                  placeholder={modoEdicion ? undefined : 'Ej. 10'}
                   value={formulario.stock_minimo}
                   onChange={cambiarCampo}
                   min="0"
