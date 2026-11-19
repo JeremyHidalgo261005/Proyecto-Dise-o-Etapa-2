@@ -1,3 +1,4 @@
+from datetime import datetime, timezone as zona_utc
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from pathlib import Path
@@ -245,3 +246,83 @@ class VentasSimultaneasTests(TransactionTestCase):
         self.assertEqual(self.ejecutar_simultaneas((cajero, datos), (cajero, datos)), [200, 201])
         self.assertEqual(Venta.objects.count(), 1)
         self.assertEqual(MovimientoInventario.objects.count(), 1)
+
+
+class HistorialYDashboardTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.cajero = crear_cajero('caja-historial')
+        cls.cajero.first_name = 'Ana'
+        cls.cajero.save(update_fields=['first_name'])
+        cls.producto = crear_producto('HISTORIAL', stock=4)
+        crear_producto('STOCK-NORMAL', stock=12)
+        cls.justamente_hoy = datetime(2026, 11, 19, 6, tzinfo=zona_utc.utc)
+        anterior = datetime(2026, 11, 19, 5, 59, tzinfo=zona_utc.utc)
+        cls.ventas = []
+        for indice in range(17):
+            venta = Venta.objects.create(
+                usuario=cls.cajero, metodo_pago='efectivo' if indice % 2 else 'tarjeta',
+                total=Decimal('19.10'), descuento=Decimal('1.00'),
+            )
+            Venta.objects.filter(pk=venta.pk).update(fecha=cls.justamente_hoy if indice >= 13 else anterior)
+            DetalleVenta.objects.create(
+                venta=venta, producto=cls.producto, cantidad=2,
+                precio_unitario=Decimal('10.05'), subtotal=Decimal('20.10'),
+            )
+            cls.ventas.append(venta)
+
+    def setUp(self):
+        self.api = cliente_de(self.cajero)
+        self.historial = VENTAS + 'historial/'
+        self.resumen = VENTAS + 'resumen/'
+
+    def test_resumen_usa_datos_reales_tres_recientes_y_dia_de_costa_rica(self):
+        from unittest.mock import patch
+        with patch('modulos.ventas.views.timezone.now', return_value=self.justamente_hoy):
+            respuesta = self.api.get(self.resumen)
+        self.assertEqual(respuesta.status_code, 200, respuesta.data)
+        self.assertEqual(respuesta.data['productos_registrados'], 2)
+        self.assertEqual(respuesta.data['productos_stock_bajo'], 1)
+        self.assertEqual(respuesta.data['ventas_del_dia'], 4)
+        self.assertEqual([v['id_venta'] for v in respuesta.data['ventas_recientes']],
+                         [v.pk for v in self.ventas[-1:-4:-1]])
+
+    def test_historial_paginado_en_orden_estable(self):
+        primera = self.api.get(self.historial)
+        segunda = self.api.get(self.historial, {'page': 2})
+        self.assertEqual(primera.status_code, 200, primera.data)
+        self.assertEqual(segunda.status_code, 200, segunda.data)
+        self.assertEqual(primera.data['count'], 17)
+        self.assertEqual(len(primera.data['results']), 15)
+        self.assertEqual(len(segunda.data['results']), 2)
+        self.assertEqual(
+            [v['id_venta'] for v in primera.data['results'] + segunda.data['results']],
+            [v.pk for v in reversed(self.ventas)],
+        )
+
+    def test_factura_fecha_metodo_y_detalle(self):
+        venta = self.ventas[-1]
+        por_factura = self.api.get(self.historial, {'factura': f'FAC-{venta.pk}'})
+        self.assertEqual(por_factura.status_code, 200, por_factura.data)
+        self.assertEqual(por_factura.data['count'], 1)
+        fila = por_factura.data['results'][0]
+        self.assertEqual((fila['cajero'], fila['cantidad_articulos'], fila['subtotal'], fila['descuento'],
+                          fila['total'], fila['metodo_pago']), ('Ana', 2, '20.10', '1.00', '19.10', 'tarjeta'))
+        filtradas = self.api.get(self.historial, {'fecha': '2026-11-19', 'metodo_pago': 'tarjeta'})
+        self.assertEqual(filtradas.status_code, 200, filtradas.data)
+        self.assertEqual([v['id_venta'] for v in filtradas.data['results']], [self.ventas[i].pk for i in (16, 14)])
+        detalle = self.api.get(VENTAS + f'{venta.pk}/')
+        self.assertEqual(detalle.data['detalles'][0]['producto_nombre'], self.producto.nombre)
+
+    def test_validacion_permisos_y_consultas_de_solo_lectura(self):
+        for datos in ({'factura': 'FAC-mal'}, {'fecha': 'fecha'}, {'metodo_pago': 'otro'}):
+            self.assertEqual(self.api.get(self.historial, datos).status_code, 400)
+        for ruta in (self.historial, self.resumen):
+            self.assertEqual(APIClient().get(ruta).status_code, 403)
+            self.assertEqual(self.api.post(ruta, {}, format='json').status_code, 405)
+        detalle = VENTAS + f'{self.ventas[-1].pk}/'
+        self.assertEqual(self.api.patch(detalle, {'total': 0}, format='json').status_code, 403)
+        self.assertEqual(self.api.delete(detalle).status_code, 403)
+        admin = cliente_de(get_user_model().objects.create_user(username='admin-historial', is_staff=True))
+        self.assertEqual(admin.patch(detalle, {'total': 0}, format='json').status_code, 405)
+        self.assertEqual(admin.delete(detalle).status_code, 405)

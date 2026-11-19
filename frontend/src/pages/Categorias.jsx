@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react'
+import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
 import './Categorias.css'
 
 const formularioInicial = {
@@ -70,6 +71,7 @@ function Categorias({ cambiarPagina }) {
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [eliminandoId, setEliminandoId] = useState(null)
+  const [porEliminar, setPorEliminar] = useState(null)
 
   const [errorCarga, setErrorCarga] = useState('')
   const [error, setError] = useState('')
@@ -248,21 +250,12 @@ function Categorias({ cambiarPagina }) {
 
   // DELETE: eliminar categoría
   async function eliminarCategoria(categoria) {
-    const confirmar = window.confirm(
-      `¿Seguro que querés eliminar la categoría "${categoria.nombre}"?`
-    )
-
-    if (!confirmar) return
-
     setError('')
     setMensaje('')
 
     const token = obtenerCSRF()
 
-    if (!token) {
-      setError('Iniciá sesión nuevamente como administrador.')
-      return
-    }
+    if (!token) throw new Error('Iniciá sesión nuevamente como administrador.')
 
     setEliminandoId(categoria.id)
 
@@ -288,8 +281,6 @@ function Categorias({ cambiarPagina }) {
       }
 
       setMensaje('Categoría eliminada correctamente.')
-    } catch (err) {
-      setError(err.message)
     } finally {
       setEliminandoId(null)
     }
@@ -304,6 +295,12 @@ function Categorias({ cambiarPagina }) {
 
   return (
     <div className="categorias-pagina">
+      {porEliminar && (
+        <ConfirmarEliminacion titulo="Eliminar categoría" nombre={porEliminar.nombre}
+          mensaje="¿Querés eliminar este registro? Esta acción no se puede deshacer."
+          onCancelar={() => setPorEliminar(null)} onEliminar={() => eliminarCategoria(porEliminar)} />
+      )}
+
 
       <button
         className="boton-volver categorias-volver"
@@ -482,7 +479,7 @@ function Categorias({ cambiarPagina }) {
                           <button
                             type="button"
                             className="categorias-eliminar"
-                            onClick={() => eliminarCategoria(categoria)}
+                            onClick={() => setPorEliminar(categoria)}
                             disabled={guardando || eliminandoId !== null}
                           >
                             {eliminandoId === categoria.id

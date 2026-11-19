@@ -1,0 +1,81 @@
+import { useId, useLayoutEffect, useRef, useState } from 'react'
+import './ConfirmarEliminacion.css'
+
+function ConfirmarEliminacion({ titulo, nombre, mensaje, onCancelar, onEliminar }) {
+  const dialogo = useRef(null)
+  const cancelar = useRef(null)
+  const enviando = useRef(false)
+  const [eliminando, setEliminando] = useState(false)
+  const [error, setError] = useState('')
+  const id = useId()
+
+  useLayoutEffect(() => {
+    const ventana = dialogo.current
+    const viewport = window.visualViewport
+    const raiz = document.documentElement
+    const overflow = raiz.style.overflow
+
+    function centrar() {
+      if (!viewport) return
+      ventana.style.setProperty('--confirmar-x', viewport.offsetLeft + viewport.width / 2 + 'px')
+      ventana.style.setProperty('--confirmar-y', viewport.offsetTop + viewport.height / 2 + 'px')
+      ventana.style.setProperty('--confirmar-ancho', viewport.width + 'px')
+      ventana.style.setProperty('--confirmar-alto', viewport.height + 'px')
+    }
+
+    raiz.style.overflow = 'hidden'
+    centrar()
+    ventana.showModal()
+    cancelar.current.focus({ preventScroll: true })
+    viewport?.addEventListener('resize', centrar)
+    viewport?.addEventListener('scroll', centrar)
+    return () => {
+      viewport?.removeEventListener('resize', centrar)
+      viewport?.removeEventListener('scroll', centrar)
+      ventana.close()
+      raiz.style.overflow = overflow
+    }
+  }, [])
+
+  async function confirmar() {
+    if (enviando.current) return
+    enviando.current = true
+    setEliminando(true)
+    setError('')
+    try {
+      await onEliminar()
+      onCancelar()
+    } catch (error) {
+      setError(error.message || 'No se pudo completar la eliminación.')
+      enviando.current = false
+      setEliminando(false)
+    }
+  }
+
+  return (
+    <dialog ref={dialogo} className="panel confirmar-eliminacion"
+      aria-labelledby={id + '-titulo'} aria-describedby={id + '-mensaje'}
+      onCancel={(evento) => {
+        evento.preventDefault()
+        if (!enviando.current) onCancelar()
+      }}>
+      <span className="confirmar-eliminacion-icono" aria-hidden="true">!</span>
+      <h2 id={id + '-titulo'}>{titulo}</h2>
+      {nombre && <p className="confirmar-eliminacion-nombre">{nombre}</p>}
+      <p id={id + '-mensaje'}>{mensaje}</p>
+      {error && <p className="confirmar-eliminacion-error" role="alert">{error}</p>}
+      <div className="confirmar-eliminacion-acciones">
+        <button ref={cancelar} type="button" className="productos-boton-secundario"
+          disabled={eliminando} onClick={onCancelar}>
+          Cancelar
+        </button>
+        <button type="button" className="confirmar-eliminacion-boton"
+          disabled={eliminando} onClick={confirmar}>
+          {eliminando ? 'Eliminando…' : 'Eliminar'}
+        </button>
+      </div>
+    </dialog>
+  )
+}
+
+export default ConfirmarEliminacion

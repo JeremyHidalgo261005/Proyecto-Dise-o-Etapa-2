@@ -1,0 +1,82 @@
+dialog.confirmar-eliminacion {
+  position: fixed;
+  inset: auto;
+  left: var(--confirmar-x, 50%);
+  top: var(--confirmar-y, 50%);
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  width: min(430px, calc(var(--confirmar-ancho, 100vw) - 24px));
+  max-width: none;
+  max-height: calc(var(--confirmar-alto, 100vh) - 24px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: clamp(18px, 5vw, 28px);
+  margin: 0;
+  color: #342349;
+  text-align: center;
+}
+
+.confirmar-eliminacion::backdrop {
+  background: #140a1e8c;
+}
+
+.confirmar-eliminacion-icono {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  place-items: center;
+  background: #fce9ec;
+  color: #a82034;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.confirmar-eliminacion h2 {
+  margin: 0;
+}
+
+.confirmar-eliminacion p {
+  margin: 10px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.confirmar-eliminacion-nombre {
+  font-weight: 700;
+}
+
+.confirmar-eliminacion-error {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fce9ec;
+  color: #8e172a;
+}
+
+.confirmar-eliminacion-acciones {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.confirmar-eliminacion-boton {
+  padding: 12px 18px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #af2337;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirmar-eliminacion-boton:hover {
+  background: #961b2d;
+}
+
+.confirmar-eliminacion button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -41,7 +41,7 @@ function MainLayout({
           <div>
             <h1>{pagina === 'Categorias' ? 'Categorías' : pagina}</h1>
 
-            <p>Sistema de administración de MiniGestor</p>
+            <p>{pagina === 'Dashboard' ? 'Te damos la bienvenida, ' + usuario.nombre : 'Sistema de administración de MiniGestor'}</p>
           </div>
         </header>
 

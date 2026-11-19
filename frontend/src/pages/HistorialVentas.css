@@ -1,0 +1,60 @@
+.productos-formulario.historial-filtros {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0 22px;
+}
+
+.historial-acciones,
+.historial-paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.historial-acciones {
+  grid-column: 1 / -1;
+}
+
+.historial-paginacion {
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.historial-paginacion button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.historial-tabla {
+  min-width: 860px;
+}
+
+dialog.historial-detalle {
+  width: min(680px, calc(100% - 24px));
+  max-width: none;
+  padding: 20px;
+  margin: auto;
+  color: #342349;
+}
+
+.historial-detalle::backdrop {
+  background: #140a1e8c;
+}
+
+.historial-totales {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
+  gap: 6px 20px;
+}
+
+.historial-totales dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .productos-formulario.historial-filtros { grid-template-columns: 1fr; }
+  .historial-paginacion { justify-content: space-between; }
+}

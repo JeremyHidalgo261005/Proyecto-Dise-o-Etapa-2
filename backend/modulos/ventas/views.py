@@ -1,15 +1,20 @@
 import hashlib
 import json
+from datetime import datetime, time, timedelta
 from decimal import Decimal, ROUND_HALF_UP
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password, is_password_usable
 from django.core import signing
 from django.db import transaction
+from django.db.models import Count, F, Q, Sum
+from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
@@ -18,11 +23,33 @@ from modulos.productos.models import Producto
 from modulos.usuarios.permisos import PermisoVentas
 
 from .models import DetalleVenta, Venta
-from .serializers import AutorizacionVentaSerializer, RegistroVentaSerializer, VentaSerializer
+from .serializers import (
+    AutorizacionVentaSerializer, FiltrosHistorialSerializer, RegistroVentaSerializer,
+    VentaHistorialSerializer, VentaSerializer,
+)
 
 SAL_AUTORIZACION = 'ventas.descuento'
 CENTIMO = Decimal('0.01')
 MAX_IMPORTE = Decimal('99999999.99')
+
+
+ZONA_NEGOCIO = ZoneInfo('America/Costa_Rica')
+
+
+def ventas_en_fecha(ventas, fecha):
+    inicio = datetime.combine(fecha, time.min, tzinfo=ZONA_NEGOCIO)
+    return ventas.filter(fecha__gte=inicio, fecha__lt=inicio + timedelta(days=1))
+
+
+def filas_historial(ventas):
+    return ventas.select_related('usuario').annotate(
+        cantidad_articulos=Sum('detalles__cantidad', default=0),
+        subtotal=Sum('detalles__subtotal', default=0),
+    )
+
+
+class PaginacionHistorial(PageNumberPagination):
+    page_size = 15
 
 
 class LimiteIntentosPin(UserRateThrottle):
@@ -41,6 +68,42 @@ class VentaViewSet(
     ).order_by('-fecha')
     serializer_class = VentaSerializer
     permission_classes = [PermisoVentas]
+
+    @action(detail=False, methods=['get'])
+    def historial(self, request):
+        entrada = FiltrosHistorialSerializer(data=request.query_params)
+        entrada.is_valid(raise_exception=True)
+        filtros = entrada.validated_data
+        ventas = Venta.objects.order_by('-fecha', '-pk')
+        if filtros.get('factura'):
+            ventas = ventas.filter(pk=filtros['factura'])
+        if 'fecha' in filtros:
+            ventas = ventas_en_fecha(ventas, filtros['fecha'])
+        if 'metodo_pago' in filtros:
+            ventas = ventas.filter(metodo_pago=filtros['metodo_pago'])
+
+        paginador = PaginacionHistorial()
+        ids = paginador.paginate_queryset(ventas.values_list('pk', flat=True), request)
+        filas = filas_historial(Venta.objects.filter(pk__in=ids))
+        return paginador.get_paginated_response(
+            VentaHistorialSerializer(filas.order_by('-fecha', '-pk'), many=True).data
+        )
+
+    @action(detail=False, methods=['get'])
+    def resumen(self, request):
+        productos = Producto.objects.aggregate(
+            productos_registrados=Count('pk'),
+            productos_stock_bajo=Count('pk', filter=Q(stock_actual__lte=F('stock_minimo'))),
+        )
+        fecha = timezone.localdate(timezone=ZONA_NEGOCIO)
+        ventas = Venta.objects.all()
+        ids = ventas.order_by('-fecha', '-pk').values('pk')[:3]
+        recientes = filas_historial(ventas.filter(pk__in=ids)).order_by('-fecha', '-pk')
+        return Response({
+            **productos,
+            'ventas_del_dia': ventas_en_fecha(ventas, fecha).count(),
+            'ventas_recientes': VentaHistorialSerializer(recientes, many=True).data,
+        })
 
     @action(detail=False, methods=['post'], url_path='autorizar', throttle_classes=[LimiteIntentosPin])
     def autorizar(self, request):

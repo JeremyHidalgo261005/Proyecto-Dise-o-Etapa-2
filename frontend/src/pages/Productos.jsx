@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react'
+import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
 import './Productos.css'
 
 const formularioInicial = {
@@ -129,6 +130,7 @@ function Productos({ cambiarPagina, usuario }) {
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [eliminandoId, setEliminandoId] = useState(null)
+  const [porEliminar, setPorEliminar] = useState(null)
 
   const [errorCarga, setErrorCarga] = useState('')
   const [errorFormulario, setErrorFormulario] = useState('')
@@ -419,13 +421,6 @@ function Productos({ cambiarPagina, usuario }) {
   async function eliminarProducto(producto) {
     if (!esAdministrador || eliminandoId !== null) return
 
-    const confirmar = window.confirm(
-      `¿Seguro que querés eliminar "${producto.nombre}"?\n\n` +
-      'Esta acción no se puede deshacer.'
-    )
-
-    if (!confirmar) return
-
     setErrorFormulario('')
     setMensaje('')
     setEliminandoId(producto.id)
@@ -457,8 +452,6 @@ function Productos({ cambiarPagina, usuario }) {
         'Producto eliminado correctamente.'
       )
 
-    } catch (error) {
-      setErrorFormulario(error.message)
     } finally {
       setEliminandoId(null)
     }
@@ -501,6 +494,12 @@ function Productos({ cambiarPagina, usuario }) {
 
   return (
     <div className="productos-pagina">
+      {porEliminar && (
+        <ConfirmarEliminacion titulo="Eliminar producto" nombre={porEliminar.nombre}
+          mensaje="¿Querés eliminar este registro? Esta acción no se puede deshacer."
+          onCancelar={() => setPorEliminar(null)} onEliminar={() => eliminarProducto(porEliminar)} />
+      )}
+
 
       <button
         className="boton-volver productos-volver"
@@ -903,7 +902,7 @@ function Productos({ cambiarPagina, usuario }) {
                               type="button"
                               className="productos-eliminar"
                               onClick={() =>
-                                eliminarProducto(producto)
+                                setPorEliminar(producto)
                               }
                               disabled={
                                 guardando ||

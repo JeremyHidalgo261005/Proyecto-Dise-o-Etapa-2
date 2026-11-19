@@ -87,3 +87,22 @@ Si la aplicación informa que falta la migración de movimientos, completá la
 actualización del esquema en el entorno de despliegue antes de editar productos
 o registrar movimientos. El guardado se revierte si el historial no puede
 registrarse.
+
+
+## Dashboard e historial de ventas
+
+El Dashboard consulta PostgreSQL para mostrar los productos registrados, los
+que alcanzaron su stock mínimo o están por debajo, las ventas del día y las
+tres ventas más recientes. Las fechas se muestran y filtran en la zona horaria
+de Costa Rica.
+
+Abrí el historial con **Ver todas las ventas** desde el Dashboard o con
+**Historial de ventas** desde el punto de venta. Podés buscar por número de
+factura (por ejemplo, FAC-123), combinar fecha y método de pago, navegar por
+páginas de 15 ventas y consultar los artículos de cada factura. El historial
+es de consulta y conserva los permisos de Ventas. Volver al punto de venta
+desde el historial conserva el carrito abierto.
+
+Para verificar las consultas y las regresiones en una base temporal, ejecutá
+`python manage.py test modulos.ventas modulos.movimientos_inventario` desde
+`backend` apuntando las variables de conexión a ese entorno de pruebas.

@@ -8,6 +8,7 @@ import Productos from './pages/Productos'
 import Categorias from './pages/Categorias'
 import Proveedores from './pages/Proveedores'
 import Ventas from './pages/Ventas'
+import HistorialVentas from './pages/HistorialVentas'
 import Inventario from './pages/Inventario'
 import ImportarCSV from './pages/ImportarCSV'
 
@@ -31,6 +32,7 @@ async function obtenerTokenCSRF() {
 
 function App() {
   const [pagina, setPagina] = useState('Dashboard')
+  const [origenHistorial, setOrigenHistorial] = useState('Dashboard')
   const [usuarioActual, setUsuarioActual] = useState(null)
 
   const [verificandoSesion, setVerificandoSesion] = useState(true)
@@ -155,7 +157,8 @@ function App() {
     const paginasCajero = [
       'Dashboard',
       'Inventario',
-      'Ventas'
+      'Ventas',
+      'Historial de ventas'
     ]
 
     if (
@@ -168,6 +171,9 @@ function App() {
       return
     }
 
+    if (destino === 'Historial de ventas') {
+      setOrigenHistorial(pagina === 'Ventas' ? 'Ventas' : 'Dashboard')
+    }
     setErrorAcceso('')
     setPagina(destino)
   }
@@ -205,13 +211,8 @@ function App() {
           />
         )
 
-      case 'Ventas':
-        return (
-          <Ventas
-            cambiarPagina={cambiarPagina}
-            usuario={usuarioActual}
-          />
-        )
+      case 'Historial de ventas':
+        return <HistorialVentas cambiarPagina={cambiarPagina} origen={origenHistorial} />
 
       case 'Movimientos':
         return (
@@ -282,7 +283,12 @@ function App() {
         </p>
       )}
 
-      {mostrarPagina()}
+      {(pagina === 'Ventas' || (pagina === 'Historial de ventas' && origenHistorial === 'Ventas')) && (
+        <div hidden={pagina !== 'Ventas'}>
+          <Ventas cambiarPagina={cambiarPagina} usuario={usuarioActual} />
+        </div>
+      )}
+      {pagina !== 'Ventas' && mostrarPagina()}
     </MainLayout>
   )
 }

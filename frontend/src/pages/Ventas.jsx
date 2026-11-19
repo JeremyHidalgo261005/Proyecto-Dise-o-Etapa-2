@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
 import './Ventas.css'
 
 // Formateador en moneda local (Colones costarricenses - CRC)
@@ -61,6 +62,7 @@ function Ventas({ cambiarPagina, usuario }) {
 
   // Estado de la factura actual (tiempo real)
   const [itemsFactura, setItemsFactura] = useState([])
+  const [confirmarFactura, setConfirmarFactura] = useState(false)
   const [porcentajeDescuento, setPorcentajeDescuento] = useState(0)
 
   // 1. Modal de Autorización de Administrador (Eliminar artículo o Descuento)
@@ -383,6 +385,18 @@ function Ventas({ cambiarPagina, usuario }) {
 
   return (
     <div className="ventas-modulo">
+      {confirmarFactura && (
+        <ConfirmarEliminacion titulo="Eliminar factura en preparación"
+          mensaje="¿Querés eliminar todos los artículos de la factura actual?"
+          onCancelar={() => setConfirmarFactura(false)}
+          onEliminar={() => {
+            setItemsFactura([])
+            setPorcentajeDescuento(0)
+            setAutorizacion('')
+            claveBorrador.current = null
+          }} />
+      )}
+
       {/* BARRA SUPERIOR */}
       <div className="ventas-cabecera">
         <div>
@@ -390,13 +404,19 @@ function Ventas({ cambiarPagina, usuario }) {
           <p>Facturación y control de caja en tiempo real</p>
         </div>
 
-        <button
-          type="button"
-          className="boton-volver"
-          onClick={() => cambiarPagina('Dashboard')}
-        >
-          Volver al Dashboard
-        </button>
+        <div className="historial-acciones">
+          <button type="button" className="productos-boton-secundario"
+            onClick={() => cambiarPagina('Historial de ventas')}>
+            Historial de ventas
+          </button>
+          <button
+            type="button"
+            className="boton-volver"
+            onClick={() => cambiarPagina('Dashboard')}
+          >
+            Volver al Dashboard
+          </button>
+        </div>
       </div>
 
       {/* DISPOSICIÓN EN 2 COLUMNAS */}
@@ -482,14 +502,8 @@ function Ventas({ cambiarPagina, usuario }) {
               <button
                 type="button"
                 className="btn-vaciar-factura"
-                onClick={() => {
-                  if (window.confirm('¿Deseás reiniciar la factura actual?')) {
-                    setItemsFactura([])
-                    setPorcentajeDescuento(0)
-                    setAutorizacion('')
-                    claveBorrador.current = null
-                  }
-                }}
+                onClick={() => setConfirmarFactura(true)}
+                disabled={Boolean(pendiente) || guardandoPago}
               >
                 Limpiar factura
               </button>

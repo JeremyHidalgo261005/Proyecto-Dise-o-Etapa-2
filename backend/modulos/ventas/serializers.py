@@ -59,6 +59,37 @@ class VentaSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class VentaHistorialSerializer(serializers.ModelSerializer):
+    cajero = serializers.SerializerMethodField()
+    cantidad_articulos = serializers.IntegerField(read_only=True)
+    subtotal = serializers.DecimalField(max_digits=22, decimal_places=2, read_only=True)
+
+    def get_cajero(self, venta):
+        return venta.usuario.get_full_name() or venta.usuario.get_username()
+
+    class Meta:
+        model = Venta
+        fields = [
+            'id_venta', 'fecha', 'cajero', 'cantidad_articulos', 'subtotal',
+            'descuento', 'total', 'metodo_pago',
+        ]
+        read_only_fields = fields
+
+
+class FiltrosHistorialSerializer(serializers.Serializer):
+    factura = serializers.RegexField(r'(?i)^(?:FAC-)?[0-9]{1,10}$', required=False, allow_blank=True)
+    fecha = serializers.DateField(required=False)
+    metodo_pago = serializers.ChoiceField(choices=['efectivo', 'tarjeta'], required=False)
+
+    def validate_factura(self, valor):
+        if not valor:
+            return None
+        numero = int(valor.upper().removeprefix('FAC-'))
+        if not 0 < numero <= 2**31 - 1:
+            raise serializers.ValidationError('Ingresá un número de factura válido.')
+        return numero
+
+
 class LineaVentaSerializer(serializers.Serializer):
     producto = serializers.IntegerField(min_value=1, max_value=2**31 - 1)
     cantidad = serializers.IntegerField(min_value=1, max_value=2**31 - 1)

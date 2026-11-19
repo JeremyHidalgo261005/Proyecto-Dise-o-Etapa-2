@@ -78,7 +78,7 @@ function valoresHistorial(movimiento) {
   return [movimiento.stock_anterior, movimiento.stock_resultante]
 }
 
-function usarModalEnPantalla(abierto, fondoRef) {
+function useModalEnPantalla(abierto, fondoRef) {
   useLayoutEffect(() => {
     if (!abierto) return
 
@@ -146,7 +146,7 @@ function Inventario({ cambiarPagina, usuario }) {
   const opcion = opciones[tipo]
   const modalAbierto = Boolean(mostrarFormulario && producto && opcion)
   const fondoModalRef = useRef(null)
-  usarModalEnPantalla(modalAbierto, fondoModalRef)
+  useModalEnPantalla(modalAbierto, fondoModalRef)
   const relacionados = opcion?.catalogo ? catalogos[opcion.catalogo] : null
   const actual = producto?.[opcion?.campo]
   const mostrarActual = relacionados

@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react'
+import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
 import './Proveedores.css'
 
 const formularioInicial = {
@@ -103,6 +104,7 @@ function Proveedores({ cambiarPagina }) {
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [eliminandoId, setEliminandoId] = useState(null)
+  const [porEliminar, setPorEliminar] = useState(null)
 
   const [errorCarga, setErrorCarga] = useState('')
   const [error, setError] = useState('')
@@ -298,22 +300,12 @@ function cambiarCampo(evento) {
 
   // DELETE: eliminar proveedor
   async function eliminarProveedor(proveedor) {
-    const confirmar = window.confirm(
-      `¿Seguro que querés eliminar al proveedor "${proveedor.nombre}"?\n\n` +
-      'Esta acción no se puede deshacer.'
-    )
-
-    if (!confirmar) return
-
     setError('')
     setMensaje('')
 
     const token = obtenerCSRF()
 
-    if (!token) {
-      setError('Iniciá sesión nuevamente como administrador.')
-      return
-    }
+    if (!token) throw new Error('Iniciá sesión nuevamente como administrador.')
 
     setEliminandoId(proveedor.id)
 
@@ -339,8 +331,6 @@ function cambiarCampo(evento) {
       }
 
       setMensaje('Proveedor eliminado correctamente.')
-    } catch (err) {
-      setError(err.message)
     } finally {
       setEliminandoId(null)
     }
@@ -363,6 +353,12 @@ function cambiarCampo(evento) {
 
   return (
     <div className="proveedores-pagina">
+      {porEliminar && (
+        <ConfirmarEliminacion titulo="Eliminar proveedor" nombre={porEliminar.nombre}
+          mensaje="¿Querés eliminar este registro? Esta acción no se puede deshacer."
+          onCancelar={() => setPorEliminar(null)} onEliminar={() => eliminarProveedor(porEliminar)} />
+      )}
+
 
       <button
         className="boton-volver proveedores-volver"
@@ -591,7 +587,7 @@ function cambiarCampo(evento) {
                             type="button"
                             className="proveedores-eliminar"
                             onClick={() =>
-                              eliminarProveedor(proveedor)
+                              setPorEliminar(proveedor)
                             }
                             disabled={
                               guardando ||

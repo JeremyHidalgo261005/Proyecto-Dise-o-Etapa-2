@@ -1,279 +1,118 @@
-
 import { useEffect, useState } from 'react'
+import { consultarVentas, factura, fechaVenta, metodoPago, monto } from './apiVentas'
+import IconoNavegacion from '../components/IconoNavegacion'
+import './Dashboard.css'
 
-// Consultar todos los productos, incluso si hay varias páginas
-async function consultarProductos(signal) {
-  const productos = []
-  const paginasVisitadas = new Set()
-
-  let ruta = '/api/productos/'
-
-  while (ruta) {
-    if (paginasVisitadas.has(ruta)) {
-      throw new Error('Error al consultar las páginas de productos.')
-    }
-
-    paginasVisitadas.add(ruta)
-
-    const respuesta = await fetch(ruta, {
-      credentials: 'same-origin',
-      signal
-    })
-
-    if (!respuesta.ok) {
-      throw new Error(
-        'No se pudieron consultar los productos.'
-      )
-    }
-
-    const datos = await respuesta.json()
-
-    // API sin paginación
-    if (Array.isArray(datos)) {
-      productos.push(...datos)
-      break
-    }
-
-    // API con paginación
-    if (!Array.isArray(datos.results)) {
-      throw new Error(
-        'La API devolvió un formato incorrecto.'
-      )
-    }
-
-    productos.push(...datos.results)
-
-    if (datos.next) {
-      const siguiente = new URL(
-        datos.next,
-        window.location.origin
-      )
-
-      if (!siguiente.pathname.startsWith('/api/productos/')) {
-        throw new Error('La API devolvió una página incorrecta.')
-      }
-
-      ruta = siguiente.pathname + siguiente.search
-    } else {
-      ruta = null
-    }
-  }
-
-  return productos
+function Acceso({ titulo, descripcion, color, destino, cambiarPagina }) {
+  return (
+    <button type="button" className={'atajo-card atajo-' + color} onClick={() => cambiarPagina(destino)}>
+      <span className="atajo-icono" aria-hidden="true"><IconoNavegacion destino={destino} /></span>
+      <span className="atajo-texto">
+        <strong>{titulo}</strong>
+        <small>{descripcion}</small>
+      </span>
+      <span className="atajo-flecha" aria-hidden="true">→</span>
+    </button>
+  )
 }
 
 function Dashboard({ cambiarPagina, usuario }) {
   const esAdministrador = usuario?.rol === 'Administrador'
+  const [mostrarGestion, setMostrarGestion] = useState(false)
+  const [resumen, setResumen] = useState(null)
+  const [error, setError] = useState('')
 
-  const [productos, setProductos] = useState([])
-  const [cargandoProductos, setCargandoProductos] = useState(true)
-  const [errorProductos, setErrorProductos] = useState('')
-
-  // Cargar los productos reales desde Django
   useEffect(() => {
     const controlador = new AbortController()
-
-    async function cargarProductos() {
-      setCargandoProductos(true)
-      setErrorProductos('')
-
-      try {
-        const datos = await consultarProductos(
-          controlador.signal
-        )
-
-        if (!controlador.signal.aborted) {
-          setProductos(datos)
-        }
-
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          setErrorProductos(error.message)
-        }
-      } finally {
-        if (!controlador.signal.aborted) {
-          setCargandoProductos(false)
-        }
-      }
-    }
-
-    cargarProductos()
-
+    consultarVentas('resumen/', controlador.signal).then(setResumen).catch((error) => {
+      if (error.name !== 'AbortError') setError(error.message)
+    })
     return () => controlador.abort()
   }, [])
 
-  // Contar todos los productos registrados
-  const totalProductos = productos.length
-
-  // Contar productos con stock bajo
-  const productosStockBajo = productos.filter((producto) => {
-    const stockActual = Number(producto.stock_actual)
-    const stockMinimo = Number(producto.stock_minimo)
-
-    return (
-      Number.isFinite(stockActual) &&
-      Number.isFinite(stockMinimo) &&
-      stockActual <= stockMinimo
-    )
-  }).length
-
-  // Accesos rápidos del administrador
-  const accesosAdministrador = [
-    { nombre: 'Nueva venta', destino: 'Ventas' },
-    { nombre: 'Inventario (Productos)', destino: 'Inventario' },
-    { nombre: 'Nueva categoría', destino: 'Categorias' },
-    { nombre: 'Nuevo proveedor', destino: 'Proveedores' }
+  const tarjetas = [
+    ['Productos registrados', resumen?.productos_registrados],
+    ['Ventas del día', resumen?.ventas_del_dia],
+    ['Productos con stock bajo', resumen?.productos_stock_bajo]
   ]
-
-  // Accesos rápidos del cajero
-  const accesosCajero = [
-    { nombre: 'Nueva venta', destino: 'Ventas' },
-    { nombre: 'Consultar inventario', destino: 'Inventario' }
-  ]
-
-  const accesos = esAdministrador
-    ? accesosAdministrador
-    : usuario?.rol === 'Cajero'
-      ? accesosCajero
-      : []
+  const recientes = resumen?.ventas_recientes || []
 
   return (
     <div className="dashboard">
-
-      {/* ACCESOS RÁPIDOS */}
       <section className="seccion">
         <h2>Accesos rápidos</h2>
-
-        <div className="accesos-grid">
-          {accesos.map((acceso) => (
-            <button
-              key={acceso.nombre}
-              type="button"
-              className="acceso-card"
-              onClick={() => cambiarPagina(acceso.destino)}
-            >
-              <span>{acceso.nombre}</span>
-              <span aria-hidden="true">→</span>
-            </button>
-          ))}
+        <div className="atajos-grid atajos-principales">
+          <div className={esAdministrador ? 'atajo-con-opciones' : undefined}>
+            <Acceso titulo="Nueva venta" descripcion="Registrar una venta"
+              color="lila" destino="Ventas" cambiarPagina={cambiarPagina} />
+            {esAdministrador && (
+              <button type="button" className="atajo-opciones"
+                aria-label={mostrarGestion ? 'Ocultar accesos de gestión' : 'Mostrar accesos de gestión'}
+                aria-expanded={mostrarGestion} aria-controls="accesos-gestion"
+                onClick={() => setMostrarGestion(!mostrarGestion)}>
+                <span aria-hidden="true">{mostrarGestion ? '×' : '⋮'}</span>
+              </button>
+            )}
+          </div>
+          <Acceso titulo="Inventario" descripcion={esAdministrador ? 'Administrar productos' : 'Consultar productos'}
+            color="menta" destino="Inventario" cambiarPagina={cambiarPagina} />
         </div>
-      </section>
 
-      {/* RESUMEN GENERAL */}
-      <section
-        className="resumen-grid"
-        aria-label="Resumen general"
-      >
-
-        {/* PRODUCTOS REGISTRADOS */}
-        <article className="resumen-card">
-          <h3>Productos registrados</h3>
-
-          <div
-            className="resumen-scroll"
-            role="region"
-            aria-label="Resumen de productos registrados"
-            aria-live="polite"
-          >
-            {cargandoProductos ? (
+        {esAdministrador && (
+          <div id="accesos-gestion" className="atajos-grid atajos-gestion" hidden={!mostrarGestion}>
+            {mostrarGestion && (
               <>
-                <p>...</p>
-                <span>Cargando productos...</span>
-              </>
-            ) : errorProductos ? (
-              <>
-                <p>—</p>
-                <span role="alert">{errorProductos}</span>
-              </>
-            ) : (
-              <>
-                <p>{totalProductos}</p>
-                <span>Productos guardados en el sistema</span>
+                <Acceso titulo="Categorías" descripcion="Administrar categorías"
+                  color="crema" destino="Categorias" cambiarPagina={cambiarPagina} />
+                <Acceso titulo="Proveedores" descripcion="Administrar proveedores"
+                  color="rosa" destino="Proveedores" cambiarPagina={cambiarPagina} />
               </>
             )}
           </div>
-        </article>
-
-        {/* VENTAS DEL DÍA */}
-        <article className="resumen-card">
-          <h3>Ventas del día</h3>
-
-          <div
-            className="resumen-scroll"
-            role="region"
-            aria-label="Resumen de ventas del día"
-          >
-            <p>Pendiente</p>
-            <span>Módulo de ventas por implementar</span>
-          </div>
-        </article>
-
-        {/* PRODUCTOS CON STOCK BAJO */}
-        <article className="resumen-card">
-          <h3>Productos con stock bajo</h3>
-
-          <div
-            className="resumen-scroll"
-            role="region"
-            aria-label="Resumen de productos con stock bajo"
-            aria-live="polite"
-          >
-            {cargandoProductos ? (
-              <>
-                <p>...</p>
-                <span>Revisando existencias...</span>
-              </>
-            ) : errorProductos ? (
-              <>
-                <p>—</p>
-                <span role="alert">{errorProductos}</span>
-              </>
-            ) : (
-              <>
-                <p>{productosStockBajo}</p>
-                <span>
-                  {productosStockBajo === 0
-                    ? 'Sin productos con stock bajo'
-                    : 'Productos que requieren atención'}
-                </span>
-              </>
-            )}
-          </div>
-        </article>
-
+        )}
       </section>
 
-      {/* VENTAS RECIENTES */}
+      <section className="resumen-grid" aria-label="Resumen general" aria-busy={!resumen && !error}>
+        {tarjetas.map(([titulo, numero]) => (
+          <article className="resumen-card dashboard-indicador" key={titulo}>
+            <h3>{titulo}</h3>
+            <p>{numero ?? '—'}</p>
+          </article>
+        ))}
+      </section>
+
       <section className="seccion panel ventas-recientes">
-        <h2>Ventas recientes</h2>
-
-        <div
-          className="tabla-contenedor dashboard-tabla-scroll"
-          role="region"
-          aria-label="Historial de ventas recientes"
-          tabIndex={0}
-        >
+        <header className="productos-encabezado">
+          <h2>Ventas recientes</h2>
+          <button type="button" className="boton-volver"
+            onClick={() => cambiarPagina('Historial de ventas')}>
+            Ver todas las ventas
+          </button>
+        </header>
+        <div className="tabla-contenedor" role="region" aria-label="Ventas recientes" tabIndex={0}>
           <table>
             <thead>
-              <tr>
-                <th>ID de venta</th>
-                <th>Fecha</th>
-                <th>Total</th>
-                <th>Estado</th>
-              </tr>
+              <tr><th>Factura</th><th>Fecha y hora</th><th>Total</th><th>Método de pago</th></tr>
             </thead>
-
             <tbody>
-              <tr>
-                <td colSpan="4" className="tabla-vacia">
-                  Todavía no hay ventas registradas.
-                </td>
-              </tr>
+              {recientes.map((venta) => (
+                <tr key={venta.id_venta}>
+                  <td>{factura(venta.id_venta)}</td>
+                  <td>{fechaVenta(venta.fecha)}</td>
+                  <td>{monto(venta.total)}</td>
+                  <td>{metodoPago(venta.metodo_pago)}</td>
+                </tr>
+              ))}
+              {recientes.length === 0 && (
+                <tr><td colSpan="4" className="tabla-vacia">
+                  {error ? <span role="alert">{error}</span>
+                    : resumen ? 'Todavía no hay ventas registradas.' : 'Consultando ventas…'}
+                </td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </section>
-
     </div>
   )
 }
