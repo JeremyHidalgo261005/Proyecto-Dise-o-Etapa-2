@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'modulos.usuarios.apps.UsuariosConfig',
     'modulos.movimientos_inventario.apps.MovimientosInventarioConfig',
     'modulos.ventas.apps.VentasConfig',
+    'modulos.agente_ia.apps.AgenteIaConfig',
 ]
 
 MIDDLEWARE = [
