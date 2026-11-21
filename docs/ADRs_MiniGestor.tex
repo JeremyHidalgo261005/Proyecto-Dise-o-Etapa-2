@@ -1,0 +1,353 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=teal,
+    urlcolor=blue,
+    citecolor=teal
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textbf{MiniGestor} -- Architecture Decision Records (ADR)}
+\lhead{Tecnológico de Costa Rica}
+\rfoot{Página \thepage}
+
+% Estilo de títulos
+\titleformat{\section}{\large\bfseries\color{teal}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{}{0em}{}
+
+\newtcolorbox{adrbox}[1]{
+    colback=teal!5!white,
+    colframe=teal!75!black,
+    fonttitle=\bfseries,
+    title=#1,
+    arc=3mm
+}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE \textbf{Instituto Tecnológico de Costa Rica}}\\[0.2cm]
+    {\large Centro Académico de Alajuela -- Diseño de Software}\\[0.4cm]
+    {\Huge \textbf{Architecture Decision Records (ADRs)}}\\[0.3cm]
+    {\Large \textbf{Proyecto: MiniGestor -- Sistema POS}}\\[0.4cm]
+    \textbf{Autores:} Jeremy Hidalgo Soto, Santiago Ballestero, Kendall Chacón\\[0.1cm]
+    \textbf{Profesor:} Raquel Rojas \quad | \quad \textbf{Fecha:} Noviembre 2026
+\end{center}
+
+\vspace{0.5cm}
+\noindent\fbox{%
+\parbox{\textwidth}{%
+\textbf{Nota de contextualización metodológica:} Con el objetivo de garantizar la trazabilidad arquitectónica y la evolución controlada del diseño del sistema \textit{MiniGestor}, el equipo sostuvo sesiones técnicas periódicas a lo largo de las semanas de desarrollo, realizadas recurrentemente a las \textbf{9:00 p.m. vía Microsoft Teams}. En dichas reuniones se evaluaron discrepancias entre el diseño original (Etapa 1) y las necesidades reales del POS, formalizando los acuerdos en los siguientes Architecture Decision Records (ADR-001 al ADR-007).
+}%
+}
+
+\vspace{0.8cm}
+\tableofcontents
+\newpage
+
+% =========================================================================
+% ADR-001
+% =========================================================================
+\section{Architecture Decision Record (ADR-001): Migración de persistencia de SQLite3 a PostgreSQL}
+
+\begin{adrbox}{Metadatos del Registro}
+\textbf{Estado:} Aceptado \\
+\textbf{Fecha de Reunión:} Octubre 2026, 9:00 p.m. vía Microsoft Teams \\
+\textbf{Participantes:} Jeremy Hidalgo, Santiago Ballestero, Kendall Chacón \\
+\textbf{Módulos Afectados:} \texttt{backend/config}, Capa Global de Persistencia y ORM
+\end{adrbox}
+
+\subsection{1. Contexto}
+Durante una sesión de trabajo realizada a las 9:00 p.m. vía Microsoft Teams entre los integrantes del grupo de desarrollo, se reevaluó la infraestructura de persistencia de datos para el proyecto MiniGestor. Originalmente, se había seleccionado SQLite3 por defecto debido a su rápida configuración e integración nativa con Django, ideal para las fases iniciales de prototipado. Sin embargo, tras analizar los requerimientos no funcionales de concurrencia, escalabilidad y la necesidad de preparar el sistema para un entorno de producción real, se discutió la viabilidad de migrar a un sistema gestor de bases de datos relacional cliente-servidor más robusto: PostgreSQL.
+
+\subsection{2. Alternativas Evaluadas}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{SQLite3 (Opción Inicial):} Base de datos basada en archivos locales. Excelente para desarrollo offline y pruebas unitarias rápidas, pero con limitaciones significativas en concurrencia de escritura (bloqueo completo del archivo de base de datos) y ausencia de tipos avanzados.
+    \item \textbf{PostgreSQL (Opción Seleccionada):} Base de datos relacional robusta, cliente-servidor y altamente concurrente. Ofrece soporte nativo avanzado para restricciones de integridad (\textit{Check Constraints}), transacciones ACID estrictas y compatibilidad directa con Django a través del conector psycopg.
+\end{itemize}
+
+\subsection{3. Decisión}
+Se toma la decisión unánime de cambiar de SQLite3 a PostgreSQL como el Sistema Gestor de Bases de Datos (SGBD) oficial para el proyecto MiniGestor, incorporándolo desde las fases de desarrollo y asegurando su estructura relacional desde el diseño actual.
+
+\subsection{4. Justificación}
+\begin{enumerate}
+    \item \textbf{Concurrencia y Rendimiento:} Un minisúper maneja operaciones frecuentes de caja y consulta de inventario en paralelo. PostgreSQL gestiona el control de concurrencia multiversión (MVCC) con bloqueos a nivel de fila de manera superior a SQLite3, evitando colisiones ante ventas simultáneas.
+    \item \textbf{Estándar de Producción:} Utilizar PostgreSQL alinea el proyecto con arquitecturas empresariales reales, facilitando el despliegue en contenedores (Docker) y servicios cloud sin requerir refactorizaciones drásticas de la capa de datos.
+    \item \textbf{Integración con Django:} Django soporta PostgreSQL de forma nativa e integral a través del backend \texttt{django.db.backends.postgresql}, permitiendo aprovechar al máximo las migraciones, transacciones atómicas y restricciones a nivel de base de datos.
+\end{enumerate}
+
+\subsection{5. Consecuencias}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Positivas:} Mayor robustez del sistema, integridad referencial estricta, excelente rendimiento ante accesos concurrentes de cajeros y administradores, y cumplimiento de buenas prácticas de ingeniería de software.
+    \item \textbf{Negativas / Mitigación:} Se añade una dependencia de infraestructura al requerir el servicio activo de PostgreSQL y variables de entorno (\texttt{.env}). Se mitiga centralizando la configuración en un archivo \texttt{.env} documentado en el repositorio.
+\end{itemize}
+
+\newpage
+
+% =========================================================================
+% ADR-002
+% =========================================================================
+\section{Architecture Decision Record (ADR-002): Desacoplamiento del Modelo de Producto: Separación de Costo de Adquisición y Precio de Venta}
+
+\begin{adrbox}{Metadatos del Registro}
+\textbf{Estado:} Aceptado \\
+\textbf{Fecha de Reunión:} Noviembre 2026, 9:00 p.m. vía Microsoft Teams \\
+\textbf{Participantes:} Jeremy Hidalgo, Santiago Ballestero, Kendall Chacón \\
+\textbf{Módulos Afectados:} \texttt{backend/modulos/productos}, \texttt{frontend/src/pages/Productos.jsx}
+\end{adrbox}
+
+\subsection{1. Contexto}
+En el documento de visión y modelo entidad-relación de la Etapa 1, la entidad \texttt{Producto} contemplaba únicamente el atributo \texttt{precio}. Durante el desarrollo del módulo de compras, ventas y reportes financieros (analizado en reunión de Teams a las 9:00 p.m.), se evidenció una deficiencia arquitectónica: no era posible calcular márgenes brutos de ganancia, valorar financieramente el stock del inventario ni auditar discrepancias entre el valor al que el proveedor entrega la mercancía y el precio ofrecido al consumidor final.
+
+\subsection{2. Alternativas Evaluadas}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Mantener atributo único \texttt{precio} (Diseño Etapa 1):} Simplifica el formulario, pero impide calcular rentabilidad real, simular compras comerciales y realizar balances contables precisos en el POS.
+    \item \textbf{Calcular costo dinámicamente con base en un porcentaje fijo:} Impreciso, dado que cada categoría y proveedor maneja márgenes comerciales dispares (canasta básica vs. golosinas o licores).
+    \item \textbf{Bifurcar en dos atributos persistentes: \texttt{costo} y \texttt{precio} (Opción Seleccionada):} Almacenar de forma explícita el costo unitario de compra y el precio de venta al público en la tabla relacional, respaldados por restricciones de validación a nivel de base de datos.
+\end{itemize}
+
+\subsection{3. Decisión}
+Se aprueba modificar el modelo \texttt{Producto} en el backend de Django, introduciendo el campo obligatorio \texttt{costo} junto a \texttt{precio}, ambos de tipo \texttt{DecimalField(max\_digits=10, decimal\_places=2)}. Asimismo, se definen dos restricciones a nivel de base de datos (\texttt{CheckConstraint}): \texttt{costo > 0} y \texttt{precio > 0}.
+
+\subsection{4. Justificación}
+\begin{enumerate}
+    \item \textbf{Transparencia Contable y Auditoría:} Permite al módulo de reportes y al futuro agente de abastecimiento conocer con exactitud el margen de contribución de cada producto ($Margen = Precio - Costo$).
+    \item \textbf{Compatibilidad con el Proceso ETL:} El dataset del supermercado costarricense (MegaSuper / Hugging Face) desglosa valores base antes de gravámenes y precios finales, facilitando la asignación coherente de ambos valores.
+    \item \textbf{Integridad de Dominio:} Las restricciones a nivel de PostgreSQL garantizan que ningún producto sea registrado con costos o precios negativos o nulos.
+\end{enumerate}
+
+\subsection{5. Consecuencias}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Positivas:} Base de datos normalizada para operaciones comerciales reales; soporte para reportes de utilidad neta en el Dashboard; mayor fidelidad del sistema POS.
+    \item \textbf{Negativas / Mitigación:} Ruptura temporal de migraciones previas en bases de datos locales ya pobladas. Se mitigó coordinando la recreación de tablas limpias y documentando la sentencia SQL \texttt{ALTER TABLE} para ambientes en desarrollo.
+\end{itemize}
+
+\newpage
+
+% =========================================================================
+% ADR-003
+% =========================================================================
+\section{Architecture Decision Record (ADR-003): Automatización del Pipeline ETL e Integración de Datasets Externos}
+
+\begin{adrbox}{Metadatos del Registro}
+\textbf{Estado:} Aceptado \\
+\textbf{Fecha de Reunión:} Noviembre 2026, 9:00 p.m. vía Microsoft Teams \\
+\textbf{Participantes:} Jeremy Hidalgo, Santiago Ballestero, Kendall Chacón \\
+\textbf{Módulos Afectados:} \texttt{ETL/}, \texttt{backend/modulos/productos/migrations}
+\end{adrbox}
+
+\subsection{1. Contexto}
+En la arquitectura inicial se planteó un proceso ETL dependiente de la carga manual interactiva de un archivo CSV local en el frontend por parte del usuario. No obstante, en la sesión de Teams de las 9:00 p.m., se identificó que el sistema requería iniciar con un catálogo robusto de miles de productos reales del mercado costarricense para pruebas de rendimiento, entrenamiento de agentes y usabilidad inmediata desde el primer despliegue.
+
+\subsection{2. Alternativas Evaluadas}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Carga Manual Exclusiva mediante Frontend (Diseño Etapa 1):} Obligaba al administrador a cargar archivos locales pesados en cada nueva instalación, generando inconsistencias de datos entre miembros del equipo.
+    \item \textbf{Fixtures Estáticos de Django (\texttt{loaddata json}):} Archivos locales JSON muy pesados dentro del repositorio Git que aumentaban innecesariamente el tamaño del código fuente.
+    \item \textbf{Pipeline ETL Autónomo en la Nube con Invocación en Migraciones (Opción Seleccionada):} Alojar los 3 datasets curados (Categorías, Proveedores y Productos) en repositorios públicos de Hugging Face y conectarlos mediante una migración de datos (\texttt{RunPython}) y un script ejecutable autónomo.
+\end{itemize}
+
+\subsection{3. Decisión}
+Adoptar una arquitectura híbrida de ingestión de datos:
+\begin{enumerate}
+    \item Implementar la migración de datos \texttt{0002\_ejecutar\_etl\_automatico.py} en Django, la cual descarga directamente los datasets de Hugging Face al ejecutar \texttt{python manage.py migrate}.
+    \item Disponer de un script desacoplado \texttt{ETL/cargar\_datasets.py} y una interfaz gráfica en React (\texttt{ImportarCSV.jsx}) para cargas adicionales bajo demanda.
+    \item Realizar inserciones masivas de alto rendimiento mediante \texttt{bulk\_create(batch\_size=500)}.
+\end{enumerate}
+
+\subsection{4. Justificación}
+\begin{enumerate}
+    \item \textbf{Idempotencia y Eficiencia:} La migración verifica si ya existen registros en la base de datos antes de disparar la descarga, evitando duplicación y sobrecarga de red.
+    \item \textbf{Estandarización de Datos de Prueba:} Todos los miembros del equipo y evaluadores del proyecto cuentan exactamente con el mismo catálogo de 2,900+ productos al levantar el servidor.
+    \item \textbf{Desacoplamiento de Repositorio:} El repositorio Git permanece ligero al no almacenar grandes volúmenes de datos binarios o tabulares.
+\end{enumerate}
+
+\subsection{5. Consecuencias}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Positivas:} Inicialización instantánea y desatendida del POS; catálogo con códigos EAN-13 reales apto para lectores de código de barras físicos.
+    \item \textbf{Negativas / Mitigación:} Requiere conexión a Internet durante la migración inicial. Se mitiga implementando bloques \texttt{try/except} que capturan excepciones de red y permiten continuar sin detener la creación del esquema.
+\end{itemize}
+
+\newpage
+
+% =========================================================================
+% ADR-004
+% =========================================================================
+\section{Architecture Decision Record (ADR-004): Reestructuración de Arquitectura Monolítica a Monolito Modular en Django}
+
+\begin{adrbox}{Metadatos del Registro}
+\textbf{Estado:} Aceptado \\
+\textbf{Fecha de Reunión:} Noviembre 2026, 9:00 p.m. vía Microsoft Teams \\
+\textbf{Participantes:} Jeremy Hidalgo, Santiago Ballestero, Kendall Chacón \\
+\textbf{Módulos Afectados:} \texttt{backend/modulos/}, \texttt{backend/config/settings.py}
+\end{adrbox}
+
+\subsection{1. Contexto}
+Al iniciar la implementación del backend en Django, las aplicaciones tendían a concentrarse en la raíz del backend o mezclarse entre sí, violando el principio de diseño establecido en la sección 7.3 y 9 del documento de la Etapa 1. En la reunión nocturna de Teams, el equipo acordó formalizar la arquitectura de \textbf{Monolito Modular} para encapsular lógicas de negocio independientes y facilitar la distribución de tareas por desarrollador.
+
+\subsection{2. Alternativas Evaluadas}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Monolito Tradicional Acoplado (Una o dos grandes apps de Django):} Mayor riesgo de dependencias circulares, difícil asignación de ramas de Git y acoplamiento excesivo de modelos.
+    \item \textbf{Microservicios:} Complejidad operacional injustificada para el alcance y tiempo de entrega de un POS para minisúper (gestión de redes distribuidas, orquestación, transacciones distribuidas).
+    \item \textbf{Monolito Modular con Apps Encapsuladas (Opción Seleccionada):} Estructurar el backend dentro de un subpaquete \texttt{modulos/}, dividiendo responsabilidades en: \texttt{usuarios}, \texttt{productos}, \texttt{proveedores}, \texttt{ventas} y \texttt{movimientos\_inventario}.
+\end{itemize}
+
+\subsection{3. Decisión}
+Reorganizar el backend bajo una arquitectura modular donde cada subdominio del POS reside en su propia app dentro del directorio \texttt{backend/modulos/}, exponiendo sus propios modelos, vistas (\texttt{ModelViewSet}), serializadores y rutas URL registradas mediante routers REST.
+
+\subsection{4. Justificación}
+\begin{enumerate}
+    \item \textbf{Bajo Acoplamiento y Alta Cohesión:} Cada módulo tiene un alcance unificado. Por ejemplo, \texttt{usuarios} maneja autenticación y roles, mientras \texttt{ventas} se enfoca en transacciones y facturación.
+    \item \textbf{Facilidad de Desarrollo Colaborativo:} Permite trabajar en ramas paralelas de Git sin generar conflictos constantes en \texttt{models.py} o \texttt{views.py}.
+    \item \textbf{Mantenimiento y Auditoría:} Facilita la aplicación de reglas de negocio aisladas (como la protección de borrado \texttt{ProtectedError} al intentar eliminar categorías o proveedores con productos vinculados).
+\end{enumerate}
+
+\subsection{5. Consecuencias}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Positivas:} Código ordenado, estructurado y altamente mantenible; cumplimiento riguroso del diagrama C4 de componentes de la Etapa 1.
+    \item \textbf{Negativas / Mitigación:} Exige registrar las aplicaciones en \texttt{INSTALLED\_APPS} utilizando la nomenclatura calificada (ej. \texttt{'modulos.productos.apps.ProductosConfig'}).
+\end{itemize}
+
+\newpage
+
+% =========================================================================
+% ADR-005
+% =========================================================================
+\section{Architecture Decision Record (ADR-005): Desacoplamiento de Inventario Físico (Catálogo) y Kardex de Movimientos}
+
+\begin{adrbox}{Metadatos del Registro}
+\textbf{Estado:} Aceptado \\
+\textbf{Fecha de Reunión:} Noviembre 2026, 9:00 p.m. vía Microsoft Teams \\
+\textbf{Participantes:} Jeremy Hidalgo, Santiago Ballestero, Kendall Chacón \\
+\textbf{Módulos Afectados:} \texttt{frontend/src/pages/}, \texttt{frontend/src/components/Sidebar.jsx}, \texttt{backend/modulos/movimientos\_inventario}
+\end{adrbox}
+
+\subsection{1. Contexto}
+En el diseño inicial existía ambigüedad en la interfaz gráfica entre las secciones "Productos" e "Inventario". "Productos" operaba como el catálogo comercial con existencias actuales, mientras que "Inventario" mostraba una tabla duplicada sin propósito claro. En reunión de Teams a las 9:00 p.m., el equipo determinó que un sistema POS profesional requiere diferenciar conceptualmente el \textbf{estado actual de existencias en tienda} del \textbf{kardex cronológico de auditoría de entradas y salidas}.
+
+\subsection{2. Alternativas Evaluadas}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Mantener la pestaña "Productos" y "Inventario" separadas (Diseño Etapa 1):} Generaba confusión al cajero y administrador, obligando a consultar dos pantallas distintas para saber el stock.
+    \item \textbf{Unificar todo en una sola pantalla sobrecargada:} Mezclar en una misma vista la edición del producto, catálogo de venta y el historial de cientos de movimientos dificultaba la lectura en cajas registradoras.
+    \item \textbf{Reconceptualización Semántica de Vistas (Opción Seleccionada):} 
+    \begin{itemize}
+        \item Renombrar la vista de catálogo comercial y existencias activas a \textbf{"Inventario"}.
+        \item Renombrar la vista de historial de transacciones, entradas, salidas y ajustes a \textbf{"Movimientos"}.
+        \item Adaptar los identificadores visuales mediante iconografía SVG acorde (caja de almacén para inventario y documento Kardex con flechas de entrada/salida para movimientos).
+    \end{itemize}
+\end{itemize}
+
+\subsection{3. Decisión}
+Redefinir la estructura de navegación del sistema:
+\begin{enumerate}
+    \item La ruta y módulo principal de gestión de stock activo se consolida como \textbf{Inventario}.
+    \item La auditoría de transacciones históricas se aísla bajo el nombre de \textbf{Movimientos} (Kardex).
+    \item Se actualiza el enrutador en \texttt{App.jsx} y la lista de accesos del \texttt{Sidebar.jsx}.
+\end{enumerate}
+
+\subsection{4. Justificación}
+\begin{enumerate}
+    \item \textbf{Ergonomía y Usabilidad POS:} Se alinea con los estándares de la industria retail y de supermercados en Costa Rica, donde los dependientes buscan el "Inventario" para ver disponibilidad inmediata.
+    \item \textbf{Claridad Funcional para Cajeros:} Los cajeros solo requieren acceso a "Inventario" para revisar precios y existencias disponibles, mientras que "Movimientos" queda restringido al administrador para auditorías.
+\end{enumerate}
+
+\subsection{5. Consecuencias}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Positivas:} Experiencia de usuario (UX) intuitiva, jerarquía de navegación coherente y trazabilidad clara entre catálogo y flujo de mercancía.
+    \item \textbf{Negativas / Mitigación:} Requirió refactorizar los manejadores de estado en \texttt{App.jsx} y sincronizar los permisos condicionales por rol.
+\end{itemize}
+
+\newpage
+
+% =========================================================================
+% ADR-006
+% =========================================================================
+\section{Architecture Decision Record (ADR-006): Transaccionalidad Atómica y Actualización Automática de Stock en Ventas}
+
+\begin{adrbox}{Metadatos del Registro}
+\textbf{Estado:} Aceptado \\
+\textbf{Fecha de Reunión:} Noviembre 2026, 9:00 p.m. vía Microsoft Teams \\
+\textbf{Participantes:} Jeremy Hidalgo, Santiago Ballestero, Kendall Chacón \\
+\textbf{Módulos Afectados:} \texttt{backend/modulos/ventas}, \texttt{backend/modulos/movimientos\_inventario}
+\end{adrbox}
+
+\subsection{1. Contexto}
+Al formalizar el módulo de facturación y cobro en el POS, surgió la necesidad crítica de garantizar la consistencia del inventario. Si un cajero emite un ticket de venta con múltiples ítems, la reducción del stock en la tabla de productos y el registro del detalle de venta no pueden fallar a medias. Si el servidor se apaga o un ítem no tiene existencias, la operación completa debe ser cancelada.
+
+\subsection{2. Alternativas Evaluadas}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Actualizaciones Secuenciales no Transaccionales:} Guardar la cabecera de la venta y descontar producto por producto en bucle simple. Riesgo elevado de inconsistencias graves (\textit{phantom reads} o deducciones de inventario de ventas que nunca se completaron).
+    \item \textbf{Uso de Bloques Atómicos (\texttt{transaction.atomic}) con Validación de Concurrencia (Opción Seleccionada):} Encapsular la creación de la \texttt{Venta}, cada \texttt{DetalleVenta}, la deducción de \texttt{stock\_actual} y el asiento en \texttt{MovimientoInventario} dentro de una única transacción ACID de PostgreSQL.
+\end{itemize}
+
+\subsection{3. Decisión}
+Se implementa el guardado de ventas bajo el decorador/contexto \texttt{@transaction.atomic} en la capa de servicios/vistas de Django. Si algún producto no cuenta con existencias suficientes (\texttt{stock\_actual < cantidad}), se lanza un error de validación \texttt{HTTP 400 Bad Request} que revierte de forma automática todos los cambios previos mediante \textit{rollback}.
+
+\subsection{4. Justificación}
+\begin{enumerate}
+    \item \textbf{Consistencia de Datos (Principio ACID):} Garantiza que el stock registrado en el sistema refleje la realidad física del minisúper en todo momento.
+    \item \textbf{Prevención de Sobrevendido (\textit{Overselling}):} Impide que dos cajeros vendan la última unidad de un producto al mismo tiempo sin que el sistema rechace la segunda transacción.
+    \item \textbf{Generación Automática del Kardex:} Cada venta confirmada dispara el registro correspondiente de tipo "Salida" en el módulo de movimientos sin intervención manual del usuario.
+\end{enumerate}
+
+\subsection{5. Consecuencias}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Positivas:} Máxima fiabilidad en el cálculo de caja e inventario; protección total contra fallos parciales de red o base de datos.
+    \item \textbf{Negativas / Mitigación:} Breve retención de bloqueos a nivel de fila durante la venta. PostgreSQL maneja esto eficientemente en milisegundos.
+\end{itemize}
+
+\newpage
+
+% =========================================================================
+% ADR-007
+% =========================================================================
+\section{Architecture Decision Record (ADR-007): Transición de Formularios Embebidos a Modales Superpuestos y Responsive Móvil}
+
+\begin{adrbox}{Metadatos del Registro}
+\textbf{Estado:} Aceptado \\
+\textbf{Fecha de Reunión:} Noviembre 2026, 9:00 p.m. vía Microsoft Teams \\
+\textbf{Participantes:} Jeremy Hidalgo, Santiago Ballestero, Kendall Chacón \\
+\textbf{Módulos Afectados:} \texttt{frontend/src/components/}, \texttt{frontend/src/pages/}
+\end{adrbox}
+
+\subsection{1. Contexto}
+El documento de la Etapa 1 señalaba en su sección 11.2 que, por alcance inicial, el sistema no contemplaba diseño adaptable para celular ni modales dinámicos, utilizando formularios fijos en pantalla que empujaban las tablas hacia abajo. Durante las revisiones de usabilidad y sugerencias docentes (debatidas en sesión de Teams a las 9:00 p.m.), se constató que esta disposición saturaba la vista del usuario en pantallas reducidas y obligaba a hacer scroll innecesario para consultar la información existente.
+
+\subsection{2. Alternativas Evaluadas}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Mantener Formularios Estáticos Embebidos (Diseño Etapa 1):} Ocupaba el 50\% vertical de la pantalla permanentemente, reduciendo el espacio útil para la tabla de inventario y aumentando la carga cognitiva del usuario.
+    \item \textbf{Navegar a Páginas Completas Independientes para Crear/Editar:} Interrumpía el flujo de trabajo del cajero o administrador al sacarlo de la lista principal.
+    \item \textbf{Modales Flotantes con Menú Móvil Desplegable (Opción Seleccionada):} Implementar ventanas modales accesibles (\texttt{role="dialog"}) para crear o editar entidades, y habilitar un menú vertical desplegable tipo acordeón para dispositivos móviles o pantallas compactas.
+\end{itemize}
+
+\subsection{3. Decisión}
+Refactorizar la interfaz de usuario en React:
+\begin{enumerate}
+    \item Convertir los formularios de Productos/Inventario, Categorías y Proveedores en componentes modales flotantes con cierre por fondo (\textit{backdrop}) y tecla Escape.
+    \item Incorporar un menú hamburguesa/desplegable responsive en el componente \texttt{Sidebar.jsx} que permite operar el sistema desde terminales móviles de supervisores o tablets.
+\end{enumerate}
+
+\subsection{4. Justificación}
+\begin{enumerate}
+    \item \textbf{Foco de Interacción:} El usuario se concentra en la edición sin perder el contexto de la tabla que está debajo.
+    \item \textbf{Aprovechamiento de Pantalla:} Las tablas de datos y el punto de venta ocupan el 100\% del área visual útil cuando no se está registrando información nueva.
+    \item \textbf{Superación de la Restricción de Etapa 1:} Amplía el alcance del proyecto haciéndolo versátil para supervisores que caminan por los pasillos del minisúper verificando estanterías con un smartphone.
+\end{enumerate}
+
+\subsection{5. Consecuencias}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Positivas:} UI moderna, limpia y ergonómica; excelente retroalimentación visual; navegación responsive sin fracturas de layout.
+    \item \textbf{Negativas / Mitigación:} Incremento moderado en la complejidad de estado en React (\texttt{modalAbierto}, \texttt{modoEdicion}). Se resolvió estandarizando un patrón de hooks y funciones \texttt{limpiarFormulario()} en cada vista.
+\end{itemize}
+
+\end{document}

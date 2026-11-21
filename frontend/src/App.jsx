@@ -13,6 +13,7 @@ import MiPerfil from './pages/MiPerfil'
 import AdministrarUsuarios from './pages/AdministrarUsuarios'
 import Inventario from './pages/Inventario'
 import ImportarCSV from './pages/ImportarCSV'
+import Recomendaciones from './pages/Recomendaciones'
 
 import { IndicadorCarga } from './components/CargaUI'
 import './App.css'
@@ -226,6 +227,14 @@ function App() {
         return (
           <ImportarCSV
             cambiarPagina={cambiarPagina}
+          />
+        )
+
+      case 'Recomendaciones':
+        return (
+          <Recomendaciones
+            cambiarPagina={cambiarPagina}
+            usuario={usuarioActual}
           />
         )
 
