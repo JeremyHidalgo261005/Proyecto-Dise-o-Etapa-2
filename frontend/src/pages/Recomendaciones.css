@@ -1,5 +1,12 @@
-/* Estilos para el Agente de IA y Recomendaciones */
+/* =====================================================
+   Agente de IA — Recomendaciones.css
+   Paleta consistente con el resto de la aplicación:
+   fondo crema (#f7f4ef), paneles blancos (.panel),
+   texto oscuro (#1f1630 / #221730), acento púrpura
+   (#7b49a6 / #8e6adf) y toques naranja (#ff8d6d).
+   ===================================================== */
 
+/* ── Contenedor principal ── */
 .agente-ia-contenedor {
   display: flex;
   flex-direction: column;
@@ -9,25 +16,43 @@
   margin: 0 auto;
 }
 
+/* ── Encabezado ── */
 .agente-ia-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 15px;
-  padding: 20px 24px;
+  padding: 22px 26px;
 }
 
+.agente-ia-header h2 {
+  margin: 0 0 6px;
+  color: #1f1630;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.agente-ia-header p {
+  margin: 0;
+  color: #60556b;
+  font-size: 14px;
+}
+
+/* ── Badge de estado del motor ── */
 .agente-badge-estado {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  background: rgba(144, 117, 177, 0.10);
+  border: 1px solid rgba(144, 117, 177, 0.22);
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #3d2660;
+  white-space: nowrap;
 }
 
 .punto-estado {
@@ -35,29 +60,48 @@
   height: 10px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .punto-estado.activo {
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
+  background: #2ea86c;
+  box-shadow: 0 0 7px rgba(46, 168, 108, 0.55);
 }
 
 .punto-estado.offline {
-  background: #f59e0b;
+  background: #d97706;
 }
 
+/* ── Alerta de error ── */
 .agente-alerta-error {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid #ef4444;
-  color: #fca5a5;
-  padding: 12px 16px;
-  border-radius: 8px;
+  background: #fff0ef;
+  border: 1px solid #f3c1bb;
+  border-radius: 12px;
+  color: #a12620;
+  padding: 13px 18px;
   font-size: 0.9rem;
+  font-weight: 600;
 }
 
-/* Sección Recomendaciones */
+/* ══════════════════════════════════════
+   SECCIÓN: Informe de Reposición
+══════════════════════════════════════ */
 .agente-seccion-recomendaciones {
-  padding: 24px;
+  padding: 26px;
+}
+
+.agente-seccion-recomendaciones h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  color: #1f1630;
+  font-weight: 800;
+}
+
+.agente-seccion-recomendaciones > .recomendaciones-acciones > div > p {
+  margin: 0;
+  color: #60556b;
+  font-size: 14px;
+  max-width: 580px;
 }
 
 .recomendaciones-acciones {
@@ -68,122 +112,174 @@
   gap: 16px;
 }
 
+/* Botón principal de generar recomendación */
 .boton-generar-rec {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  padding: 12px 22px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: transform 0.2s, opacity 0.2s;
+  background: linear-gradient(135deg, #2b1835 0%, #5c377d 100%);
+  color: #ffffff;
+  border: none;
+  padding: 13px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s;
+  box-shadow: 0 6px 18px rgba(54, 28, 78, 0.20);
+  white-space: nowrap;
 }
 
 .boton-generar-rec:hover:not(:disabled) {
   transform: translateY(-2px);
-  filter: brightness(1.1);
+  box-shadow: 0 10px 24px rgba(54, 28, 78, 0.28);
 }
 
 .boton-generar-rec:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
+/* Caja del informe resultante */
 .informe-recomendacion-caja {
-  margin-top: 20px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 18px;
+  margin-top: 22px;
+  background: #f6effc;
+  border: 1px solid #dbc9ee;
+  border-radius: 14px;
+  padding: 20px 22px;
+}
+
+.informe-recomendacion-caja h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #4c2d6e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .informe-contenido-markdown pre {
   white-space: pre-wrap;
   font-family: inherit;
   font-size: 0.95rem;
-  line-height: 1.5;
-  color: #e2e8f0;
+  line-height: 1.65;
+  color: #221730;
+  margin: 0;
 }
 
-/* Chat */
+/* ══════════════════════════════════════
+   SECCIÓN: Chat de consultas
+══════════════════════════════════════ */
 .agente-chat-seccion {
   display: flex;
   flex-direction: column;
-  height: 520px;
-  padding: 20px 24px;
+  height: 540px;
+  padding: 22px 26px;
 }
 
 .chat-encabezado {
-  margin-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding-bottom: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ece3ef;
 }
 
 .chat-encabezado h3 {
-  margin: 0;
-  font-size: 1.1rem;
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #1f1630;
 }
 
 .chat-encabezado span {
-  font-size: 0.85rem;
-  color: #94a3b8;
+  font-size: 13px;
+  color: #60556b;
 }
 
+/* Lista de mensajes */
 .chat-mensajes-lista {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 10px 4px 10px 0;
+  gap: 12px;
+  padding: 6px 4px 6px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #ac91c8 #f1eaf5;
 }
 
+.chat-mensajes-lista::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-mensajes-lista::-webkit-scrollbar-track {
+  background: #f1eaf5;
+  border-radius: 10px;
+}
+
+.chat-mensajes-lista::-webkit-scrollbar-thumb {
+  background: #ac91c8;
+  border-radius: 10px;
+}
+
+/* Burbujas */
 .mensaje-burbuja {
-  max-width: 80%;
+  max-width: 82%;
   padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 0.92rem;
-  line-height: 1.45;
+  border-radius: 14px;
+  font-size: 0.93rem;
+  line-height: 1.5;
 }
 
+/* Mensaje del usuario */
 .mensaje-usuario {
   align-self: flex-end;
-  background: #3b82f6;
-  color: white;
-  border-bottom-right-radius: 2px;
+  background: linear-gradient(135deg, #5c377d 0%, #7b49a6 100%);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 12px rgba(92, 55, 125, 0.22);
 }
 
+.mensaje-usuario .mensaje-autor {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Mensaje del agente */
 .mensaje-agente {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f1f5f9;
-  border-bottom-left-radius: 2px;
+  background: #ffffff;
+  border: 1px solid #e3d9f1;
+  color: #221730;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 8px rgba(40, 24, 52, 0.06);
 }
 
+.mensaje-agente .mensaje-autor {
+  color: #7b49a6;
+}
+
+/* Autor y cuerpo */
 .mensaje-autor {
-  font-size: 0.75rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-  opacity: 0.8;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 5px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
 }
 
 .mensaje-cuerpo {
   white-space: pre-wrap;
 }
 
+/* Burbuja de carga */
 .cargando-burbuja {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #cbd5e1;
+  gap: 10px;
+  color: #60556b;
+  font-size: 0.88rem;
 }
 
+/* ── Formulario de entrada ── */
 .chat-formulario {
   display: flex;
   gap: 10px;
@@ -192,47 +288,129 @@
 
 .chat-formulario input {
   flex: 1;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(0, 0, 0, 0.3);
-  color: white;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px solid #d8cde2;
+  background: #ffffff;
+  color: #221730;
+  font: inherit;
   font-size: 0.95rem;
+  transition: border-color 0.18s, outline 0.18s;
+}
+
+.chat-formulario input::placeholder {
+  color: #9d8fa8;
 }
 
 .chat-formulario input:focus {
-  outline: none;
-  border-color: #3b82f6;
+  outline: 2px solid #8e6adf;
+  outline-offset: 1px;
+  border-color: transparent;
 }
 
-.chat-formulario button {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 0 22px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.chat-formulario button:disabled {
-  opacity: 0.5;
+.chat-formulario input:disabled {
+  background: #f0edf3;
+  color: #6b5e76;
   cursor: not-allowed;
 }
 
+.chat-formulario button {
+  background: linear-gradient(135deg, #2b1835 0%, #5c377d 100%);
+  color: #ffffff;
+  border: none;
+  padding: 0 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.18s;
+  box-shadow: 0 4px 12px rgba(54, 28, 78, 0.18);
+  white-space: nowrap;
+}
+
+.chat-formulario button:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.chat-formulario button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Spinner ── */
 .spinner {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(92, 55, 125, 0.25);
   border-radius: 50%;
-  border-top-color: white;
-  animation: girar 0.8s linear infinite;
+  border-top-color: #7b49a6;
+  animation: girar 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Spinner dentro del botón de generar (fondo oscuro) */
+.boton-generar-rec .spinner,
+.chat-formulario .spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
 }
 
 @keyframes girar {
-  to {
-    transform: rotate(360deg);
+  to { transform: rotate(360deg); }
+}
+
+/* ══════════════════════════════════════
+   Adaptación a pantallas pequeñas
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+  .agente-ia-header {
+    padding: 18px 20px;
+  }
+
+  .agente-ia-header h2 {
+    font-size: 19px;
+  }
+
+  .agente-seccion-recomendaciones {
+    padding: 18px 20px;
+  }
+
+  .recomendaciones-acciones {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .boton-generar-rec {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .agente-chat-seccion {
+    height: 480px;
+    padding: 18px 20px;
+  }
+
+  .mensaje-burbuja {
+    max-width: 92%;
+  }
+
+  .chat-formulario {
+    flex-direction: column;
+  }
+
+  .chat-formulario button {
+    padding: 13px 0;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton-generar-rec,
+  .chat-formulario button,
+  .spinner {
+    transition: none;
+    animation: none;
   }
 }
