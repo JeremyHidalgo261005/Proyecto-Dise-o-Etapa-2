@@ -22,9 +22,9 @@
 .usuarios-editor {
   padding: 16px;
   margin-bottom: 20px;
-  border: 1px solid #e2d8eb;
+  border: 1px solid #d8e2eb;
   border-radius: 16px;
-  background: #fbf8fe;
+  background: #f8fbfe;
 }
 
 .usuarios-editor h3 {
@@ -33,16 +33,16 @@
 
 .usuarios-formulario input::placeholder,
 .usuarios-formulario select:required:invalid {
-  color: #6b6570;
+  color: #5e6c77;
   opacity: 1;
 }
 
 .usuarios-formulario select option:not([value=""]) {
-  color: #21162f;
+  color: #16242f;
 }
 
 .usuario-obligatorio {
-  color: #a82034;
+  color: #a84920;
 }
 
 .usuarios-tabla {

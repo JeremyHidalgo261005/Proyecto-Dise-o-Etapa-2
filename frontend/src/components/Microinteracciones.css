@@ -36,11 +36,11 @@ dialog[open]::backdrop { animation: ui-aparecer 180ms ease-out; }
 :where(button:not(:disabled)):active { scale: .98; }
 
 :where(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea):focus-visible {
-  box-shadow: 0 0 0 3px rgba(118, 93, 199, .18);
+  box-shadow: 0 0 0 3px rgba(93, 151, 199, .18);
 }
 
 :where(tbody tr:not(.ui-fila-esqueleto, .ui-tabla-carga):is(:hover, :focus-within) > td) {
-  background-color: rgba(147, 119, 220, .09);
+  background-color: rgba(119, 175, 220, .09);
 }
 
 .ui-tooltip {
@@ -50,9 +50,9 @@ dialog[open]::backdrop { animation: ui-aparecer 180ms ease-out; }
   max-width: min(260px, calc(100vw - 16px));
   padding: .42rem .65rem;
   border-radius: .55rem;
-  background: #37275c;
-  color: #fff;
-  box-shadow: 0 4px 14px #39286033;
+  background: #27445c;
+  color: #ffffff;
+  box-shadow: 0 4px 14px #28476033;
   font-size: .82rem;
   font-weight: 550;
   line-height: 1.35;
@@ -85,8 +85,8 @@ dialog[open]::backdrop { animation: ui-aparecer 180ms ease-out; }
 }
 
 .ui-aviso {
-  --ui-aviso-color: #423173;
-  --ui-aviso-fondo: #f2ecff;
+  --ui-aviso-color: #315573;
+  --ui-aviso-fondo: #ecf6ff;
   display: grid;
   grid-template-columns: 1.55rem minmax(0, 1fr) 2rem;
   align-items: center;
@@ -102,9 +102,9 @@ dialog[open]::backdrop { animation: ui-aparecer 180ms ease-out; }
   animation: ui-subir 200ms ease-out both;
 }
 
-.ui-aviso-exito { --ui-aviso-color: #165c4d; --ui-aviso-fondo: #e7f6ee; }
-.ui-aviso-error { --ui-aviso-color: #95283e; --ui-aviso-fondo: #fff0f3; }
-.ui-aviso-advertencia { --ui-aviso-color: #744900; --ui-aviso-fondo: #fff4dc; }
+.ui-aviso-exito { --ui-aviso-color: #165c4c; --ui-aviso-fondo: #e7f6f2; }
+.ui-aviso-error { --ui-aviso-color: #954928; --ui-aviso-fondo: #fff4f0; }
+.ui-aviso-advertencia { --ui-aviso-color: #742300; --ui-aviso-fondo: #ffe6dc; }
 
 .ui-aviso-icono {
   display: grid;
@@ -154,7 +154,7 @@ dialog[open]::backdrop { animation: ui-aparecer 180ms ease-out; }
   display: block;
   height: .85rem;
   border-radius: .35rem;
-  background-color: #e6dff2;
+  background-color: #dfe9f2;
   animation: ui-pulso 1.3s ease-in-out infinite;
 }
 

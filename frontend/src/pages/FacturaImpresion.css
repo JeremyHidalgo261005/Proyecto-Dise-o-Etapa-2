@@ -4,7 +4,7 @@
 
 body {
   margin: 0;
-  color: #21162f;
+  color: #16242f;
   font: 12pt system-ui, sans-serif;
   print-color-adjust: exact;
 }
@@ -41,7 +41,7 @@ thead { display: table-header-group; }
 
 th, td {
   padding: 8px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #e1dbd9;
   text-align: left;
   overflow-wrap: anywhere;
 }

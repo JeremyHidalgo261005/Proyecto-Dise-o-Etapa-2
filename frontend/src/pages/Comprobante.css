@@ -8,34 +8,34 @@
   width: 64px;
   height: 64px;
   margin: 0 auto 16px;
-  background: #e8f5e9;
-  border: 2px solid #81c784;
+  background: #e8f5f2;
+  border: 2px solid #81c7b7;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 32px;
   font-weight: 900;
-  color: #2e7d32;
+  color: #2e7d6b;
 }
 
 .comprobante-modal h3 {
   margin: 0 0 6px;
   font-size: 22px;
-  color: #21162f;
+  color: #16242f;
 }
 
 .comprobante-sub {
   margin: 0 0 18px;
-  color: #726482;
+  color: #647482;
   font-size: 13px;
 }
 
 .comprobante-articulos-lista {
   max-height: 180px;
   overflow-y: auto;
-  border-top: 1px dashed #e2d6ec;
-  border-bottom: 1px dashed #e2d6ec;
+  border-top: 1px dashed #d6e2ec;
+  border-bottom: 1px dashed #d6e2ec;
   padding: 12px 0;
   margin-bottom: 14px;
   text-align: left;
@@ -46,7 +46,7 @@
   justify-content: space-between;
   padding: 4px 6px;
   font-size: 13px;
-  color: #38294a;
+  color: #293b4a;
 }
 
 .comprobante-desglose-pago {
@@ -61,22 +61,22 @@
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  color: #605170;
+  color: #516270;
 }
 
 .desglose-linea.total {
   font-size: 16px;
   font-weight: 800;
-  color: #21162f;
+  color: #16242f;
   padding-top: 4px;
-  border-top: 1px solid #eee5f5;
+  border-top: 1px solid #e5eef5;
 }
 
 .vuelto-resaltado {
-  color: #17663d;
+  color: #176654;
   font-weight: 800;
   font-size: 15px;
-  background: #f0f9f3;
+  background: #f0f9f7;
   padding: 6px 10px;
   border-radius: 8px;
 }

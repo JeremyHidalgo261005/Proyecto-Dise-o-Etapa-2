@@ -15,13 +15,13 @@
 
 .categorias-encabezado h2 {
   margin: 0 0 10px;
-  color: #21162f;
+  color: #16242f;
   font-size: 24px;
 }
 
 .categorias-encabezado p {
   margin: 0;
-  color: #60556b;
+  color: #54616c;
   font-size: 14px;
 }
 
@@ -36,7 +36,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #4c4060;
+  color: #405260;
   font-size: 14px;
   font-weight: 700;
 }
@@ -46,10 +46,10 @@
 .categorias-busqueda input {
   width: 100%;
   padding: 13px 14px;
-  border: 1px solid #d8cde2;
+  border: 1px solid #cdd9e2;
   border-radius: 12px;
   background: white;
-  color: #21162f;
+  color: #16242f;
   font: inherit;
   box-sizing: border-box;
 }
@@ -57,7 +57,7 @@
 .categorias-formulario input:focus,
 .categorias-formulario textarea:focus,
 .categorias-busqueda input:focus {
-  outline: 2px solid #8e6adf;
+  outline: 2px solid #6aaadf;
   outline-offset: 1px;
 }
 
@@ -84,7 +84,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(20, 10, 30, 0.55);
+  background: rgba(10, 21, 30, 0.55);
 }
 
 .modal-caja {
@@ -99,11 +99,11 @@
 }
 
 .categorias-secundario {
-  border: 1px solid #d8cde2;
+  border: 1px solid #cdd9e2;
   border-radius: 12px;
   padding: 12px 18px;
-  background: #f4eff9;
-  color: #50316f;
+  background: #eff4f9;
+  color: #31536f;
   font-weight: 700;
   cursor: pointer;
 }
@@ -117,7 +117,7 @@
 }
 
 .categorias-busqueda label {
-  color: #4c4060;
+  color: #405260;
   font-size: 14px;
   font-weight: 700;
 }
@@ -136,7 +136,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #f6effc;
+  background: #eff6fc;
 }
 
 .categorias-acciones {
@@ -154,26 +154,26 @@
 }
 
 .categorias-editar {
-  background: #e9dfff;
-  color: #4d2d78;
+  background: #dff1ff;
+  color: #2d5678;
 }
 
 .categorias-eliminar {
-  background: #ffe5e1;
-  color: #9c2f28;
+  background: #ffeae1;
+  color: #9c4b28;
 }
 
 .categorias-exito {
-  background: #e6f7ed;
-  color: #17663d;
+  background: #e6f7f3;
+  color: #176654;
   border-radius: 12px;
   padding: 14px 18px;
   font-weight: 700;
 }
 
 .categorias-error {
-  background: #fff0ef;
-  color: #a12620;
+  background: #fff4ef;
+  color: #a14720;
   border-radius: 12px;
   padding: 14px 18px;
   font-weight: 700;
