@@ -19,13 +19,13 @@
 
 .ventas-cabecera h2 {
   margin: 0 0 6px;
-  color: #21162f;
+  color: #16242f;
   font-size: 26px;
 }
 
 .ventas-cabecera p {
   margin: 0;
-  color: #60556b;
+  color: #54616c;
   font-size: 14px;
 }
 
@@ -64,7 +64,7 @@
 .catalogo-header h3 {
   margin: 0;
   font-size: 18px;
-  color: #21162f;
+  color: #16242f;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -72,8 +72,8 @@
 
 .atajo-info {
   font-size: 12px;
-  color: #7b6f88;
-  background: #f1ebf7;
+  color: #6d7d8a;
+  background: #ebf2f7;
   padding: 4px 10px;
   border-radius: 999px;
   font-weight: 600;
@@ -88,20 +88,20 @@
 .catalogo-buscador input {
   width: 100%;
   padding: 13px 40px 13px 14px;
-  border: 1px solid #d8cde2;
+  border: 1px solid #cdd9e2;
   border-radius: 12px;
   background: #ffffff;
   font: inherit;
   font-size: 14px;
-  color: #21162f;
+  color: #16242f;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .catalogo-buscador input:focus {
   outline: none;
-  border-color: #8e6adf;
-  box-shadow: 0 0 0 3px rgba(142, 106, 223, 0.15);
+  border-color: #6aaadf;
+  box-shadow: 0 0 0 3px rgba(106, 170, 223, 0.15);
 }
 
 .btn-limpiar-busqueda {
@@ -109,7 +109,7 @@
   right: 12px;
   background: transparent;
   border: none;
-  color: #9283a0;
+  color: #8393a0;
   font-size: 14px;
   cursor: pointer;
   padding: 4px 6px;
@@ -117,8 +117,8 @@
 }
 
 .btn-limpiar-busqueda:hover {
-  background: #f0ecf4;
-  color: #21162f;
+  background: #ecf0f4;
+  color: #16242f;
 }
 
 .catalogo-scroll {
@@ -126,7 +126,7 @@
   overflow-y: auto;
   padding-right: 4px;
   scrollbar-width: thin;
-  scrollbar-color: #cfbfdf #faf7fc;
+  scrollbar-color: #bfd1df #f7fafc;
 }
 
 .catalogo-lista {
@@ -141,7 +141,7 @@
   justify-content: space-between;
   text-align: left;
   background: #ffffff;
-  border: 1px solid #e5dceb;
+  border: 1px solid #dce4eb;
   border-radius: 14px;
   padding: 14px;
   cursor: pointer;
@@ -150,8 +150,8 @@
 
 .catalogo-item:hover {
   transform: translateY(-2px);
-  border-color: #a482ea;
-  box-shadow: 0 6px 16px rgba(106, 56, 179, 0.08);
+  border-color: #82bbea;
+  box-shadow: 0 6px 16px rgba(56, 124, 179, 0.08);
 }
 
 .item-meta {
@@ -159,27 +159,27 @@
   justify-content: space-between;
   align-items: center;
   font-size: 11px;
-  color: #7b6f88;
+  color: #6d7d8a;
   margin-bottom: 6px;
 }
 
 .item-codigo {
   font-family: monospace;
-  background: #f4eff9;
+  background: #eff4f9;
   padding: 2px 6px;
   border-radius: 6px;
   font-weight: 700;
 }
 
 .item-stock {
-  color: #3b7e56;
+  color: #3b7e6e;
   font-weight: 600;
 }
 
 .item-nombre {
   font-size: 14px;
   font-weight: 700;
-  color: #271a39;
+  color: #1a2b39;
   line-height: 1.3;
   margin-bottom: 10px;
   display: -webkit-box;
@@ -198,33 +198,33 @@
 .item-precio {
   font-size: 15px;
   font-weight: 800;
-  color: #552787;
+  color: #275c87;
 }
 
 .item-btn-agregar {
   font-size: 12px;
   font-weight: 700;
   color: #ffffff;
-  background: #73459c;
+  background: #45759c;
   padding: 4px 10px;
   border-radius: 8px;
   transition: background 0.15s;
 }
 
 .catalogo-item:hover .item-btn-agregar {
-  background: #5c2f82;
+  background: #2f5d82;
 }
 
 .catalogo-vacio-texto,
 .catalogo-error {
   padding: 30px;
   text-align: center;
-  color: #72677f;
+  color: #657481;
 }
 
 .catalogo-error {
-  color: #b02a23;
-  background: #fff2f1;
+  color: #b04d23;
+  background: #fff5f1;
   border-radius: 12px;
 }
 
@@ -238,8 +238,8 @@
   max-block-size: clamp(21rem, calc(100dvh - 13rem), 35rem);
   padding: 22px;
   background: #ffffff;
-  border: 1px solid #e7dfed;
-  box-shadow: 0 8px 24px rgba(45, 23, 72, 0.05);
+  border: 1px solid #dfe7ed;
+  box-shadow: 0 8px 24px rgba(23, 50, 72, 0.05);
 }
 
 .factura-header {
@@ -248,14 +248,14 @@
   justify-content: space-between;
   align-items: center;
   padding-bottom: 14px;
-  border-bottom: 1px solid #efe8f3;
+  border-bottom: 1px solid #e8eef3;
   margin-bottom: 14px;
 }
 
 .factura-header h3 {
   margin: 0;
   font-size: 18px;
-  color: #21162f;
+  color: #16242f;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -264,13 +264,13 @@
 .factura-subtitulo {
   margin: 4px 0 0;
   font-size: 13px;
-  color: #7b6f88;
+  color: #6d7d8a;
 }
 
 .btn-vaciar-factura {
-  background: #fcedec;
-  border: 1px solid #f7cfcd;
-  color: #ad2b24;
+  background: #fcf1ec;
+  border: 1px solid #f7dacd;
+  color: #ad4d24;
   font-size: 12px;
   font-weight: 700;
   padding: 6px 12px;
@@ -280,7 +280,7 @@
 }
 
 .btn-vaciar-factura:hover {
-  background: #f9dedd;
+  background: #f9e5dd;
 }
 
 @media (min-width: 981px) {
@@ -311,13 +311,13 @@
   overflow: auto;
   scroll-padding-block: 2.5rem .5rem;
   scrollbar-width: thin;
-  scrollbar-color: #a482ce #f8f4fb;
+  scrollbar-color: #82acce #f4f8fb;
 }
 
 .factura-vacia-aviso {
   text-align: center;
   padding: 12px 16px;
-  color: #8c7f99;
+  color: #7e8d9a;
 }
 
 .factura-icono-vacio {
@@ -329,7 +329,7 @@
 .factura-vacia-aviso h4 {
   margin: 0 0 6px;
   font-size: 16px;
-  color: #4b3d5b;
+  color: #3d4e5b;
 }
 
 .factura-vacia-aviso p {
@@ -345,14 +345,14 @@
 }
 
 .tabla-factura th {
-  background: #f8f4fb;
-  color: #554865;
+  background: #f4f8fb;
+  color: #485865;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 10px 8px;
-  border-bottom: 1px solid #ebdff2;
+  border-bottom: 1px solid #dfe9f2;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -360,9 +360,9 @@
 
 .tabla-factura td {
   padding: 12px 8px;
-  border-bottom: 1px solid #f3eef7;
+  border-bottom: 1px solid #eef3f7;
   font-size: 13px;
-  color: #271a39;
+  color: #1a2b39;
   vertical-align: middle;
 }
 
@@ -381,14 +381,14 @@
 .nombre-prod {
   display: block;
   font-weight: 700;
-  color: #21162f;
+  color: #16242f;
   line-height: 1.3;
 }
 
 .cod-prod {
   display: block;
   font-size: 11px;
-  color: #7b6f88;
+  color: #6d7d8a;
   font-family: monospace;
 }
 
@@ -396,8 +396,8 @@
 .control-cantidad {
   display: inline-flex;
   align-items: center;
-  background: #f4eff9;
-  border: 1px solid #ded3e8;
+  background: #eff4f9;
+  border: 1px solid #d3dfe8;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -409,7 +409,7 @@
   font-weight: 800;
   width: 26px;
   height: 28px;
-  color: #4b2d6a;
+  color: #2d4f6a;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -418,7 +418,7 @@
 }
 
 .btn-cambio-cant:hover {
-  background: #e6dbf2;
+  background: #dbe8f2;
 }
 
 .control-cantidad input {
@@ -428,7 +428,7 @@
   text-align: center;
   font-weight: 700;
   background: #ffffff;
-  color: #21162f;
+  color: #16242f;
   font-size: 13px;
   padding: 0;
 }
@@ -438,9 +438,9 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #fff4f3;
-  border: 1px solid #f5cfcc;
-  color: #b02a23;
+  background: #fff7f3;
+  border: 1px solid #f5d8cc;
+  color: #b04d23;
   padding: 6px 10px;
   border-radius: 8px;
   font-size: 12px;
@@ -450,8 +450,8 @@
 }
 
 .btn-eliminar-articulo:hover {
-  background: #fce4e2;
-  border-color: #ebaca7;
+  background: #fceae2;
+  border-color: #ebbba7;
   transform: scale(1.02);
 }
 
@@ -462,7 +462,7 @@
 /* Sección de totales */
 .factura-totales-seccion {
   flex: none;
-  border-top: 2px dashed #ebdff2;
+  border-top: 2px dashed #dfe9f2;
   padding-top: 16px;
   margin-top: 14px;
   display: flex;
@@ -475,18 +475,18 @@
   justify-content: space-between;
   align-items: center;
   font-size: 14px;
-  color: #554865;
+  color: #485865;
 }
 
 .fila-descuento {
-  color: #2e7d32;
+  color: #2e7d6b;
   font-weight: 600;
 }
 
 .btn-quitar-desc {
   background: transparent;
   border: none;
-  color: #9283a0;
+  color: #8393a0;
   font-size: 11px;
   cursor: pointer;
   margin-left: 6px;
@@ -495,22 +495,22 @@
 }
 
 .btn-quitar-desc:hover {
-  background: #f0ecf4;
-  color: #b02a23;
+  background: #ecf0f4;
+  color: #b04d23;
 }
 
 .fila-total-grande {
   padding-top: 6px;
-  border-top: 1px solid #efe8f3;
+  border-top: 1px solid #e8eef3;
   font-size: 17px;
   font-weight: 800;
-  color: #1e122d;
+  color: #12212d;
 }
 
 .cifra-total-grande {
   font-size: 26px;
   font-weight: 900;
-  color: #4a1d77;
+  color: #1d4e77;
 }
 
 /* Botones de acción final de factura */
@@ -527,9 +527,9 @@
   justify-content: center;
   gap: 8px;
   padding: 13px 14px;
-  background: #f5f0fa;
-  border: 1px solid #d8c8e8;
-  color: #552787;
+  background: #f0f5fa;
+  border: 1px solid #c8dae8;
+  color: #275c87;
   font-weight: 700;
   font-size: 14px;
   border-radius: 12px;
@@ -538,7 +538,7 @@
 }
 
 .btn-aplicar-descuento:hover:not(:disabled) {
-  background: #eae0f5;
+  background: #e0ecf5;
 }
 
 .btn-procesar-pago {
@@ -547,20 +547,20 @@
   justify-content: center;
   gap: 8px;
   padding: 13px 18px;
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  background: linear-gradient(135deg, #2e7d6b 0%, #1b5e4e 100%);
   border: none;
   color: #ffffff;
   font-weight: 800;
   font-size: 15px;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(46, 125, 50, 0.28);
+  box-shadow: 0 4px 14px rgba(46, 125, 107, 0.28);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .btn-procesar-pago:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(46, 125, 50, 0.38);
+  box-shadow: 0 6px 18px rgba(46, 125, 107, 0.38);
 }
 
 .btn-aplicar-descuento:disabled,
@@ -583,7 +583,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(18, 9, 28, 0.75) !important;
+  background: rgba(9, 19, 28, 0.75) !important;
   backdrop-filter: blur(6px);
 }
 
@@ -591,8 +591,8 @@
   background: #ffffff !important;
   border-radius: 24px;
   padding: 32px;
-  box-shadow: 0 24px 60px rgba(18, 9, 32, 0.40);
-  border: 1px solid #dcd1e6;
+  box-shadow: 0 24px 60px rgba(9, 22, 32, 0.40);
+  border: 1px solid #d1dde6;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -612,8 +612,8 @@
   width: 58px;
   height: 58px;
   margin: 0 auto 14px;
-  background: #f4effb;
-  border: 1px solid #dccbe9;
+  background: #eff6fb;
+  border: 1px solid #cbdbe9;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -623,13 +623,13 @@
 
 .modal-admin-titulo {
   margin: 0 0 8px;
-  color: #21162f;
+  color: #16242f;
   font-size: 20px;
 }
 
 .modal-admin-descripcion {
   margin: 0 0 20px;
-  color: #635770;
+  color: #576570;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -650,7 +650,7 @@
 .form-campo-grupo label {
   font-size: 13px;
   font-weight: 700;
-  color: #4b3d5b;
+  color: #3d4e5b;
 }
 
 .input-con-sufijo {
@@ -662,24 +662,24 @@
 .input-con-sufijo input {
   width: 100%;
   padding: 12px 36px 12px 14px;
-  border: 1px solid #d8cde2;
+  border: 1px solid #cdd9e2;
   border-radius: 10px;
   font: inherit;
   font-size: 15px;
-  color: #21162f;
+  color: #16242f;
 }
 
 .sufijo {
   position: absolute;
   right: 14px;
   font-weight: 700;
-  color: #6d5f7c;
+  color: #5f6f7c;
 }
 
 .descuento-vista-previa {
   font-size: 12px;
-  color: #3b7e56;
-  background: #f0f9f3;
+  color: #3b7e6e;
+  background: #f0f9f7;
   padding: 8px 12px;
   border-radius: 8px;
   margin-top: 4px;
@@ -695,19 +695,19 @@
 .input-pin-caja input {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #d8cde2;
+  border: 1px solid #cdd9e2;
   border-radius: 10px;
   font: inherit;
   font-size: 16px;
   letter-spacing: 2px;
-  color: #21162f;
+  color: #16242f;
   box-sizing: border-box;
 }
 
 .input-pin-caja input:focus {
   outline: none;
-  border-color: #8e6adf;
-  box-shadow: 0 0 0 3px rgba(142, 106, 223, 0.15);
+  border-color: #6aaadf;
+  box-shadow: 0 0 0 3px rgba(106, 170, 223, 0.15);
 }
 
 .input-pin-caja input::-ms-reveal {
@@ -716,13 +716,13 @@
 
 .pin-hint {
   font-size: 11px;
-  color: #837593;
+  color: #758593;
 }
 
 .modal-error-alerta {
-  background: #fff0ef;
-  border: 1px solid #f3c1bb;
-  color: #a12620;
+  background: #fff4ef;
+  border: 1px solid #f3ccbb;
+  color: #a14720;
   padding: 10px 14px;
   border-radius: 10px;
   font-size: 13px;
@@ -737,7 +737,7 @@
 }
 
 .btn-confirmar-admin {
-  background: linear-gradient(135deg, #743e9d 0%, #4f2175 100%);
+  background: linear-gradient(135deg, #3e729d 0%, #214f75 100%);
 }
 
 /* =========================================================
@@ -758,45 +758,45 @@
 .modal-pago-header h3 {
   margin: 0 0 4px;
   font-size: 22px;
-  color: #21162f;
+  color: #16242f;
 }
 
 .modal-pago-header p {
   margin: 0;
   font-size: 13px;
-  color: #726482;
+  color: #647482;
 }
 
 .btn-cerrar-modal {
   background: transparent;
   border: none;
   font-size: 18px;
-  color: #8c7f9a;
+  color: #7f8e9a;
   cursor: pointer;
   padding: 4px;
 }
 
 .btn-cerrar-modal:hover {
-  color: #21162f;
+  color: #16242f;
 }
 
 .total-destacado-pago {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(135deg, #241432 0%, #462562 100%);
+  background: linear-gradient(135deg, #142532 0%, #254762 100%);
   color: #ffffff;
   padding: 20px;
   border-radius: 16px;
   margin-bottom: 20px;
-  box-shadow: 0 8px 20px rgba(45, 23, 72, 0.15);
+  box-shadow: 0 8px 20px rgba(23, 50, 72, 0.15);
 }
 
 .etiqueta-total-pago {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #dfceef;
+  color: #cee0ef;
   font-weight: 600;
   margin-bottom: 4px;
 }
@@ -821,25 +821,25 @@
   align-items: center;
   gap: 8px;
   padding: 14px 10px;
-  background: #f8f4fb;
-  border: 2px solid #e2d7ec;
+  background: #f4f8fb;
+  border: 2px solid #d7e3ec;
   border-radius: 12px;
   font-weight: 700;
   font-size: 14px;
-  color: #4b3d5b;
+  color: #3d4e5b;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-selector:hover {
-  border-color: #aa86e3;
+  border-color: #86b9e3;
 }
 
 .btn-selector.activo {
-  background: #f2e9fc;
-  border-color: #6d35a5;
-  color: #4a1d77;
-  box-shadow: 0 4px 12px rgba(109, 53, 165, 0.12);
+  background: #e9f3fc;
+  border-color: #3573a5;
+  color: #1d4e77;
+  box-shadow: 0 4px 12px rgba(53, 115, 165, 0.12);
 }
 
 .icono-metodo {
@@ -861,7 +861,7 @@
 .bloque-efectivo label {
   font-size: 13px;
   font-weight: 700;
-  color: #4b3d5b;
+  color: #3d4e5b;
 }
 
 .input-dinero-wrapper {
@@ -875,7 +875,7 @@
   left: 16px;
   font-size: 22px;
   font-weight: 800;
-  color: #552787;
+  color: #275c87;
 }
 
 .input-monto-recibido {
@@ -883,16 +883,16 @@
   padding: 14px 14px 14px 44px;
   font-size: 24px;
   font-weight: 800;
-  color: #21162f;
-  border: 2px solid #d0c1e0;
+  color: #16242f;
+  border: 2px solid #c1d2e0;
   border-radius: 12px;
   box-sizing: border-box;
 }
 
 .input-monto-recibido:focus {
   outline: none;
-  border-color: #7b42ad;
-  box-shadow: 0 0 0 3px rgba(123, 66, 173, 0.15);
+  border-color: #427dad;
+  box-shadow: 0 0 0 3px rgba(66, 125, 173, 0.15);
 }
 
 /* Atajos de billetes */
@@ -903,9 +903,9 @@
 }
 
 .atajos-billetes button {
-  background: #f4eff9;
-  border: 1px solid #dccbe9;
-  color: #4f2e71;
+  background: #eff4f9;
+  border: 1px solid #cbdbe9;
+  color: #2e5371;
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 12px;
@@ -915,7 +915,7 @@
 }
 
 .atajos-billetes button:hover {
-  background: #e6daf2;
+  background: #dae7f2;
 }
 
 /* Caja de vuelto en tiempo real */
@@ -930,15 +930,15 @@
 }
 
 .caja-vuelto-real.vuelto-ok {
-  background: #eaf7ee;
-  border: 1px solid #b7e4c3;
-  color: #17663d;
+  background: #eaf7f4;
+  border: 1px solid #b7e4da;
+  color: #176654;
 }
 
 .caja-vuelto-real.vuelto-insuficiente {
-  background: #fff1f0;
-  border: 1px solid #f6c5c1;
-  color: #a8231c;
+  background: #fff4f0;
+  border: 1px solid #f6d1c1;
+  color: #a8461c;
 }
 
 .vuelto-titulo {
@@ -962,8 +962,8 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  background: #f3ecfb;
-  border: 1px solid #dcceeb;
+  background: #ecf4fb;
+  border: 1px solid #cedeeb;
   padding: 16px;
   border-radius: 12px;
 }
@@ -975,20 +975,20 @@
 .tarjeta-indicacion p {
   margin: 0;
   font-size: 14px;
-  color: #402360;
+  color: #234560;
   line-height: 1.4;
 }
 
 .bloque-tarjeta label {
   font-size: 13px;
   font-weight: 700;
-  color: #4b3d5b;
+  color: #3d4e5b;
 }
 
 .bloque-tarjeta input {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #d8cde2;
+  border: 1px solid #cdd9e2;
   border-radius: 10px;
   font: inherit;
   font-size: 14px;
@@ -1003,7 +1003,7 @@
 }
 
 .btn-confirmar-pago {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  background: linear-gradient(135deg, #2e7d6b 0%, #1b5e4e 100%);
 }
 
 .comprobante-acciones {

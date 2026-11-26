@@ -3,6 +3,20 @@
   font-family: Arial, Helvetica, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+
+  /* Tres matices base: azul, teal análogo y terracota complementario.
+     Los fondos, bordes y textos usan tintes de esos mismos matices. */
+  --color-dominante: #eaf2f8;
+  --color-superficie: #f5f9fc;
+  --color-secundario: #245f91;
+  --color-secundario-oscuro: #173f63;
+  --color-secundario-suave: #dcebf5;
+  --color-analogo: #18745f;
+  --color-acento: #c75b32;
+  --color-acento-oscuro: #963d20;
+  --color-texto: #19364f;
+  --color-texto-secundario: #516c81;
+  --color-borde: #c4d7e5;
 }
 
 * {
@@ -12,7 +26,7 @@
 body {
   margin: 0;
   min-width: 320px;
-  background: #faf5ee;
+  background: var(--color-dominante);
 }
 
 button {

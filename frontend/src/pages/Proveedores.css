@@ -19,13 +19,13 @@
 
 .proveedores-encabezado h2 {
   margin: 0 0 10px;
-  color: #21162f;
+  color: #16242f;
   font-size: 24px;
 }
 
 .proveedores-encabezado p {
   margin: 0;
-  color: #60556b;
+  color: #54616c;
   font-size: 14px;
 }
 
@@ -41,7 +41,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #4c4060;
+  color: #405260;
   font-size: 14px;
   font-weight: 700;
 }
@@ -52,10 +52,10 @@
   width: 100%;
   min-width: 0;
   padding: 13px 14px;
-  border: 1px solid #d8cde2;
+  border: 1px solid #cdd9e2;
   border-radius: 12px;
   background: white;
-  color: #21162f;
+  color: #16242f;
   font: inherit;
   box-sizing: border-box;
 }
@@ -63,7 +63,7 @@
 .proveedores-formulario input:focus,
 .proveedores-formulario textarea:focus,
 .proveedores-busqueda input:focus {
-  outline: 2px solid #8e6adf;
+  outline: 2px solid #6aaadf;
   outline-offset: 1px;
 }
 
@@ -87,11 +87,11 @@
 }
 
 .proveedores-secundario {
-  border: 1px solid #d8cde2;
+  border: 1px solid #cdd9e2;
   border-radius: 12px;
   padding: 12px 18px;
-  background: #f4eff9;
-  color: #50316f;
+  background: #eff4f9;
+  color: #31536f;
   font-weight: 700;
   cursor: pointer;
 }
@@ -105,7 +105,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(20, 10, 30, 0.55);
+  background: rgba(10, 21, 30, 0.55);
 }
 
 .modal-caja {
@@ -130,7 +130,7 @@
 }
 
 .proveedores-busqueda label {
-  color: #4c4060;
+  color: #405260;
   font-size: 14px;
   font-weight: 700;
 }
@@ -143,7 +143,7 @@
   overflow-x: auto;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #ac91c8 #f1eaf5;
+  scrollbar-color: #91afc8 #eaf0f5;
 }
 
 .proveedores-tabla-scroll table {
@@ -154,7 +154,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #f6effc;
+  background: #eff6fc;
 }
 
 .proveedores-tabla-scroll td,
@@ -163,7 +163,7 @@
 }
 
 .proveedores-tabla-scroll tbody tr:hover {
-  background: #faf7fc;
+  background: #f7fafc;
 }
 
 /* Botones de editar y eliminar */
@@ -183,41 +183,41 @@
 }
 
 .proveedores-editar {
-  background: #e9dfff;
-  color: #4d2d78;
+  background: #dff1ff;
+  color: #2d5678;
 }
 
 .proveedores-editar:hover {
-  background: #d8c5ff;
+  background: #c5e5ff;
 }
 
 .proveedores-eliminar {
-  background: #ffe5e1;
-  color: #9c2f28;
+  background: #ffeae1;
+  color: #9c4b28;
 }
 
 .proveedores-eliminar:hover {
-  background: #ffd1ca;
+  background: #ffdaca;
 }
 
 /* Mensajes */
 
 .proveedores-exito {
-  background: #e6f7ed;
-  border: 1px solid #a9dfc1;
+  background: #e6f7f3;
+  border: 1px solid #a9dfd2;
   border-radius: 12px;
   padding: 14px 18px;
-  color: #17663d;
+  color: #176654;
   font-weight: 700;
   margin-bottom: 22px;
 }
 
 .proveedores-error {
-  background: #fff0ef;
-  border: 1px solid #f3c1bb;
+  background: #fff4ef;
+  border: 1px solid #f3ccbb;
   border-radius: 12px;
   padding: 14px 18px;
-  color: #a12620;
+  color: #a14720;
   font-weight: 700;
   margin-bottom: 22px;
   overflow-wrap: anywhere;

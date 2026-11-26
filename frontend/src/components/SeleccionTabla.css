@@ -8,12 +8,12 @@
   width: 18px;
   height: 18px;
   vertical-align: middle;
-  accent-color: #70479d;
+  accent-color: #47769d;
   cursor: pointer;
 }
 
 tr[data-seleccionada="true"] > td {
-  background: #efe5fa;
+  background: #e5f1fa;
 }
 
 .tabla-barra-seleccion {
@@ -24,10 +24,10 @@ tr[data-seleccionada="true"] > td {
   gap: 8px 14px;
   margin-block: 8px;
   padding: 8px 12px;
-  border: 1px solid #e4d5ef;
+  border: 1px solid #d5e3ef;
   border-radius: 12px;
-  background: #f6f0fb;
-  color: #453057;
+  background: #f0f6fb;
+  color: #304557;
   font-size: .85rem;
   animation: ui-subir 180ms ease-out;
 }
@@ -43,19 +43,19 @@ tr[data-seleccionada="true"] > td {
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border: 1px solid #dfd2eb;
+  border: 1px solid #d2e0eb;
   border-radius: 8px;
-  background: #fff;
-  color: #453057;
+  background: #ffffff;
+  color: #304557;
   font: inherit;
   font-weight: 650;
   cursor: pointer;
 }
 
 .tabla-accion svg { width: 16px; height: 16px; }
-.tabla-accion:hover:not(:disabled) { background: #ecdef8; }
+.tabla-accion:hover:not(:disabled) { background: #deecf8; }
 .tabla-accion:disabled { opacity: .55; cursor: default; }
-.tabla-accion-peligro { color: #a72837; }
+.tabla-accion-peligro { color: #a74e28; }
 
 @media (prefers-reduced-motion: reduce) {
   .tabla-barra-seleccion { animation: none; }

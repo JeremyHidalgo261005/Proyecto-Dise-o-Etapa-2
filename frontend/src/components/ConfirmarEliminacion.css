@@ -12,12 +12,12 @@ dialog.confirmar-eliminacion {
   overscroll-behavior: contain;
   padding: clamp(18px, 5vw, 28px);
   margin: 0;
-  color: #342349;
+  color: #233849;
   text-align: center;
 }
 
 .confirmar-eliminacion::backdrop {
-  background: #140a1e8c;
+  background: #0a151e8c;
 }
 
 .confirmar-eliminacion-icono {
@@ -27,8 +27,8 @@ dialog.confirmar-eliminacion {
   margin: 0 auto 12px;
   border-radius: 50%;
   place-items: center;
-  background: #fce9ec;
-  color: #a82034;
+  background: #fcefe9;
+  color: #a84920;
   font-size: 24px;
   font-weight: 800;
 }
@@ -49,8 +49,8 @@ dialog.confirmar-eliminacion {
 .confirmar-eliminacion-error {
   padding: 10px 12px;
   border-radius: 10px;
-  background: #fce9ec;
-  color: #8e172a;
+  background: #fcefe9;
+  color: #8e3b17;
 }
 
 .confirmar-eliminacion-acciones {
@@ -65,15 +65,15 @@ dialog.confirmar-eliminacion {
   padding: 12px 18px;
   border: 1px solid transparent;
   border-radius: 12px;
-  background: #af2337;
-  color: #fff;
+  background: #af4d23;
+  color: #ffffff;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
 }
 
 .confirmar-eliminacion-boton:hover {
-  background: #961b2d;
+  background: #96401b;
 }
 
 .confirmar-eliminacion button:disabled {

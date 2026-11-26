@@ -34,11 +34,11 @@ dialog.historial-detalle {
   max-width: none;
   padding: 20px;
   margin: auto;
-  color: #342349;
+  color: #233849;
 }
 
 .historial-detalle::backdrop {
-  background: #140a1e8c;
+  background: #0a151e8c;
 }
 
 .historial-totales {

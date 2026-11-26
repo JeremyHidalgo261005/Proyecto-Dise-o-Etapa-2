@@ -18,10 +18,10 @@
   gap: 9px;
   align-items: center;
   padding: 5px 5px 5px 13px;
-  border: 1px solid #e2d8eb;
+  border: 1px solid #d8e2eb;
   border-radius: 999px;
-  background: #fff;
-  color: #342349;
+  background: #ffffff;
+  color: #233849;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -42,8 +42,8 @@
   place-items: center;
   overflow: hidden;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ffb199, #ff8e72);
-  color: #342349;
+  background: linear-gradient(135deg, #ffb899, #ff9c72);
+  color: #233849;
   font-weight: 800;
 }
 
@@ -61,10 +61,10 @@
   width: max-content;
   max-width: calc(100vw - 24px);
   padding: 6px;
-  border: 1px solid #e2d8eb;
+  border: 1px solid #d8e2eb;
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 12px 30px #37245724;
+  background: #ffffff;
+  box-shadow: 0 12px 30px #24405724;
   opacity: 0;
   visibility: hidden;
   translate: 0 -5px;
@@ -86,7 +86,7 @@
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #342349;
+  color: #233849;
   font: inherit;
   font-size: 14px;
   text-align: left;
@@ -95,7 +95,7 @@
 
 .perfil-menu button:hover,
 .perfil-menu button:focus-visible {
-  background: #f1e9fb;
+  background: #e9f3fb;
 }
 
 .perfil-menu svg {

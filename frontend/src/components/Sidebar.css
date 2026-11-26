@@ -10,8 +10,8 @@
 
   background: linear-gradient(
     180deg,
-    #20142b 0%,
-    #2b1738 100%
+    #14212b 0%,
+    #172938 100%
   );
 
   display: flex;
@@ -30,6 +30,10 @@
   position: relative;
   z-index: 10;
 }
+
+.sidebar { background: linear-gradient(180deg, var(--color-secundario-oscuro), #102f49); }
+.logo-icono, .menu-opcion.activo { background: var(--color-acento); color: #ffffff; }
+.sidebar-toggle:focus-visible { outline-color: var(--color-acento); }
 
 /* ========================================
    ENCABEZADO Y LOGO
@@ -57,11 +61,11 @@
 .logo-icono {
   background: linear-gradient(
     135deg,
-    #ffb199,
-    #ff8e72
+    #ffb899,
+    #ff9c72
   );
 
-  color: #24152f;
+  color: #15232f;
 
   width: 45px;
   height: 45px;
@@ -91,7 +95,7 @@
 }
 
 .sidebar-logo p {
-  color: #d6c9df;
+  color: #c9d5df;
   font-size: 11px;
   margin: 5px 0 0;
 }
@@ -126,7 +130,7 @@
 }
 
 .sidebar-toggle:focus-visible {
-  outline: 2px solid #ffb199;
+  outline: 2px solid #ffb899;
   outline-offset: 3px;
 }
 
@@ -145,7 +149,7 @@
   min-height: 46px;
 
   background: transparent;
-  color: #f0e8f5;
+  color: #e8eff5;
 
   border: none;
   border-radius: 12px;
@@ -173,11 +177,11 @@
 .menu-opcion.activo {
   background: linear-gradient(
     135deg,
-    #ff9f7a,
-    #ff7f67
+    #ffa27a,
+    #ff9567
   );
 
-  color: #23162f;
+  color: #16242f;
   font-weight: 800;
 }
 
@@ -221,7 +225,7 @@
 .sidebar-footer {
   margin-top: auto;
 
-  border-top: 1px solid #594361;
+  border-top: 1px solid #435361;
 
   padding: 20px 4px 0;
 }
@@ -246,11 +250,11 @@
 
   background: linear-gradient(
     135deg,
-    #ffb199,
-    #ff8e72
+    #ffb899,
+    #ff9c72
   );
 
-  color: #24152f;
+  color: #15232f;
 
   display: flex;
   align-items: center;
@@ -282,7 +286,7 @@
 }
 
 .usuario-rol {
-  color: #d6c9df;
+  color: #c9d5df;
   font-size: 11px;
 }
 
@@ -317,8 +321,8 @@
 }
 
 .sidebar-cerrar-sesion:hover {
-  background: rgba(255, 142, 114, 0.18);
-  border-color: rgba(255, 177, 153, 0.4);
+  background: rgba(255, 156, 114, 0.18);
+  border-color: rgba(255, 184, 153, 0.4);
 }
 
 .sidebar-cerrar-sesion:disabled {
@@ -514,7 +518,7 @@
 
   .movil-toggle-icono {
     font-size: 16px;
-    color: #ffb199;
+    color: #ffb899;
   }
 
   .movil-toggle-texto {
@@ -578,8 +582,8 @@
 
   .menu-opcion.activo,
   .sidebar.contraido .menu-opcion.activo {
-    background: linear-gradient(135deg, rgba(255, 177, 153, 0.22), rgba(255, 142, 114, 0.12));
-    border-color: rgba(255, 177, 153, 0.4);
+    background: linear-gradient(135deg, rgba(255, 184, 153, 0.22), rgba(255, 156, 114, 0.12));
+    border-color: rgba(255, 184, 153, 0.4);
     color: #ffffff;
   }
 

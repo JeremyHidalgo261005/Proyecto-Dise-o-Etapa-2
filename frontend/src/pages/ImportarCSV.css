@@ -41,15 +41,15 @@
   background: #ffffff;
   border-radius: 20px;
   padding: 18px;
-  box-shadow: 0 10px 30px rgba(54, 28, 78, 0.05);
-  border: 1px solid rgba(220, 212, 230, 0.5);
+  box-shadow: 0 10px 30px rgba(28, 56, 78, 0.05);
+  border: 1px solid rgba(212, 222, 230, 0.5);
   display: flex;
   flex-direction: column;
 }
 
 .importar-card h2 {
   font-size: 20px;
-  color: #24152f;
+  color: #15232f;
   margin: 0 0 8px;
   font-weight: 800;
   display: flex;
@@ -58,7 +58,7 @@
 }
 
 .importar-card p {
-  color: #63596d;
+  color: #57646f;
   font-size: 14.5px;
   line-height: 1.5;
   margin: 0 0 12px;
@@ -66,11 +66,11 @@
 
 /* Zona Drag and Drop */
 .dropzone {
-  border: 2.5px dashed #b8a9ce;
+  border: 2.5px dashed #a9bdce;
   border-radius: 20px;
   padding: 14px 10px;
   text-align: center;
-  background: #fbf9fd;
+  background: #f9fbfd;
   cursor: pointer;
   transition: all 0.25s ease;
   display: flex;
@@ -82,27 +82,27 @@
 
 .dropzone:hover,
 .dropzone.arrastrando {
-  border-color: #7b49a6;
-  background: #f4ecfc;
+  border-color: #497ca6;
+  background: #ecf5fc;
   transform: translateY(-2px);
 }
 
 .dropzone-icono {
   width: 40px;
   height: 40px;
-  color: #8c68ff;
+  color: #68bbff;
 }
 
 .dropzone-texto-principal {
   font-size: 16px;
   font-weight: 700;
-  color: #3b2c48;
+  color: #2c3b48;
 }
 
 .boton-examinar {
   background: transparent;
-  color: #7b49a6;
-  border: 2px solid #7b49a6;
+  color: #497ca6;
+  border: 2px solid #497ca6;
   padding: 7px 16px;
   border-radius: 12px;
   font-size: 14px;
@@ -112,15 +112,15 @@
 }
 
 .boton-examinar:hover {
-  background: #7b49a6;
+  background: #497ca6;
   color: #ffffff;
 }
 
 .archivo-seleccionado-caja {
   margin-top: 16px;
   padding: 8px 12px;
-  background: #edf7ed;
-  border: 1px solid #c8e6c9;
+  background: #edf7f5;
+  border: 1px solid #c8e6df;
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -132,7 +132,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #1e4620;
+  color: #1e463d;
   font-size: 14px;
   font-weight: 600;
   overflow: hidden;
@@ -143,7 +143,7 @@
 .boton-quitar-archivo {
   background: none;
   border: none;
-  color: #d32f2f;
+  color: #d3602f;
   font-size: 18px;
   cursor: pointer;
   font-weight: bold;
@@ -152,13 +152,13 @@
 }
 
 .boton-quitar-archivo:hover {
-  background: rgba(211, 47, 47, 0.1);
+  background: rgba(211, 96, 47, 0.1);
 }
 
 .boton-procesar-csv {
   margin-top: 12px;
   width: 100%;
-  background: linear-gradient(135deg, #7b49a6 0%, #4c2d68 100%);
+  background: linear-gradient(135deg, #497ca6 0%, #2d4d68 100%);
   color: white;
   border: none;
   padding: 10px 16px;
@@ -166,7 +166,7 @@
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(123, 73, 166, 0.25);
+  box-shadow: 0 8px 20px rgba(73, 124, 166, 0.25);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -177,7 +177,7 @@
 .boton-procesar-csv:hover:not(:disabled) {
   opacity: 0.95;
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(123, 73, 166, 0.35);
+  box-shadow: 0 10px 24px rgba(73, 124, 166, 0.35);
 }
 
 .boton-procesar-csv:disabled {
@@ -188,8 +188,8 @@
 
 /* Tabla de ejemplo y guía */
 .formato-guia {
-  background: #fdfcff;
-  border: 1px solid #e9e3f0;
+  background: #fcfeff;
+  border: 1px solid #e3eaf0;
   border-radius: 16px;
   padding: 10px;
   margin-bottom: 12px;
@@ -206,18 +206,18 @@
 
 .lista-atributos li {
   font-size: 13.5px;
-  color: #3b2d4c;
+  color: #2d3e4c;
   overflow-wrap: anywhere;
 }
 
 .lista-atributos li strong {
-  color: #7b49a6;
+  color: #497ca6;
 }
 
 .tabla-ejemplo-wrapper {
   overflow-x: auto;
   border-radius: 10px;
-  border: 1px solid #e2dbec;
+  border: 1px solid #dbe4ec;
 }
 
 .tabla-ejemplo {
@@ -228,8 +228,8 @@
 }
 
 .tabla-ejemplo th {
-  background: #f1ebf7;
-  color: #4a2f73;
+  background: #ebf2f7;
+  color: #2f5473;
   padding: 7px 8px;
   font-weight: 700;
   white-space: normal;
@@ -238,16 +238,16 @@
 
 .tabla-ejemplo td {
   padding: 7px 8px;
-  border-top: 1px solid #eee8f5;
-  color: #554862;
+  border-top: 1px solid #e8eff5;
+  color: #485662;
   white-space: normal;
   overflow-wrap: anywhere;;
 }
 
 .boton-descargar-plantilla {
-  background: #f4ecfc;
-  color: #6a3498;
-  border: 1px solid #dcc9ee;
+  background: #ecf5fc;
+  color: #346b98;
+  border: 1px solid #c9ddee;
   padding: 9px 16px;
   border-radius: 10px;
   font-size: 13px;
@@ -261,8 +261,8 @@
 }
 
 .boton-descargar-plantilla:hover {
-  background: #ebd8fa;
-  border-color: #7b49a6;
+  background: #d8ebfa;
+  border-color: #497ca6;
 }
 
 /* Mensajes de resultado */
@@ -278,15 +278,15 @@
 }
 
 .mensaje-alerta.error {
-  background: #ffebee;
-  color: #c62828;
-  border: 1px solid #ffcdd2;
+  background: #fff1eb;
+  color: #c65728;
+  border: 1px solid #ffdccd;
 }
 
 .mensaje-alerta.exito {
-  background: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
+  background: #e8f5f2;
+  color: #2e7d6b;
+  border: 1px solid #c8e6df;
 }
 
 /* ========================================================
@@ -298,7 +298,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(22, 13, 33, 0.65);
+  background: rgba(13, 24, 33, 0.65);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex;
@@ -345,26 +345,26 @@
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: #e8f5f2;
+  color: #2e7d6b;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 40px;
   margin: 0 auto 18px auto;
-  box-shadow: 0 8px 20px rgba(46, 125, 50, 0.15);
+  box-shadow: 0 8px 20px rgba(46, 125, 107, 0.15);
 }
 
 .modal-titulo {
   font-size: 24px;
   font-weight: 800;
-  color: #1f1630;
+  color: #162430;
   margin: 0 0 10px 0;
 }
 
 .modal-descripcion {
   font-size: 15px;
-  color: #63596d;
+  color: #57646f;
   margin: 0 0 24px 0;
   line-height: 1.5;
 }
@@ -373,7 +373,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  background: #f8f6fb;
+  background: #f6f9fb;
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 26px;
@@ -388,19 +388,19 @@
 .metrica-valor {
   font-size: 22px;
   font-weight: 900;
-  color: #4a2f73;
+  color: #2f5473;
 }
 
 .metrica-etiqueta {
   font-size: 12px;
-  color: #7b7188;
+  color: #6e7e8b;
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .modal-boton-cerrar {
   width: 100%;
-  background: #7b49a6;
+  background: #497ca6;
   color: white;
   border: none;
   padding: 14px;
@@ -412,5 +412,5 @@
 }
 
 .modal-boton-cerrar:hover {
-  background: #603485;
+  background: #346185;
 }
